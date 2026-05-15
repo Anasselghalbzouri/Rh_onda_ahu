@@ -1,8 +1,18 @@
+import { useState } from 'react'
+import ListeEmployes from './ListeEmployes'
+
+const TABS = [
+  { key: 'employes', label: 'Employés' },
+]
+
 export default function Dashboard({ user, onLogout }) {
+  const [activeTab, setActiveTab] = useState('employes')
+
   return (
     <div style={styles.container}>
+      {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.title}>Tableau de bord RH</h1>
+        <h1 style={styles.title}>RH — ONDA</h1>
         <div style={styles.userInfo}>
           <span style={styles.badge}>Matricule : {user.matricule}</span>
           <button style={styles.logoutBtn} onClick={onLogout}>
@@ -11,8 +21,25 @@ export default function Dashboard({ user, onLogout }) {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div style={styles.tabs}>
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            style={{
+              ...styles.tab,
+              ...(activeTab === tab.key ? styles.tabActive : {}),
+            }}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
       <div style={styles.content}>
-        <p style={styles.welcome}>Bienvenue, Responsable RH</p>
+        {activeTab === 'employes' && <ListeEmployes />}
       </div>
     </div>
   )
@@ -46,6 +73,25 @@ const styles = {
     fontWeight: 600,
     fontSize: '0.875rem',
   },
-  content: { padding: '2rem' },
-  welcome: { fontSize: '1.1rem', color: '#374151' },
+  tabs: {
+    display: 'flex',
+    gap: '0.5rem',
+    padding: '0.8rem 2rem 0',
+    background: '#1a3c5e',
+  },
+  tab: {
+    padding: '0.5rem 1.2rem',
+    border: 'none',
+    borderRadius: '6px 6px 0 0',
+    background: 'rgba(255,255,255,0.15)',
+    color: '#fff',
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '0.9rem',
+  },
+  tabActive: {
+    background: '#f0f4f8',
+    color: '#1a3c5e',
+  },
+  content: { padding: '1.5rem' },
 }
