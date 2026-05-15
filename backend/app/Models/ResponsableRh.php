@@ -3,20 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
-class ResponsableRh extends Employe
+class ResponsableRh extends Authenticatable
 {
+    use HasApiTokens;
+
     protected $table = 'responsable_rh';
 
     public $timestamps = false;
 
-    protected $fillable = [
-        'login',
-    ];
+    protected $fillable = ['login', 'password'];
 
-    // Les colonnes propres à responsable_rh uniquement
-    // Les colonnes d'employe ne sont pas dupliquées ici car la table
-    // responsable_rh ne les contient pas (relation par login, pas héritage DB)
+    protected $hidden = ['password'];
 
     public function demandesTraitees(): HasMany
     {

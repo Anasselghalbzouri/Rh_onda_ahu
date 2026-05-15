@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ResponsableRh;
 use App\Models\User;
 
 return [
@@ -39,8 +40,12 @@ return [
 
     'guards' => [
         'web' => [
-            'driver' => 'session',
+            'driver'   => 'session',
             'provider' => 'users',
+        ],
+        'rh' => [
+            'driver'   => 'sanctum',
+            'provider' => 'responsable_rh',
         ],
     ],
 
@@ -64,7 +69,11 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model'  => env('AUTH_MODEL', User::class),
+        ],
+        'responsable_rh' => [
+            'driver' => 'eloquent',
+            'model'  => ResponsableRh::class,
         ],
 
         // 'users' => [
