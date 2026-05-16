@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from './api'
 
-export default function ListeEmployes() {
+export default function ListeEmployes({ onSelectEmploye }) {
   const [employes, setEmployes]   = useState([])
   const [meta, setMeta]           = useState(null)
   const [page, setPage]           = useState(1)
@@ -81,7 +81,13 @@ export default function ListeEmployes() {
                   </tr>
                 ) : (
                   employes.map((emp) => (
-                    <tr key={emp.id} style={styles.tr}>
+                    <tr
+                      key={emp.id}
+                      style={{ ...styles.tr, cursor: 'pointer' }}
+                      onClick={() => onSelectEmploye && onSelectEmploye(emp.id)}
+                      onMouseEnter={e => e.currentTarget.style.background = '#f0f4f8'}
+                      onMouseLeave={e => e.currentTarget.style.background = ''}
+                    >
                       <td style={styles.td}>{emp.matricule}</td>
                       <td style={styles.td}>{emp.prenom} {emp.nom}</td>
                       <td style={styles.td}>{emp.fonction ?? '—'}</td>

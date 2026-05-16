@@ -14,7 +14,7 @@ class ResponsableRh extends Authenticatable
 
     public $timestamps = false;
 
-    protected $fillable = ['login', 'password'];
+    protected $fillable = ['id', 'login', 'password'];
 
     protected $hidden = ['password'];
 

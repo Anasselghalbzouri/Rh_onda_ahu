@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ListeEmployes from './ListeEmployes'
+import FicheEmploye from './FicheEmploye'
 
 const TABS = [
   { key: 'employes', label: 'Employés' },
@@ -7,10 +8,10 @@ const TABS = [
 
 export default function Dashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('employes')
+  const [selectedEmployeId, setSelectedEmployeId] = useState(null)
 
   return (
     <div style={styles.container}>
-      {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.title}>RH — ONDA</h1>
         <div style={styles.userInfo}>
@@ -21,25 +22,26 @@ export default function Dashboard({ user, onLogout }) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={styles.tabs}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            style={{
-              ...styles.tab,
-              ...(activeTab === tab.key ? styles.tabActive : {}),
-            }}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {!selectedEmployeId && (
+        <div style={styles.tabs}>
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              style={{ ...styles.tab, ...(activeTab === tab.key ? styles.tabActive : {}) }}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Content */}
       <div style={styles.content}>
-        {activeTab === 'employes' && <ListeEmployes />}
+        {selectedEmployeId ? (
+          <FicheEmploye id={selectedEmployeId} onRetour={() => setSelectedEmployeId(null)} />
+        ) : (
+          activeTab === 'employes' && <ListeEmployes onSelectEmploye={setSelectedEmployeId} />
+        )}
       </div>
     </div>
   )
