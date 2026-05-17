@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 
 class EmployeController extends Controller
 {
+    // JsonResponse makes the API contract explicit: this action returns JSON data.
     public function index(Request $request): JsonResponse
     {
         $query = Employe::with('service');
