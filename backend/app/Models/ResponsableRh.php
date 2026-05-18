@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -17,6 +18,11 @@ class ResponsableRh extends Authenticatable
     protected $fillable = ['id', 'login', 'password'];
 
     protected $hidden = ['password'];
+
+    public function employe(): HasOne
+    {
+        return $this->hasOne(Employe::class, 'matricule', 'login');
+    }
 
     public function demandesTraitees(): HasMany
     {

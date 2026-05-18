@@ -141,8 +141,8 @@ export default function FicheEmploye({ id, onRetour }) {
       <Section titre="Informations générales">
         <Grid>
           <Info label="Sexe"           value={employe.sexe === 'M' ? 'Masculin' : employe.sexe === 'F' ? 'Féminin' : '—'} />
-          <Info label="Date naissance" value={employe.date_naissance ?? '—'} />
-          <Info label="Date embauche"  value={employe.date_embauche ?? '—'} />
+          <Info label="Date naissance" value={formatDate(employe.date_naissance)} />
+          <Info label="Date embauche"  value={formatDate(employe.date_embauche)} />
           <Info label="Catégorie"      value={employe.categorie ?? '—'} />
           <Info label="Échelle"        value={employe.echelle ?? '—'} />
           <Info label="Échelon"        value={employe.echelon ?? '—'} />

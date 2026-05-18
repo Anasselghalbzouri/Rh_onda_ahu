@@ -17,7 +17,7 @@ class AuthController extends Controller
             'password'  => 'required|string',
         ]);
 
-        $rh = ResponsableRh::where('login', $request->input('matricule'))->first();
+        $rh = ResponsableRh::with('employe')->where('login', $request->input('matricule'))->first();
 
         if (! $rh || ! Hash::check($request->input('password'), $rh->password)) {
             throw ValidationException::withMessages([
@@ -32,6 +32,8 @@ class AuthController extends Controller
             'user'  => [
                 'id'        => $rh->id,
                 'matricule' => $rh->login,
+                'prenom'    => $rh->employe?->prenom,
+                'nom'       => $rh->employe?->nom,
                 'role'      => 'rh',
             ],
         ]);
@@ -46,12 +48,35 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        $rh = $request->user();
+        $rh = $request->user()->load('employe');
 
         return response()->json([
             'id'        => $rh->id,
             'matricule' => $rh->login,
+            'prenom'    => $rh->employe?->prenom,
+            'nom'       => $rh->employe?->nom,
             'role'      => 'rh',
         ]);
+    }
+
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password'      => 'required|string',
+            'password'              => 'required|string|min:4|confirmed',
+            'password_confirmation' => 'required|string',
+        ]);
+
+        $rh = $request->user();
+
+        if (! Hash::check($request->input('current_password'), $rh->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Mot de passe actuel incorrect.'],
+            ]);
+        }
+
+        $rh->update(['password' => Hash::make($request->input('password'))]);
+
+        return response()->json(['message' => 'Mot de passe mis à jour avec succès.']);
     }
 }

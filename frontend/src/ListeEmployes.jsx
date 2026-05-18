@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from './api'
+import { toFormData } from 'axios'
 
 export default function ListeEmployes({ onSelectEmploye }) {
   const [employes, setEmployes]   = useState([])
@@ -20,6 +21,12 @@ export default function ListeEmployes({ onSelectEmploye }) {
     } finally {
       setLoading(false)
     }
+  }
+    const formatDate = (value) => {
+    if (!value) return '—'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+    return date.toLocaleDateString('fr-FR')
   }
 
   useEffect(() => {
@@ -92,7 +99,7 @@ export default function ListeEmployes({ onSelectEmploye }) {
                       <td style={styles.td}>{emp.prenom} {emp.nom}</td>
                       <td style={styles.td}>{emp.fonction ?? '—'}</td>
                       <td style={styles.td}>{emp.service?.nom ?? '—'}</td>
-                      <td style={styles.td}>{emp.date_embauche ?? '—'}</td>
+                      <td style={styles.td}>{formatDate(emp.date_embauche) ?? '—'}</td>
                       <td style={styles.td}>
                         <span style={{
                           ...styles.badge,
