@@ -1,0 +1,45 @@
+.unauthorized-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  font-family: sans-serif;
+}
+
+.unauthorized-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 48px 64px;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.unauthorized-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.unauthorized-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.unauthorized-text {
+  color: #6b7280;
+  margin: 0 0 32px;
+}
+
+.unauthorized-back-btn {
+  padding: 10px 24px;
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}

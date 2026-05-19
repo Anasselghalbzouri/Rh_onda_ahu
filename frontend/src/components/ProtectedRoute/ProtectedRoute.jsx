@@ -1,5 +1,5 @@
-import { Navigate } from 'react-router-dom'
-import { useAuth } from './useAuth'
+import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '../../useAuth'
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const { isAuthenticated, user } = useAuth()
@@ -12,5 +12,5 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/unauthorized" replace />
   }
 
-  return children
+  return children ?? <Outlet />
 }
