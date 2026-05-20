@@ -123,6 +123,21 @@
   color: #6b7280;
 }
 
+.liste-import-btn {
+  padding: 0.6rem 1.2rem;
+  background: #fff;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.liste-import-btn:hover { background: #eff6ff; }
+
 .liste-add-btn {
   padding: 0.6rem 1.2rem;
   background: #1a3c5e;

@@ -7,6 +7,7 @@ import PersonnelPage from './components/PersonnelPage/PersonnelPage'
 import Unauthorized from './components/Unauthorized/Unauthorized'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 
+
 const Placeholder = ({ title }) => (
   <div style={{ padding: '2rem 0' }}>
     <h2 style={{ margin: '0 0 0.5rem', color: '#1a3c5e', fontSize: '1.4rem', fontWeight: 700 }}>{title}</h2>
@@ -37,7 +38,7 @@ export default function App() {
           <Route index element={<Navigate to="/personnel" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="personnel" element={<PersonnelPage />} />
-          <Route path="conges" element={<Placeholder title="Congés" />} />
+<Route path="conges" element={<Placeholder title="Congés" />} />
           <Route path="absences" element={<Placeholder title="Absences" />} />
           <Route path="avances" element={<Placeholder title="Avances" />} />
           <Route path="profil" element={<Placeholder title="Mon profil" />} />

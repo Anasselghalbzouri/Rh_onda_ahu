@@ -47,7 +47,7 @@ class EmployeController extends Controller
             'matricule'             => 'required|string|unique:employe,matricule',
             'nom'                   => 'required|string|max:100',
             'prenom'                => 'required|string|max:100',
-            'sexe'                  => 'nullable|in:M,F',
+            'sexe'                  => 'required|in:M,F',
             'date_naissance'        => 'nullable|date',
             'date_embauche'         => 'nullable|date',
             'categorie'             => 'nullable|string|max:50',
@@ -59,10 +59,13 @@ class EmployeController extends Controller
             'service_id'            => 'nullable|integer|exists:service,id',
             'affectation'           => 'nullable|string|max:100',
             'date_affectation'      => 'nullable|date',
-            'solde_conge'           => 'nullable|numeric',
-            'statut'                => 'nullable|string|max:20',
+            'solde_conge'           => 'nullable|numeric|min:0',
+            'statut'                => 'nullable|in:actif,mute,retraite,parti,suspendu',
             'observation'           => 'nullable|string',
         ]);
+
+        $data['solde_conge'] = $data['solde_conge'] ?? 0;
+        $data['statut']      = $data['statut'] ?? 'actif';
 
         $employe = Employe::create($data);
 
@@ -105,5 +108,66 @@ class EmployeController extends Controller
         $employe->delete();
 
         return response()->json(['message' => 'Employé supprimé.']);
+    }
+
+    // T-060 — RHAHU-89 : bulk upsert depuis Excel VBA
+    public function bulkSync(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'employes'              => 'required|array|min:1|max:500',
+            'employes.*.matricule'  => 'required|string',
+            'employes.*.nom'        => 'required|string|max:100',
+            'employes.*.prenom'     => 'required|string|max:100',
+            'employes.*.sexe'                => 'nullable|in:M,F',
+            'employes.*.date_naissance'      => 'nullable|date',
+            'employes.*.date_embauche'       => 'nullable|date',
+            'employes.*.categorie'           => 'nullable|string|max:50',
+            'employes.*.echelle'             => 'nullable|string|max:20',
+            'employes.*.echelon'             => 'nullable|string|max:20',
+            'employes.*.entite'              => 'nullable|string|max:100',
+            'employes.*.fonction'            => 'nullable|string|max:100',
+            'employes.*.qualification'       => 'nullable|string|max:100',
+            'employes.*.affectation'         => 'nullable|string|max:100',
+            'employes.*.date_affectation'    => 'nullable|date',
+            'employes.*.solde_conge'         => 'nullable|numeric|min:0',
+            'employes.*.statut'              => 'nullable|in:actif,mute,retraite,parti,suspendu',
+            'employes.*.observation'         => 'nullable|string',
+        ]);
+
+        $results  = [];
+        $created  = 0;
+        $updated  = 0;
+
+        $syncFields = [
+            'nom', 'prenom', 'sexe', 'date_naissance', 'date_embauche',
+            'categorie', 'echelle', 'echelon', 'entite', 'fonction',
+            'qualification', 'affectation', 'date_affectation',
+            'solde_conge', 'statut', 'observation',
+        ];
+
+        foreach ($data['employes'] as $row) {
+            $fields = array_intersect_key($row, array_flip($syncFields));
+            
+            $fields['solde_conge'] = $fields['solde_conge'] ?? 0;
+            $fields['statut']      = $fields['statut'] ?? 'actif';
+
+            $employe = Employe::updateOrCreate(
+                ['matricule' => $row['matricule']],
+                $fields
+            );
+
+            $status = $employe->wasRecentlyCreated ? 'created' : 'updated';
+            $employe->wasRecentlyCreated ? $created++ : $updated++;
+
+            $results[] = ['matricule' => $row['matricule'], 'status' => $status];
+        }
+
+        return response()->json([
+            'total'   => count($data['employes']),
+            'created' => $created,
+            'updated' => $updated,
+            'errors'  => 0,
+            'results' => $results,
+        ]);
     }
 }

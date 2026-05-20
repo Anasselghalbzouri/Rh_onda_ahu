@@ -5,7 +5,7 @@ const MENU_BY_ROLE = {
   rh: [
     { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard' },
     { key: 'personnel', label: 'Personnel', path: '/personnel' },
-    { key: 'conges', label: 'Congés', path: '/conges' },
+{ key: 'conges', label: 'Congés', path: '/conges' },
     { key: 'absences', label: 'Absences', path: '/absences' },
     { key: 'avances', label: 'Avances', path: '/avances' },
   ],

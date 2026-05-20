@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employe;
+use App\Models\PieceJointe;
 use App\Models\Service;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as XlsDate;
 
 class ImportController extends Controller
 {
@@ -30,6 +35,140 @@ class ImportController extends Controller
         'm'     => 'M',
         'f'     => 'F',
     ];
+
+    public function downloadModele(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $path = storage_path('app/public/modele_import_employes.xlsx');
+        return response()->download($path, 'modele_import_employes.xlsx');
+    }
+
+    // Colonnes standardisées A→Q (ligne 1 = en-têtes, données à partir de ligne 2)
+    private const COL_MAP = [
+        1  => 'matricule',
+        2  => 'nom',
+        3  => 'prenom',
+        4  => 'sexe',
+        5  => 'date_naissance',
+        6  => 'date_embauche',
+        7  => 'categorie',
+        8  => 'echelle',
+        9  => 'echelon',
+        10 => 'entite',
+        11 => 'fonction',
+        12 => 'qualification',
+        13 => 'affectation',
+        14 => 'date_affectation',
+        15 => 'solde_conge',
+        16 => 'statut',
+        17 => 'observation',
+    ];
+
+    private const DATE_FIELDS = ['date_naissance', 'date_embauche', 'date_affectation'];
+
+    public function importFromFile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'fichier' => 'required|file|mimes:xlsx,xls|max:10240',
+        ]);
+
+        $file = $request->file('fichier');
+
+        // Lire le spreadsheet depuis le chemin temporaire avant stockage
+        $spreadsheet = IOFactory::load($file->getRealPath());
+        $sheet       = $spreadsheet->getActiveSheet();
+
+        // Stocker le fichier
+        $path = $file->store('excel', 'public');
+
+        // Enregistrer dans pieces_jointes
+        PieceJointe::create([
+            'entite'        => 'sync_excel',
+            'entite_id'     => auth()->id(),
+            'nom_original'  => $file->getClientOriginalName(),
+            'nom_stockage'  => basename($path),
+            'chemin'        => $path,
+            'extension'     => $file->getClientOriginalExtension(),
+            'taille_octets' => $file->getSize(),
+            'mime_type'     => $file->getMimeType(),
+            'categorie'     => 'sync_excel',
+            'uploade_par'   => auth()->id(),
+            'date_upload'   => now(),
+            'actif'         => true,
+        ]);
+
+        // Extraire les lignes (ligne 1 = en-têtes)
+        $rows        = [];
+        $highestRow  = $sheet->getHighestDataRow();
+
+        for ($r = 2; $r <= $highestRow; $r++) {
+            $rowData = [];
+            foreach (self::COL_MAP as $col => $field) {
+                $cell  = $sheet->getCellByColumnAndRow($col, $r);
+                $value = $cell->getValue();
+
+                if (in_array($field, self::DATE_FIELDS, true)) {
+                    if (is_numeric($value) && $value > 0) {
+                        $value = XlsDate::excelToDateTimeObject($value)->format('Y-m-d');
+                    } elseif (is_string($value)) {
+                        $value = $this->parseDate($value);
+                    }
+                }
+
+                $rowData[$field] = ($value !== null && $value !== '') ? trim((string) $value) : null;
+            }
+
+            if (empty($rowData['matricule'])) continue;
+            $rows[] = $rowData;
+        }
+
+        // Synchronisation
+        $created = 0;
+        $updated = 0;
+        $errors  = [];
+
+        $syncFields = [
+            'nom', 'prenom', 'sexe', 'date_naissance', 'date_embauche',
+            'categorie', 'echelle', 'echelon', 'entite', 'fonction',
+            'qualification', 'affectation', 'date_affectation',
+            'solde_conge', 'statut', 'observation',
+        ];
+
+        foreach ($rows as $i => $row) {
+            try {
+                $fields = array_intersect_key($row, array_flip($syncFields));
+
+                $sexeRaw          = strtolower($fields['sexe'] ?? '');
+                $fields['sexe']   = $this->sexeMap[$sexeRaw] ?? 'M';
+
+                $catRaw              = strtolower($fields['categorie'] ?? '');
+                $fields['categorie'] = $this->normaliserCategorie($catRaw);
+
+                $fields['solde_conge'] = is_numeric($fields['solde_conge'] ?? null)
+                    ? (float) $fields['solde_conge'] : 0;
+
+                $fields['statut'] = $fields['statut'] ?: 'actif';
+
+                $employe = Employe::updateOrCreate(
+                    ['matricule' => $row['matricule']],
+                    $fields
+                );
+
+                $employe->wasRecentlyCreated ? $created++ : $updated++;
+
+            } catch (\Throwable $e) {
+                $errors[] = 'Ligne '.($i + 2).': '.$e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'fichier' => $file->getClientOriginalName(),
+            'total'   => count($rows),
+            'created' => $created,
+            'updated' => $updated,
+            'errors'  => $errors,
+        ]);
+    }
 
     public function syncFromExcel(Request $request): \Illuminate\Http\JsonResponse
     {

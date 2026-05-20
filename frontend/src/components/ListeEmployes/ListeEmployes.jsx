@@ -27,7 +27,7 @@ export default function ListeEmployes({ onSelectEmploye }) {
   const [statut, setStatut] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const [createOpen, setCreateOpen] = useState(false)
+const [createOpen, setCreateOpen] = useState(false)
   const [createForm, setCreateForm] = useState(EMPTY_FORM)
   const [createErrors, setCreateErrors] = useState({})
   const [createSaving, setCreateSaving] = useState(false)
@@ -112,7 +112,7 @@ export default function ListeEmployes({ onSelectEmploye }) {
           <option value="retraite">Retraité</option>
           <option value="depart_volontaire">Départ volontaire</option>
         </select>
-        <button className="liste-add-btn" onClick={openCreate}>
+<button className="liste-add-btn" onClick={openCreate}>
           + Ajouter un employé
         </button>
       </div>
