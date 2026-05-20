@@ -1,12 +1,16 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import Sidebar from '../Sidebar/Sidebar'
 import ChangePasswordModal from '../ChangePasswordModal/ChangePasswordModal'
 import './Layout.css'
 
 export default function Layout({ user, onLogout }) {
+  const navigate = useNavigate()
   const [showChangePwd, setShowChangePwd] = useState(false)
-
+    const handleLogout = async () => {
+    await onLogout()
+    navigate('/login', { replace: true })
+  }
   return (
     <div className="layout-root">
       <Sidebar role={user?.role} />
@@ -30,7 +34,7 @@ export default function Layout({ user, onLogout }) {
             <button className="layout-change-pwd-btn" onClick={() => setShowChangePwd(true)}>
               Mot de passe
             </button>
-            <button className="layout-logout-btn" onClick={onLogout}>
+            <button className="layout-logout-btn" onClick={handleLogout}>
               Déconnexion
             </button>
           </div>

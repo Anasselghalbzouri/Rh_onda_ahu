@@ -8,11 +8,23 @@ const api = axios.create({
   },
 })
 
-// Attach token to every request if present
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
+
+// Laravel retourne 401 → token invalide ou expiré → redirect login
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.replace('/login')
+    }
+    return Promise.reject(error)
+  }
+)
 
 export default api

@@ -1,0 +1,49 @@
+.ff-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ff-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ff-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #111827;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+.ff-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.ff-input.ff-has-error {
+  border-color: #ef4444;
+}
+
+.ff-input.ff-has-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+textarea.ff-input {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.ff-error {
+  font-size: 12px;
+  color: #ef4444;
+}

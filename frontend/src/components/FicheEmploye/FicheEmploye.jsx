@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../../api'
+import FormField from '../ui/FormField/FormField'
 import './FicheEmploye.css'
 
 const STATUT_STYLE = {
@@ -48,6 +49,10 @@ export default function FicheEmploye({ id, onRetour }) {
   const [editError, setEditError] = useState(null)
   const [editSuccess, setEditSuccess] = useState(false)
 
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+
   const fetchEmploye = () => {
     return api.get(`/employes/${id}`)
       .then(({ data }) => { setEmploye(data); setError(null) })
@@ -83,6 +88,18 @@ export default function FicheEmploye({ id, onRetour }) {
   const onEditChange = (e) => {
     const { name, value } = e.target
     setEditForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const onDelete = async () => {
+    setDeleteError(null)
+    setDeleting(true)
+    try {
+      await api.delete(`/employes/${id}`)
+      onRetour()
+    } catch {
+      setDeleteError("Impossible de supprimer l'employé.")
+      setDeleting(false)
+    }
   }
 
   const onEditSubmit = async (e) => {
@@ -189,7 +206,28 @@ export default function FicheEmploye({ id, onRetour }) {
           {employe.statut ?? '—'}
         </span>
         <button className="fiche-edit-btn" onClick={openEdit}>Modifier</button>
+        <button className="fiche-del-btn" onClick={() => { setDeleteConfirm(true); setDeleteError(null) }}>
+          Supprimer
+        </button>
       </div>
+
+      {deleteConfirm && (
+        <div className="fiche-confirm-box">
+          <p className="fiche-confirm-text">
+            Confirmer la suppression de <strong>{employe.prenom} {employe.nom}</strong> ?
+            Cette action est irréversible.
+          </p>
+          {deleteError && <div className="fiche-form-error">{deleteError}</div>}
+          <div className="fiche-confirm-actions">
+            <button className="fiche-cancel-btn" onClick={() => setDeleteConfirm(false)} disabled={deleting}>
+              Annuler
+            </button>
+            <button className="fiche-danger-btn" onClick={onDelete} disabled={deleting}>
+              {deleting ? 'Suppression...' : 'Confirmer la suppression'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* INFOS GÉNÉRALES */}
       <Section titre="Informations générales">
@@ -327,7 +365,14 @@ export default function FicheEmploye({ id, onRetour }) {
                         <button
                           type="button"
                           className="fiche-link-btn"
-                          onClick={() => { if (p.url) window.open(p.url, '_blank', 'noopener,noreferrer') }}
+                          onClick={() => {
+                            if (p.url) {
+                              const href = p.url.startsWith('http')
+                                ? p.url
+                                : `${new URL(api.defaults.baseURL).origin}${p.url}`
+                              window.open(href, '_blank', 'noopener,noreferrer')
+                            }
+                          }}
                         >
                           Télécharger
                         </button>
@@ -378,59 +423,24 @@ export default function FicheEmploye({ id, onRetour }) {
             <h3 className="fiche-modal-title">Modifier l'employé</h3>
             <form onSubmit={onEditSubmit}>
               <div className="fiche-modal-grid">
-                <ModalField label="Prénom">
-                  <input name="prenom" value={editForm.prenom} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Nom">
-                  <input name="nom" value={editForm.nom} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Sexe">
-                  <select name="sexe" value={editForm.sexe} onChange={onEditChange} className="fiche-input">
-                    <option value="">—</option>
-                    <option value="M">Masculin</option>
-                    <option value="F">Féminin</option>
-                  </select>
-                </ModalField>
-                <ModalField label="Statut">
-                  <select name="statut" value={editForm.statut} onChange={onEditChange} className="fiche-input">
-                    <option value="">—</option>
-                    {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </ModalField>
-                <ModalField label="Date naissance">
-                  <input type="date" name="date_naissance" value={editForm.date_naissance} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Date embauche">
-                  <input type="date" name="date_embauche" value={editForm.date_embauche} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Catégorie">
-                  <input name="categorie" value={editForm.categorie} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Échelle">
-                  <input name="echelle" value={editForm.echelle} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Échelon">
-                  <input name="echelon" value={editForm.echelon} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Fonction">
-                  <input name="fonction" value={editForm.fonction} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Qualification">
-                  <input name="qualification" value={editForm.qualification} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Entité">
-                  <input name="entite" value={editForm.entite} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Affectation">
-                  <input name="affectation" value={editForm.affectation} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
-                <ModalField label="Solde congé (jours)">
-                  <input type="number" name="solde_conge" value={editForm.solde_conge} onChange={onEditChange} className="fiche-input" />
-                </ModalField>
+                <FormField label="Prénom"          name="prenom"         value={editForm.prenom}         onChange={onEditChange} />
+                <FormField label="Nom"             name="nom"            value={editForm.nom}            onChange={onEditChange} />
+                <FormField label="Sexe"            name="sexe"           value={editForm.sexe}           onChange={onEditChange} type="select"
+                  options={[{ value: 'M', label: 'Masculin' }, { value: 'F', label: 'Féminin' }]} />
+                <FormField label="Statut"          name="statut"         value={editForm.statut}         onChange={onEditChange} type="select"
+                  options={STATUTS.map((s) => ({ value: s, label: s }))} />
+                <FormField label="Date naissance"  name="date_naissance" value={editForm.date_naissance} onChange={onEditChange} type="date" />
+                <FormField label="Date embauche"   name="date_embauche"  value={editForm.date_embauche}  onChange={onEditChange} type="date" />
+                <FormField label="Catégorie"       name="categorie"      value={editForm.categorie}      onChange={onEditChange} />
+                <FormField label="Échelle"         name="echelle"        value={editForm.echelle}        onChange={onEditChange} />
+                <FormField label="Échelon"         name="echelon"        value={editForm.echelon}        onChange={onEditChange} />
+                <FormField label="Fonction"        name="fonction"       value={editForm.fonction}       onChange={onEditChange} />
+                <FormField label="Qualification"   name="qualification"  value={editForm.qualification}  onChange={onEditChange} />
+                <FormField label="Entité"          name="entite"         value={editForm.entite}         onChange={onEditChange} />
+                <FormField label="Affectation"     name="affectation"    value={editForm.affectation}    onChange={onEditChange} />
+                <FormField label="Solde congé (jours)" name="solde_conge" value={editForm.solde_conge}  onChange={onEditChange} type="number" />
               </div>
-              <ModalField label="Observation">
-                <textarea name="observation" value={editForm.observation} onChange={onEditChange} rows={3} className="fiche-input" style={{ resize: 'vertical' }} />
-              </ModalField>
+              <FormField label="Observation" name="observation" value={editForm.observation} onChange={onEditChange} type="textarea" rows={3} />
 
               {editError   && <div className="fiche-form-error">{editError}</div>}
               {editSuccess && <div className="fiche-form-success">Modifications sauvegardées !</div>}
@@ -470,11 +480,3 @@ function Info({ label, value }) {
   )
 }
 
-function ModalField({ label, children }) {
-  return (
-    <div className="fiche-modal-field">
-      <label className="fiche-modal-field-label">{label}</label>
-      {children}
-    </div>
-  )
-}

@@ -1,10 +1,8 @@
 import { useState } from 'react'
-import axios from 'axios'
-import { useAuth } from '../../useAuth'
+import api from '../../api'
 import './ChangePasswordModal.css'
 
 export default function ChangePasswordModal({ onClose }) {
-  const { token } = useAuth()
   const [form, setForm] = useState({
     current_password: '',
     password: '',
@@ -27,11 +25,7 @@ export default function ChangePasswordModal({ onClose }) {
     setLoading(true)
     setErrors({})
     try {
-      await axios.put(
-        `${import.meta.env.VITE_API_URL}/change-password`,
-        form,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      await api.put('/change-password', form)
       setSuccess(true)
       setTimeout(onClose, 1500)
     } catch (err) {
