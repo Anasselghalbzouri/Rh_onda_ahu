@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Plus, Search } from 'lucide-react'
 import api from '../../api'
 import FormField from '../ui/FormField/FormField'
 import './ListeEmployes.css'
@@ -94,6 +95,11 @@ const [createOpen, setCreateOpen] = useState(false)
 
   return (
     <div className="liste-container">
+      <div className="liste-page-header">
+        <p className="liste-page-subtitle">Consulter et gérer le personnel</p>
+        <h2 className="liste-page-title">Personnel</h2>
+      </div>
+
       <div className="liste-toolbar">
         <input
           className="liste-search-input"
@@ -101,19 +107,22 @@ const [createOpen, setCreateOpen] = useState(false)
           placeholder="Rechercher nom, prénom, matricule, fonction..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Rechercher un employé"
         />
         <select
           className="liste-select"
           value={statut}
           onChange={(e) => setStatut(e.target.value)}
+          aria-label="Filtrer par statut"
         >
           <option value="">Tous les statuts</option>
           <option value="actif">Actif</option>
           <option value="retraite">Retraité</option>
           <option value="depart_volontaire">Départ volontaire</option>
         </select>
-<button className="liste-add-btn" onClick={openCreate}>
-          + Ajouter un employé
+        <button className="liste-add-btn" onClick={openCreate}>
+          <Plus size={14} aria-hidden="true" />
+          Ajouter un employé
         </button>
       </div>
 

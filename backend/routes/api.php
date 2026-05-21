@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CongeController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\PieceJointeController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +21,17 @@ Route::middleware('auth:rh')->group(function () {
     Route::get('/employes/{id}', [EmployeController::class, 'show']);
     Route::put('/employes/{id}', [EmployeController::class, 'update']);
     Route::delete('/employes/{id}', [EmployeController::class, 'destroy']);
+
+    // MODULE 3 — Dashboard
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+
+    // MODULE 1 — Congés
+    Route::get('/conges', [CongeController::class, 'index']);
+    Route::post('/conges', [CongeController::class, 'store']);
+    Route::get('/conges/{id}', [CongeController::class, 'show']);
+    Route::put('/conges/{id}', [CongeController::class, 'update']);
+    Route::delete('/conges/{id}', [CongeController::class, 'destroy']);
+    Route::get('/conges/{id}/fichier', [CongeController::class, 'downloadFichier']);
 
     // T-09 — Pièces Jointes
     Route::get('/employes/{id}/pieces-jointes', [PieceJointeController::class, 'index']);

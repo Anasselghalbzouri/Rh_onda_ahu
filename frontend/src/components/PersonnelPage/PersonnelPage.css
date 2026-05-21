@@ -1,3 +1,5 @@
+/* ── Personnel Page ─────────────────────────────────────────── */
 .personnel-page {
   width: 100%;
+  animation: fadeIn 200ms ease-out;
 }

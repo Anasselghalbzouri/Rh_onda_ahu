@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
+import { LogOut, KeyRound, CalendarDays } from 'lucide-react'
 import Sidebar from '../Sidebar/Sidebar'
 import ChangePasswordModal from '../ChangePasswordModal/ChangePasswordModal'
 import './Layout.css'
@@ -7,42 +8,59 @@ import './Layout.css'
 export default function Layout({ user, onLogout }) {
   const navigate = useNavigate()
   const [showChangePwd, setShowChangePwd] = useState(false)
-    const handleLogout = async () => {
+
+  const handleLogout = async () => {
     await onLogout()
     navigate('/login', { replace: true })
   }
+
+  const dateLabel = new Date().toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
   return (
     <div className="layout-root">
-      <Sidebar role={user?.role} />
+      <div className="layout-shell">
+        <Sidebar role={user?.role} />
 
-      <div className="layout-main">
-        <header className="layout-header">
-          <div className="layout-user-info">
+        <div className="layout-main">
+          <header className="layout-header">
             <span className="layout-user-name">
               {user?.prenom && user?.nom
                 ? `${user.prenom} ${user.nom}`
                 : `Matricule : ${user?.matricule}`}
             </span>
+
             <span className="layout-date">
-              {new Date().toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
+              <CalendarDays size={14} aria-hidden="true" />
+              {dateLabel}
             </span>
-            <button className="layout-change-pwd-btn" onClick={() => setShowChangePwd(true)}>
+
+            <button
+              className="layout-header-btn"
+              onClick={() => setShowChangePwd(true)}
+              aria-label="Changer le mot de passe"
+            >
+              <KeyRound size={14} aria-hidden="true" />
               Mot de passe
             </button>
-            <button className="layout-logout-btn" onClick={handleLogout}>
+
+            <button
+              className="layout-logout-btn"
+              onClick={handleLogout}
+              aria-label="Se déconnecter"
+            >
+              <LogOut size={14} aria-hidden="true" />
               Déconnexion
             </button>
-          </div>
-        </header>
+          </header>
 
-        <main className="layout-content">
-          <Outlet />
-        </main>
+          <main className="layout-content">
+            <Outlet />
+          </main>
+        </div>
       </div>
 
       {showChangePwd && <ChangePasswordModal onClose={() => setShowChangePwd(false)} />}

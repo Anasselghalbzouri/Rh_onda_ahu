@@ -4,14 +4,25 @@ import LoginPage from './components/LoginPage/LoginPage'
 import Layout from './components/Layout/Layout'
 import Dashboard from './components/Dashboard/Dashboard'
 import PersonnelPage from './components/PersonnelPage/PersonnelPage'
+import CongesPage from './components/CongesPage/CongesPage'
 import Unauthorized from './components/Unauthorized/Unauthorized'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 
 
 const Placeholder = ({ title }) => (
-  <div style={{ padding: '2rem 0' }}>
-    <h2 style={{ margin: '0 0 0.5rem', color: '#1a3c5e', fontSize: '1.4rem', fontWeight: 700 }}>{title}</h2>
-    <p style={{ color: '#64748b', fontSize: '0.95rem' }}>Ce module sera disponible prochainement.</p>
+  <div style={{ padding: '0' }}>
+    <p style={{ fontSize: 13, color: 'var(--neutral-500)', fontWeight: 500, marginBottom: 4 }}>Module en développement</p>
+    <h2 style={{ margin: '0 0 var(--space-4)', color: 'var(--neutral-900)', fontSize: 28, fontWeight: 700 }}>{title}</h2>
+    <div style={{
+      background: 'var(--white)',
+      border: '1px solid var(--neutral-200)',
+      borderRadius: 'var(--radius-lg)',
+      padding: '3rem',
+      textAlign: 'center',
+      boxShadow: 'var(--shadow-md)',
+    }}>
+      <p style={{ color: 'var(--neutral-400)', fontSize: 14 }}>Ce module sera disponible prochainement.</p>
+    </div>
   </div>
 )
 
@@ -38,7 +49,7 @@ export default function App() {
           <Route index element={<Navigate to="/personnel" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="personnel" element={<PersonnelPage />} />
-<Route path="conges" element={<Placeholder title="Congés" />} />
+<Route path="conges" element={<CongesPage />} />
           <Route path="absences" element={<Placeholder title="Absences" />} />
           <Route path="avances" element={<Placeholder title="Avances" />} />
           <Route path="profil" element={<Placeholder title="Mon profil" />} />

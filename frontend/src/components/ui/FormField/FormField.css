@@ -1,41 +1,42 @@
+/* ── FormField ──────────────────────────────────────────────── */
 .ff-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .ff-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: #374151;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--neutral-700);
 }
 
 .ff-input {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #111827;
-  background: #fff;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  padding: 9px 12px;
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--neutral-900);
+  background: var(--neutral-50);
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
   box-sizing: border-box;
+  outline: none;
 }
 
 .ff-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: var(--secondary);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(13, 139, 255, 0.1);
 }
 
 .ff-input.ff-has-error {
-  border-color: #ef4444;
+  border-color: var(--danger);
+  background: var(--danger-light);
 }
 
 .ff-input.ff-has-error:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 textarea.ff-input {
@@ -45,5 +46,6 @@ textarea.ff-input {
 
 .ff-error {
   font-size: 12px;
-  color: #ef4444;
+  color: var(--danger);
+  font-weight: 500;
 }

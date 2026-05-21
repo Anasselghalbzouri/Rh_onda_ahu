@@ -10,21 +10,16 @@ export default function LoginPage({ onLogin }) {
 
   const canSubmit = matricule.trim().length > 0 && password.length > 0 && !loading
 
-  const clearError = () => {
-    if (error) setError('')
-  }
+  const clearError = () => { if (error) setError('') }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     if (!matricule.trim() || !password) {
       setError('Veuillez saisir votre matricule et votre mot de passe.')
       return
     }
-
     setError('')
     setLoading(true)
-
     try {
       await onLogin(matricule.trim(), password)
     } catch (err) {
@@ -42,9 +37,17 @@ export default function LoginPage({ onLogin }) {
     <main className="login-page">
       <section className="login-shell" aria-label="Connexion">
         <div className="login-card">
+          <div className="login-logo">
+            <div className="login-logo-mark" aria-hidden="true">RH</div>
+            <div className="login-logo-text">
+              <span className="login-logo-name">RH ONDA</span>
+              <span className="login-logo-sub">Aéroport AHU</span>
+            </div>
+          </div>
+
           <div className="login-heading">
-            <p>Connexion</p>
-            <h2>Bienvenue</h2>
+            <p>Portail RH</p>
+            <h2>Connexion</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="login-form" noValidate>
@@ -86,16 +89,14 @@ export default function LoginPage({ onLogin }) {
             </div>
 
             {error && (
-              <p className="login-error" role="alert">
-                {error}
-              </p>
+              <p className="login-error" role="alert">{error}</p>
             )}
 
             <button className="submit-button" type="submit" disabled={!canSubmit} aria-busy={loading}>
               {loading ? (
                 <>
                   <span className="spinner" aria-hidden="true" />
-                  Connexion...
+                  Connexion…
                 </>
               ) : (
                 'Se connecter'

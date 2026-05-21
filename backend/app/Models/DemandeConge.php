@@ -23,6 +23,10 @@ class DemandeConge extends Model
         'statut',
         'date_decision',
         'commentaire_rh',
+        'ref_hraccess',
+        'ref_onda_ahu',
+        'fichier_nom',
+        'fichier_chemin',
     ];
 
     protected $casts = [

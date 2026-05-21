@@ -1,0 +1,403 @@
+/* ── Congés Page ───────────────────────────────────────────── */
+.conges-container { padding: 0; }
+
+/* ── Page header ───────────────────────────────────────────── */
+.conges-page-header {
+  margin-bottom: var(--space-6);
+}
+
+.conges-page-subtitle {
+  font-size: 13px;
+  color: var(--neutral-500);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.conges-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--neutral-900);
+  margin: 0;
+}
+
+/* ── Toolbar ───────────────────────────────────────────────── */
+.conges-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.conges-filters {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.conges-select {
+  padding: 8px 12px;
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  background: var(--white);
+  color: var(--neutral-700);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.conges-select:focus { border-color: var(--secondary); }
+
+.conges-add-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px var(--space-5);
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+  white-space: nowrap;
+}
+
+.conges-add-btn:hover {
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+/* ── States ────────────────────────────────────────────────── */
+.conges-loading {
+  text-align: center;
+  color: var(--neutral-500);
+  padding: 3rem 0;
+  font-size: 14px;
+}
+
+/* ── Table wrapper ─────────────────────────────────────────── */
+.conges-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--neutral-200);
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.conges-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.conges-table thead tr {
+  background: var(--neutral-50);
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.conges-table th {
+  padding: 11px var(--space-4);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.conges-table td {
+  padding: 12px var(--space-4);
+  color: var(--neutral-700);
+  border-bottom: 1px solid var(--neutral-200);
+  vertical-align: middle;
+}
+
+.conges-table tbody tr:hover { background: var(--neutral-50); }
+.conges-table tbody tr:last-child td { border-bottom: none; }
+
+.conges-empty {
+  text-align: center;
+  color: var(--neutral-400);
+  padding: 3rem var(--space-4);
+  font-size: 14px;
+}
+
+.conges-emp        { font-weight: 500; color: var(--neutral-900); }
+.conges-matricule  { color: var(--neutral-400); font-size: 11px; font-weight: 400; margin-left: 4px; }
+.conges-jours      { font-weight: 700; color: var(--primary); text-align: center; }
+.conges-solde      { color: var(--success); font-weight: 600; text-align: center; }
+.conges-ref        { font-size: 12px; color: var(--neutral-500); font-family: ui-monospace, monospace; }
+
+/* Type badges */
+.conges-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.type-annuel       { background: var(--secondary-light); color: var(--secondary); }
+.type-maladie      { background: var(--danger-light);    color: var(--danger); }
+.type-maternite    { background: #FCE7F3;                 color: #9D174D; }
+.type-sans_solde   { background: var(--neutral-100);      color: var(--neutral-500); }
+.type-exceptionnel { background: var(--warning-light);   color: var(--warning); }
+
+/* ── Action buttons ────────────────────────────────────────── */
+.conges-actions { display: flex; gap: 6px; }
+
+.btn-edit,
+.btn-delete,
+.btn-file {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, transform 100ms ease;
+}
+
+.btn-edit   { background: var(--secondary-light); color: var(--secondary); }
+.btn-delete { background: var(--danger-light);    color: var(--danger); }
+.btn-file   { background: var(--success-light);   color: var(--success); }
+
+.btn-edit:hover   { background: #C7E7FF; transform: scale(1.05); }
+.btn-delete:hover { background: #FECACA; transform: scale(1.05); }
+.btn-file:hover   { background: #A7F3D0; transform: scale(1.05); }
+
+/* ── Pagination ────────────────────────────────────────────── */
+.conges-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  font-size: 13px;
+  color: var(--neutral-500);
+}
+
+.conges-pagination button {
+  padding: 7px 14px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--neutral-700);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.conges-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.conges-pagination button:not(:disabled):hover {
+  background: var(--neutral-100);
+  border-color: var(--neutral-300);
+}
+
+/* ── Modal overlay ─────────────────────────────────────────── */
+.conges-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-4);
+  backdrop-filter: blur(2px);
+}
+
+.conges-modal {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  animation: scaleIn 250ms ease-out;
+}
+
+.conges-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--neutral-900);
+  margin: 0 0 var(--space-5);
+}
+
+.conges-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+/* ── Form fields ───────────────────────────────────────────── */
+.conges-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: var(--space-3);
+}
+
+.conges-field-full { grid-column: 1 / -1; }
+
+.conges-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+.conges-field input,
+.conges-field select,
+.conges-field textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--neutral-900);
+  background: var(--neutral-50);
+  outline: none;
+  resize: vertical;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.conges-field input:focus,
+.conges-field select:focus,
+.conges-field textarea:focus {
+  border-color: var(--secondary);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(13,139,255,0.1);
+}
+
+/* ── Section label ─────────────────────────────────────────── */
+.conges-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--neutral-500);
+  margin: var(--space-4) 0 var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+/* ── Autocomplete ──────────────────────────────────────────── */
+.conges-suggestions {
+  position: absolute;
+  top: calc(100% - 2px);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--neutral-300);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  list-style: none;
+  z-index: 50;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.conges-suggestions li {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--neutral-700);
+  transition: background 100ms ease;
+}
+
+.conges-suggestions li:hover { background: var(--neutral-100); }
+.emp-solde { color: var(--neutral-400); font-size: 12px; }
+
+/* ── File zone ─────────────────────────────────────────────── */
+.conges-file-zone {
+  border: 2px dashed var(--neutral-300);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.conges-file-zone:hover {
+  border-color: var(--secondary);
+  background: var(--secondary-light);
+}
+
+.conges-file-placeholder { font-size: 13px; color: var(--neutral-400); }
+.conges-file-name        { font-size: 13px; color: var(--secondary); font-weight: 500; }
+
+.conges-existing-file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--neutral-500);
+  margin-bottom: var(--space-2);
+}
+
+.conges-file-remove {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 500;
+}
+
+.conges-file-remove:hover { text-decoration: underline; }
+
+/* ── Errors ────────────────────────────────────────────────── */
+.field-error { font-size: 12px; color: var(--danger); }
+.mt-1        { margin-top: 4px; }
+
+/* ── Modal actions ─────────────────────────────────────────── */
+.conges-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.btn-cancel {
+  padding: 9px var(--space-5);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--neutral-700);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.btn-cancel:hover { background: var(--neutral-100); }
+
+.btn-submit {
+  padding: 9px var(--space-6);
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.btn-submit:hover    { background: var(--primary-light); }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }

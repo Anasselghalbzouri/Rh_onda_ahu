@@ -1,57 +1,54 @@
+/* ── UI Table ───────────────────────────────────────────────── */
 .ui-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--neutral-200);
+  background: var(--white);
+  box-shadow: var(--shadow-md);
 }
 
 .ui-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 13px;
 }
 
 .ui-thead {
-  background: #f8fafc;
+  background: var(--neutral-50);
+  border-bottom: 1px solid var(--neutral-200);
 }
 
 .ui-th {
-  padding: 0.65rem 1rem;
+  padding: 11px var(--space-5);
   text-align: left;
+  font-size: 11px;
   font-weight: 600;
-  color: #374151;
-  font-size: 0.82rem;
+  color: var(--neutral-500);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  border-bottom: 1px solid #e5e7eb;
+  letter-spacing: 0.6px;
   white-space: nowrap;
 }
 
 .ui-tr {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--neutral-200);
+  transition: background 150ms ease;
 }
 
-.ui-tr:last-child {
-  border-bottom: none;
-}
+.ui-tr:last-child { border-bottom: none; }
 
-.ui-tr-clickable {
-  cursor: pointer;
-}
-
-.ui-tr-clickable:hover {
-  background: #f0f7ff;
-}
+.ui-tr-clickable { cursor: pointer; }
+.ui-tr-clickable:hover { background: var(--neutral-50); }
 
 .ui-td {
-  padding: 0.65rem 1rem;
-  color: #1f2937;
+  padding: 12px var(--space-5);
+  color: var(--neutral-700);
   vertical-align: middle;
 }
 
 .ui-td-empty {
-  padding: 2rem 1rem;
+  padding: 3rem var(--space-5);
   text-align: center;
-  color: #9ca3af;
-  font-style: italic;
+  color: var(--neutral-400);
+  font-size: 14px;
 }
