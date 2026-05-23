@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, Calendar, FolderOpen, UserCircle,
-  CalendarCheck, BarChart3,
+  LayoutDashboard, Users, Calendar, UserCircle,
+  CalendarCheck, BarChart3, GraduationCap,
 } from 'lucide-react'
 import './Sidebar.css'
 
@@ -9,8 +9,9 @@ const ICONS = {
   dashboard: LayoutDashboard,
   personnel: Users,
   conges:    Calendar,
+  formations: GraduationCap,
+  'mes-formations': GraduationCap,
   absences:  CalendarCheck,
-  avances:   FolderOpen,
   profil:    UserCircle,
   stats:     BarChart3,
 }
@@ -20,8 +21,8 @@ const MENU_BY_ROLE = {
     { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard' },
     { key: 'personnel', label: 'Personnel',        path: '/personnel' },
     { key: 'conges',    label: 'Congés',            path: '/conges'   },
+    { key: 'formations', label: 'Formations',       path: '/formations' },
     { key: 'absences',  label: 'Absences',          path: '/absences' },
-    { key: 'avances',   label: 'Avances',           path: '/avances'  },
   ],
   dg: [
     { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard' },
@@ -30,6 +31,7 @@ const MENU_BY_ROLE = {
   employe: [
     { key: 'profil',    label: 'Mon profil',   path: '/profil'   },
     { key: 'conges',    label: 'Mes congés',   path: '/conges'   },
+    { key: 'mes-formations', label: 'Mes formations', path: '/mes-formations' },
     { key: 'absences',  label: 'Mes absences', path: '/absences' },
   ],
 }
@@ -57,9 +59,10 @@ export default function Sidebar({ role }) {
               <NavLink
                 to={item.path}
                 className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}
+                title={item.label}
               >
                 <Icon size={18} aria-hidden="true" />
-                {item.label}
+                <span>{item.label}</span>
               </NavLink>
             </li>
           )

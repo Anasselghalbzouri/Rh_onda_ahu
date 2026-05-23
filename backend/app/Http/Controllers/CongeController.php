@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CongeController extends Controller
 {
-    // GET /api/conges?employe_id=&type_conge=&page=
+    // GET /api/conges?employe_id=&type_conge=&statut=&page=
     public function index(Request $request): JsonResponse
     {
         $q = DemandeConge::with(['employe:id,matricule,nom,prenom,solde_conge'])
@@ -21,6 +21,9 @@ class CongeController extends Controller
         }
         if ($request->filled('type_conge')) {
             $q->where('type_conge', $request->type_conge);
+        }
+        if ($request->filled('statut')) {
+            $q->where('statut', $request->statut);
         }
 
         return response()->json($q->paginate(15));

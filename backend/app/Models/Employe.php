@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
@@ -86,6 +87,17 @@ class Employe extends Model
     public function getNomCompletAttribute(): string
     {
         return "{$this->prenom} {$this->nom}";
+    }
+
+    public function formations(): BelongsToMany
+    {
+        return $this->belongsToMany(Formation::class, 'employe_formation', 'employe_id', 'formation_id')
+                    ->withPivot('statut', 'suivi', 'remarque');
+    }
+
+    public function evaluationsFormation(): HasMany
+    {
+        return $this->hasMany(EvaluationFormation::class, 'employe_id');
     }
 
     public function isActif(): bool

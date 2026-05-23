@@ -1,0 +1,146 @@
+.eval-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.eval-context {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--space-4);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  background: var(--neutral-50);
+}
+
+.eval-context span,
+.eval-field span,
+.eval-slider span,
+.eval-radio-group legend {
+  color: var(--neutral-500);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.eval-context strong {
+  color: var(--neutral-900);
+  font-size: 14px;
+}
+
+.eval-radio-group {
+  display: flex;
+  gap: var(--space-3);
+  padding: 0;
+  border: 0;
+}
+
+.eval-radio-group legend {
+  width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+.eval-radio-group label,
+.eval-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px 12px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--neutral-700);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.eval-slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.eval-slider input {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--secondary);
+}
+
+.eval-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.eval-field textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  background: var(--neutral-50);
+  color: var(--neutral-900);
+  outline: 0;
+}
+
+.eval-field textarea:focus {
+  border-color: var(--secondary);
+  background: var(--white);
+}
+
+.eval-toggle {
+  justify-content: flex-start;
+}
+
+.eval-error {
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.eval-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.eval-btn-secondary,
+.eval-btn-primary {
+  padding: 9px var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.eval-btn-secondary {
+  border: 1px solid var(--neutral-200);
+  background: var(--white);
+  color: var(--neutral-700);
+}
+
+.eval-btn-primary {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.eval-btn-primary:disabled,
+.eval-btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 560px) {
+  .eval-radio-group,
+  .eval-actions {
+    flex-direction: column;
+  }
+
+  .eval-actions button {
+    width: 100%;
+  }
+}

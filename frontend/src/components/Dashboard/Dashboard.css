@@ -5,6 +5,10 @@
 
 /* ── Page header ───────────────────────────────────────────── */
 .dash-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
 
@@ -21,6 +25,42 @@
   color: var(--neutral-900);
   margin: 0;
 }
+
+.dash-period-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  background: var(--neutral-100);
+}
+
+.dash-period-tabs button {
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--neutral-500);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dash-period-tabs button.active {
+  background: var(--primary);
+  color: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-skeleton-card,
+.dash-skeleton-chart {
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, var(--neutral-100) 25%, var(--neutral-50) 37%, var(--neutral-100) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border: 1px solid var(--neutral-200);
+}
+
+.dash-skeleton-card { height: 132px; }
+.dash-skeleton-chart { height: 270px; }
 
 /* ── States ────────────────────────────────────────────────── */
 .dash-loading {
@@ -81,6 +121,7 @@
 }
 
 .dash-kpi-card {
+  text-align: left;
   background: var(--white);
   border: 1px solid var(--neutral-200);
   border-radius: var(--radius-lg);
@@ -94,6 +135,103 @@
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
+
+.dash-kpi-card:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+.dash-actions-card {
+  background: var(--white);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-5);
+}
+
+.dash-actions-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.dash-actions-header p {
+  color: var(--neutral-500);
+  font-size: 13px;
+}
+
+.dash-actions-header > span {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--secondary-light);
+  color: var(--secondary);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dash-action-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.dash-action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  background: var(--neutral-50);
+  color: var(--neutral-700);
+  text-align: left;
+}
+
+.dash-action-item:hover {
+  background: var(--white);
+  border-color: var(--neutral-300);
+}
+
+.dash-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.dash-action-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.dash-action-copy strong {
+  color: var(--neutral-900);
+  font-size: 13px;
+}
+
+.dash-action-copy small {
+  color: var(--neutral-500);
+  font-size: 12px;
+}
+
+.dash-action-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--neutral-900);
+}
+
+.dash-action-success .dash-action-icon { background: var(--success-light); color: var(--success); }
+.dash-action-warning .dash-action-icon { background: var(--warning-light); color: var(--warning); }
+.dash-action-info .dash-action-icon { background: var(--secondary-light); color: var(--secondary); }
 
 .dash-kpi-top {
   display: flex;
@@ -126,6 +264,11 @@
   margin-bottom: 4px;
 }
 
+.dash-kpi-compact {
+  font-size: 26px;
+  word-break: break-word;
+}
+
 .dash-kpi-trend {
   font-size: 12px;
   color: var(--neutral-500);
@@ -145,6 +288,9 @@
 
 @media (max-width: 768px) {
   .dash-charts-2col { grid-template-columns: 1fr; }
+  .dash-page-header { flex-direction: column; }
+  .dash-period-tabs { width: 100%; overflow-x: auto; }
+  .dash-action-list { grid-template-columns: 1fr; }
 }
 
 .dash-chart-card {
@@ -166,6 +312,21 @@
   font-weight: 600;
   color: var(--neutral-900);
   margin-bottom: var(--space-4);
+}
+
+.dash-formation-note {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dash-formation-note p {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--secondary-light);
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .dash-chart-empty {

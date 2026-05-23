@@ -1,9 +1,11 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/label-has-associated-control, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from 'react'
-import { Plus, Pencil, Trash2, Paperclip } from 'lucide-react'
+import { CalendarDays, Plus, Pencil, Search, Trash2, Paperclip } from 'lucide-react'
 import api from '../../api'
 import './CongesPage.css'
 
 const TYPES = ['annuel', 'maladie', 'maternite', 'sans_solde', 'exceptionnel']
+const STATUTS = ['en_attente', 'approuve', 'refuse']
 
 const TYPE_LABEL = {
   annuel:       'Annuel',
@@ -11,6 +13,12 @@ const TYPE_LABEL = {
   maternite:    'Maternité',
   sans_solde:   'Sans solde',
   exceptionnel: 'Exceptionnel',
+}
+
+const STATUT_LABEL = {
+  en_attente: 'En attente',
+  approuve: 'Approuvé',
+  refuse: 'Refusé',
 }
 
 const EMPTY_FORM = {
@@ -44,7 +52,11 @@ export default function CongesPage() {
   const [page, setPage]                 = useState(1)
   const [filterType, setFilterType]     = useState('')
   const [filterEmp, setFilterEmp]       = useState('')
+  const [filterEmpSearch, setFilterEmpSearch] = useState('')
+  const [filterEmpSuggestions, setFilterEmpSuggestions] = useState([])
+  const [filterStatut, setFilterStatut] = useState('')
   const [loading, setLoading]           = useState(false)
+  const [viewMode, setViewMode]         = useState('table')
 
   // Modal saisie (create / edit)
   const [modalOpen, setModalOpen]       = useState(false)
@@ -58,6 +70,10 @@ export default function CongesPage() {
   // Autocomplete employé
   const [empSearch, setEmpSearch]       = useState('')
   const [empSuggestions, setEmpSuggestions] = useState([])
+  const [selectedEmpSolde, setSelectedEmpSolde] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   // ── Fetch ──────────────────────────────────────────────────
   const fetchConges = async (p = 1) => {
@@ -66,6 +82,7 @@ export default function CongesPage() {
       const params = { page: p }
       if (filterType) params.type_conge  = filterType
       if (filterEmp)  params.employe_id  = filterEmp
+      if (filterStatut) params.statut = filterStatut
       const { data } = await api.get('/conges', { params })
       setConges(data.data)
       setMeta(data)
@@ -74,7 +91,7 @@ export default function CongesPage() {
     }
   }
 
-  useEffect(() => { setPage(1); fetchConges(1) }, [filterType, filterEmp])
+  useEffect(() => { setPage(1); fetchConges(1) }, [filterType, filterEmp, filterStatut])
   const handlePage = (p) => { setPage(p); fetchConges(p) }
 
   // ── Recherche employé ──────────────────────────────────────
@@ -85,9 +102,24 @@ export default function CongesPage() {
     setEmpSuggestions(data.data.slice(0, 6))
   }
 
+  const onFilterEmpSearchChange = async (q) => {
+    setFilterEmpSearch(q)
+    if (!q) setFilterEmp('')
+    if (q.length < 2) { setFilterEmpSuggestions([]); return }
+    const { data } = await api.get('/employes', { params: { search: q } })
+    setFilterEmpSuggestions(data.data.slice(0, 6))
+  }
+
+  const selectFilterEmp = (emp) => {
+    setFilterEmp(emp.id)
+    setFilterEmpSearch(`${emp.prenom} ${emp.nom} (${emp.matricule})`)
+    setFilterEmpSuggestions([])
+  }
+
   const selectEmp = (emp) => {
     setForm((f) => ({ ...f, employe_id: emp.id }))
     setEmpSearch(`${emp.prenom} ${emp.nom} (${emp.matricule})`)
+    setSelectedEmpSolde(emp.solde_conge ?? null)
     setEmpSuggestions([])
   }
 
@@ -99,6 +131,7 @@ export default function CongesPage() {
     setEmpSearch('')
     setEmpSuggestions([])
     setFichierFile(null)
+    setSelectedEmpSolde(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
     setModalOpen(true)
   }
@@ -119,6 +152,7 @@ export default function CongesPage() {
     setEmpSearch(c.employe ? `${c.employe.prenom} ${c.employe.nom} (${c.employe.matricule})` : '')
     setEmpSuggestions([])
     setFichierFile(null)
+    setSelectedEmpSolde(c.employe?.solde_conge ?? c.solde_restant ?? null)
     if (fileInputRef.current) fileInputRef.current.value = ''
     setModalOpen(true)
   }
@@ -179,11 +213,19 @@ export default function CongesPage() {
   }
 
   // ── Supprimer ──────────────────────────────────────────────
-  const handleDelete = async (c) => {
-    const label = c.employe ? `${c.employe.prenom} ${c.employe.nom}` : `#${c.id}`
-    if (!window.confirm(`Supprimer ce congé de ${label} ?\nLes jours seront recrédités au solde.`)) return
-    await api.delete(`/conges/${c.id}`)
-    fetchConges(page)
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await api.delete(`/conges/${deleteTarget.id}`)
+      setDeleteTarget(null)
+      fetchConges(page)
+    } catch {
+      setDeleteError('Impossible de supprimer ce congé.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   // ── Télécharger fichier ────────────────────────────────────
@@ -191,6 +233,10 @@ export default function CongesPage() {
     const base = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '')
     window.open(`${base}/api/conges/${id}/fichier`, '_blank')
   }
+
+  const requestedDays = Number(form.nombre_jours || countJours(form.date_debut, form.date_fin))
+  const remainingPreview = selectedEmpSolde == null ? null : Math.max(0, Number(selectedEmpSolde) - requestedDays)
+  const calendarRows = conges.slice(0, 8)
 
   // ── Rendu ──────────────────────────────────────────────────
   return (
@@ -208,6 +254,35 @@ export default function CongesPage() {
             <option value="">Tous les types</option>
             {TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
           </select>
+          <select className="conges-select" value={filterStatut} onChange={(e) => setFilterStatut(e.target.value)}>
+            <option value="">Tous les statuts</option>
+            {STATUTS.map((s) => <option key={s} value={s}>{STATUT_LABEL[s]}</option>)}
+          </select>
+          <div className="conges-filter-search">
+            <Search size={14} aria-hidden="true" />
+            <input
+              value={filterEmpSearch}
+              onChange={(e) => onFilterEmpSearchChange(e.target.value)}
+              placeholder="Filtrer par employé..."
+              aria-label="Filtrer les congés par employé"
+            />
+            {filterEmpSuggestions.length > 0 && (
+              <ul className="conges-suggestions">
+                {filterEmpSuggestions.map((emp) => (
+                  <li key={emp.id} onClick={() => selectFilterEmp(emp)}>
+                    {emp.prenom} {emp.nom} — {emp.matricule}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+        <div className="conges-view-tabs" aria-label="Mode d’affichage">
+          <button type="button" className={viewMode === 'table' ? 'active' : ''} onClick={() => setViewMode('table')}>Table</button>
+          <button type="button" className={viewMode === 'calendar' ? 'active' : ''} onClick={() => setViewMode('calendar')}>
+            <CalendarDays size={14} aria-hidden="true" />
+            Calendrier
+          </button>
         </div>
         <button className="conges-add-btn" onClick={openCreate}>
           <Plus size={14} aria-hidden="true" />
@@ -220,6 +295,19 @@ export default function CongesPage() {
         <p className="conges-loading">Chargement...</p>
       ) : (
         <>
+          {viewMode === 'calendar' ? (
+            <div className="conges-calendar">
+              {calendarRows.length === 0 ? (
+                <div className="conges-empty">Aucun congé à afficher.</div>
+              ) : calendarRows.map((c) => (
+                <div key={c.id} className={`conges-calendar-item statut-${c.statut}`}>
+                  <span>{formatDate(c.date_debut)} → {formatDate(c.date_fin)}</span>
+                  <strong>{c.employe ? `${c.employe.prenom} ${c.employe.nom}` : '—'}</strong>
+                  <small>{TYPE_LABEL[c.type_conge] ?? c.type_conge} · {c.nombre_jours}j · {STATUT_LABEL[c.statut] ?? c.statut}</small>
+                </div>
+              ))}
+            </div>
+          ) : (
           <div className="conges-table-wrapper">
             <table className="conges-table">
               <thead>
@@ -230,6 +318,7 @@ export default function CongesPage() {
                   <th>Fin</th>
                   <th>Jours</th>
                   <th>Solde restant</th>
+                  <th>Statut</th>
                   <th>Réf HRaccess</th>
                   <th>Réf ONDA AHU</th>
                   <th>Doc</th>
@@ -238,7 +327,7 @@ export default function CongesPage() {
               </thead>
               <tbody>
                 {conges.length === 0 ? (
-                  <tr><td colSpan={10} className="conges-empty">Aucun congé enregistré.</td></tr>
+                  <tr><td colSpan={11} className="conges-empty">Aucun congé enregistré.</td></tr>
                 ) : (
                   conges.map((c) => (
                     <tr key={c.id}>
@@ -259,6 +348,11 @@ export default function CongesPage() {
                       <td className="conges-solde">
                         {c.solde_restant != null ? `${c.solde_restant}j` : '—'}
                       </td>
+                      <td>
+                        <span className={`conges-statut-badge statut-${c.statut}`}>
+                          {STATUT_LABEL[c.statut] ?? c.statut ?? '—'}
+                        </span>
+                      </td>
                       <td className="conges-ref">{c.ref_hraccess || '—'}</td>
                       <td className="conges-ref">{c.ref_onda_ahu  || '—'}</td>
                       <td>
@@ -270,7 +364,7 @@ export default function CongesPage() {
                       </td>
                       <td className="conges-actions">
                         <button className="btn-edit"   onClick={() => openEdit(c)} aria-label="Modifier"><Pencil size={14} aria-hidden="true" /></button>
-                        <button className="btn-delete" onClick={() => handleDelete(c)} aria-label="Supprimer"><Trash2 size={14} aria-hidden="true" /></button>
+                        <button className="btn-delete" onClick={() => { setDeleteTarget(c); setDeleteError(null) }} aria-label="Supprimer"><Trash2 size={14} aria-hidden="true" /></button>
                       </td>
                     </tr>
                   ))
@@ -278,6 +372,7 @@ export default function CongesPage() {
               </tbody>
             </table>
           </div>
+          )}
 
           {meta && meta.last_page > 1 && (
             <div className="conges-pagination">
@@ -357,6 +452,14 @@ export default function CongesPage() {
                   {formErrors.nombre_jours && <span className="field-error">{formErrors.nombre_jours}</span>}
                 </div>
               </div>
+
+              {selectedEmpSolde != null && requestedDays > 0 && (
+                <div className="conges-balance-preview">
+                  <span>Solde actuel <strong>{selectedEmpSolde}j</strong></span>
+                  <span>Demandé <strong>{requestedDays}j</strong></span>
+                  <span>Restant <strong>{remainingPreview}j</strong></span>
+                </div>
+              )}
 
               {/* Références */}
               <div className="conges-section-label">Références</div>
@@ -438,6 +541,25 @@ export default function CongesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="conges-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="conges-confirm" onClick={(e) => e.stopPropagation()}>
+            <h3>Supprimer le congé</h3>
+            <p>
+              Supprimer ce congé de <strong>{deleteTarget.employe ? `${deleteTarget.employe.prenom} ${deleteTarget.employe.nom}` : `#${deleteTarget.id}`}</strong> ?
+              Les jours seront recrédités au solde.
+            </p>
+            {deleteError && <div className="field-error mt-1">{deleteError}</div>}
+            <div className="conges-modal-actions">
+              <button type="button" className="btn-cancel" onClick={() => setDeleteTarget(null)} disabled={deleting}>Annuler</button>
+              <button type="button" className="btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Suppression...' : 'Confirmer'}
+              </button>
+            </div>
           </div>
         </div>
       )}

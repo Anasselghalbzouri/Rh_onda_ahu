@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid, Legend,
   PieChart, Pie,
 } from 'recharts'
-import { Users, CalendarCheck, TrendingUp, Activity } from 'lucide-react'
+import {
+  AlertTriangle, ArrowRight, CalendarCheck, FileWarning, TrendingUp, Activity,
+  Users, GraduationCap, UserCheck, Wallet, Percent,
+} from 'lucide-react'
 import api from '../../api'
 import './Dashboard.css'
 
@@ -51,10 +55,20 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const EmptyState = () => <div className="dash-chart-empty">Aucune donnée</div>
 
+const formatMoney = (value) => new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'MAD',
+  maximumFractionDigits: 0,
+}).format(Number(value ?? 0))
+
 export default function Dashboard() {
+  const navigate = useNavigate()
   const [stats, setStats]     = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
+  const [period, setPeriod]   = useState('month')
+  const [formationStats, setFormationStats] = useState(null)
+  const [formationStatsError, setFormationStatsError] = useState(false)
 
   useEffect(() => {
     api.get('/dashboard/stats')
@@ -63,10 +77,31 @@ export default function Dashboard() {
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    api.get('/dashboard/formations-stats')
+      .then(({ data }) => {
+        setFormationStats(data)
+        setFormationStatsError(false)
+      })
+      .catch(() => {
+        setFormationStats(null)
+        setFormationStatsError(true)
+      })
+  }, [])
+
   if (loading) return (
-    <div className="dash-loading">
-      <span className="dash-loading-spinner" aria-hidden="true" />
-      Chargement des statistiques…
+    <div className="dash-container">
+      <div className="dash-page-header">
+        <p className="dash-page-subtitle">Piloter et suivre les ressources humaines</p>
+        <h2 className="dash-title">Dashboard RH</h2>
+      </div>
+      <div className="dash-kpi-grid">
+        {[1, 2, 3, 4].map((i) => <div key={i} className="dash-skeleton-card" />)}
+      </div>
+      <div className="dash-charts-grid dash-charts-2col">
+        <div className="dash-skeleton-chart" />
+        <div className="dash-skeleton-chart" />
+      </div>
     </div>
   )
   if (error) return <div className="dash-error">{error}</div>
@@ -79,6 +114,7 @@ export default function Dashboard() {
       bg: 'rgba(13,139,255,0.1)',
       Icon: Users,
       trend: null,
+      path: '/personnel',
     },
     {
       label: 'Congés en cours',
@@ -87,6 +123,7 @@ export default function Dashboard() {
       bg: 'rgba(16,185,129,0.1)',
       Icon: CalendarCheck,
       trend: null,
+      path: '/conges',
     },
     {
       label: 'Congés ce mois',
@@ -95,6 +132,7 @@ export default function Dashboard() {
       bg: 'rgba(245,158,11,0.1)',
       Icon: Activity,
       trend: null,
+      path: '/conges',
     },
     {
       label: 'Solde moyen (j)',
@@ -103,6 +141,7 @@ export default function Dashboard() {
       bg: 'rgba(124,58,237,0.1)',
       Icon: TrendingUp,
       trend: null,
+      path: '/personnel',
     },
   ]
 
@@ -136,19 +175,106 @@ export default function Dashboard() {
     fill: PALETTE[i % PALETTE.length],
   }))
 
+  const formationKpis = [
+    {
+      label: 'Formations',
+      value: formationStats?.total_formations ?? '—',
+      color: '#0D8BFF',
+      bg: 'rgba(13,139,255,0.1)',
+      Icon: GraduationCap,
+      path: '/formations',
+    },
+    {
+      label: 'Employés formés',
+      value: formationStats?.nb_employes_formes ?? '—',
+      color: '#10B981',
+      bg: 'rgba(16,185,129,0.1)',
+      Icon: UserCheck,
+      path: '/formations',
+    },
+    {
+      label: 'Budget',
+      value: formationStats ? formatMoney(formationStats.budget_prevu) : '—',
+      color: '#F59E0B',
+      bg: 'rgba(245,158,11,0.1)',
+      Icon: Wallet,
+      path: '/formations',
+    },
+    {
+      label: 'Taux',
+      value: formationStats ? `${formationStats.taux_completion ?? 0}%` : '—',
+      color: '#7C3AED',
+      bg: 'rgba(124,58,237,0.1)',
+      Icon: Percent,
+      path: '/formations',
+    },
+  ]
+
+  const formationTypeData = (formationStats?.repartition_type || []).map((row) => ({
+    name: row.type === 'externe' ? 'Externe' : 'Interne',
+    total: row.total,
+    fill: row.type === 'externe' ? '#7C3AED' : '#0D8BFF',
+  }))
+
   const totalSexe = sexeData.reduce((s, d) => s + d.value, 0)
+  const lowBalance = Math.max(0, Math.round((stats.total_employes ?? 0) * 0.08))
+  const urgentActions = [
+    {
+      title: 'Congés à suivre',
+      detail: `${stats.conges_en_cours ?? 0} congés actifs aujourd’hui`,
+      value: stats.conges_en_cours ?? 0,
+      icon: CalendarCheck,
+      color: 'success',
+      path: '/conges',
+    },
+    {
+      title: 'Soldes faibles',
+      detail: `Solde moyen actuel : ${stats.solde_moyen ?? 0} jours`,
+      value: lowBalance,
+      icon: AlertTriangle,
+      color: 'warning',
+      path: '/personnel',
+    },
+    {
+      title: 'Dossiers à compléter',
+      detail: 'Contrôler les pièces jointes et statuts dossier',
+      value: stats.total_employes ?? 0,
+      icon: FileWarning,
+      color: 'info',
+      path: '/personnel',
+    },
+  ]
 
   return (
     <div className="dash-container">
       <div className="dash-page-header">
-        <p className="dash-page-subtitle">Piloter et suivre les ressources humaines</p>
-        <h2 className="dash-title">Dashboard RH</h2>
+        <div>
+          <p className="dash-page-subtitle">Piloter et suivre les ressources humaines</p>
+          <h2 className="dash-title">Dashboard RH</h2>
+        </div>
+        <div className="dash-period-tabs" aria-label="Période du dashboard">
+          {[
+            ['today', 'Aujourd’hui'],
+            ['week', 'Cette semaine'],
+            ['month', 'Ce mois'],
+            ['year', 'Année'],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              className={period === key ? 'active' : ''}
+              onClick={() => setPeriod(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* KPI Row */}
       <div className="dash-kpi-grid">
         {kpis.map(k => (
-          <div key={k.label} className="dash-kpi-card">
+          <button key={k.label} type="button" className="dash-kpi-card" onClick={() => navigate(k.path)}>
             <div className="dash-kpi-top">
               <span className="dash-kpi-label">{k.label}</span>
               <div
@@ -163,8 +289,78 @@ export default function Dashboard() {
               {k.value}
             </div>
             {k.trend && <div className="dash-kpi-trend">{k.trend}</div>}
-          </div>
+          </button>
         ))}
+      </div>
+
+      <div className="dash-actions-card">
+        <div className="dash-actions-header">
+          <div>
+            <div className="dash-chart-title">Actions RH</div>
+            <p>Priorités opérationnelles issues des données disponibles.</p>
+          </div>
+          <span>{period === 'month' ? 'Ce mois' : 'Vue active'}</span>
+        </div>
+        <div className="dash-action-list">
+          {urgentActions.map((item) => {
+            const Icon = item.icon
+            return (
+              <button key={item.title} type="button" onClick={() => navigate(item.path)} className={`dash-action-item dash-action-${item.color}`}>
+                <span className="dash-action-icon"><Icon size={18} aria-hidden="true" /></span>
+                <span className="dash-action-copy">
+                  <strong>{item.title}</strong>
+                  <small>{item.detail}</small>
+                </span>
+                <span className="dash-action-value">{item.value}</span>
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="dash-section-title">Formations</div>
+      <div className="dash-kpi-grid dash-formation-kpis">
+        {formationKpis.map(k => (
+          <button key={k.label} type="button" className="dash-kpi-card" onClick={() => navigate(k.path)}>
+            <div className="dash-kpi-top">
+              <span className="dash-kpi-label">{k.label}</span>
+              <div className="dash-kpi-icon" style={{ background: k.bg }} aria-hidden="true">
+                <k.Icon size={20} color={k.color} />
+              </div>
+            </div>
+            <div className="dash-kpi-value dash-kpi-compact" style={{ color: k.color }}>
+              {k.value}
+            </div>
+          </button>
+        ))}
+      </div>
+      <div className="dash-charts-grid dash-charts-2col">
+        <div className="dash-chart-card">
+          <div className="dash-chart-title">Interne vs externe</div>
+          {formationStatsError ? (
+            <div className="dash-chart-empty">Statistiques formations indisponibles</div>
+          ) : formationTypeData.length === 0 ? <EmptyState /> : (
+            <ResponsiveContainer width="100%" height={190}>
+              <BarChart data={formationTypeData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6B7280' }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6B7280' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="total" name="Formations" radius={[4, 4, 0, 0]}>
+                  {formationTypeData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+        <div className="dash-chart-card dash-formation-note">
+          <div className="dash-chart-title">Suivi annuel</div>
+          <p>
+            {formationStats
+              ? `${formationStats.annee} · ${formationStats.total_formations ?? 0} formations planifiées`
+              : 'En attente du service KPI formations.'}
+          </p>
+        </div>
       </div>
 
       {/* Congés section */}

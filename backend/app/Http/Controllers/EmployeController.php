@@ -33,9 +33,16 @@ class EmployeController extends Controller
 
     public function show(string $id): JsonResponse
     {
+        $relations = [
+            'service',
+            'dossierPersonnel',
+            'historiqueProfessionnel',
+            'demandesConge' => fn ($query) => $query->orderByDesc('date_debut')->orderByDesc('id'),
+        ];
+
         $employe = is_numeric($id)
-            ? Employe::with(['service', 'dossierPersonnel', 'historiqueProfessionnel'])->findOrFail($id)
-            : Employe::with(['service', 'dossierPersonnel', 'historiqueProfessionnel'])
+            ? Employe::with($relations)->findOrFail($id)
+            : Employe::with($relations)
                      ->where('matricule', $id)->firstOrFail();
 
         return response()->json($employe);

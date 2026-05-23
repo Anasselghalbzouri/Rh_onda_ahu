@@ -2,9 +2,13 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CongeController;
+use App\Http\Controllers\CoursController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeController;
+use App\Http\Controllers\EvaluationFormationController;
+use App\Http\Controllers\FormationController;
 use App\Http\Controllers\PieceJointeController;
+use App\Http\Controllers\PlanFormationController;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -37,4 +41,42 @@ Route::middleware('auth:rh')->group(function () {
     Route::get('/employes/{id}/pieces-jointes', [PieceJointeController::class, 'index']);
     Route::post('/employes/{id}/pieces-jointes', [PieceJointeController::class, 'store']);
     Route::delete('/pieces-jointes/{id}', [PieceJointeController::class, 'destroy']);
+
+    // MODULE FORMATION — Plans
+    Route::get('/plans-formation',          [PlanFormationController::class, 'index']);
+    Route::post('/plans-formation',         [PlanFormationController::class, 'store']);
+    Route::get('/plans-formation/{id}',     [PlanFormationController::class, 'show']);
+    Route::put('/plans-formation/{id}',     [PlanFormationController::class, 'update']);
+    Route::delete('/plans-formation/{id}',  [PlanFormationController::class, 'destroy']);
+
+    // MODULE FORMATION — Formations (routes fixes avant les wildcards)
+    Route::get('/formations',               [FormationController::class, 'index']);
+    Route::post('/formations',              [FormationController::class, 'store']);
+    Route::get('/formations/export',        [FormationController::class, 'export']);
+    Route::post('/formations/bulk-sync',    [FormationController::class, 'bulkSync']);
+    Route::get('/formations/{id}',          [FormationController::class, 'show']);
+    Route::put('/formations/{id}',          [FormationController::class, 'update']);
+    Route::delete('/formations/{id}',       [FormationController::class, 'destroy']);
+
+    // MODULE FORMATION — Inscriptions
+    Route::post('/formations/{id}/employes',              [FormationController::class, 'inscrire']);
+    Route::put('/formations/{id}/employes/{eid}',         [FormationController::class, 'updateInscription']);
+    Route::delete('/formations/{id}/employes/{eid}',      [FormationController::class, 'desinscrire']);
+    Route::get('/employes/{id}/formations',               [FormationController::class, 'formationsEmploye']);
+
+    // MODULE FORMATION — Évaluations
+    Route::get('/formations/{id}/evaluations',            [EvaluationFormationController::class, 'index']);
+    Route::post('/formations/{id}/evaluations',           [EvaluationFormationController::class, 'store']);
+    Route::put('/evaluations/{id}',                       [EvaluationFormationController::class, 'update']);
+    Route::delete('/evaluations/{id}',                    [EvaluationFormationController::class, 'destroy']);
+
+    // MODULE FORMATION — Cours
+    Route::get('/cours',        [CoursController::class, 'index']);
+    Route::post('/cours',       [CoursController::class, 'store']);
+    Route::get('/cours/{id}',   [CoursController::class, 'show']);
+    Route::put('/cours/{id}',   [CoursController::class, 'update']);
+    Route::delete('/cours/{id}',[CoursController::class, 'destroy']);
+
+    // Dashboard — stats formations
+    Route::get('/dashboard/formations-stats',             [DashboardController::class, 'formationsStats']);
 });

@@ -1,4 +1,7 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, Briefcase, CalendarDays, FileCheck2, GraduationCap, History, Paperclip, UserRound } from 'lucide-react'
 import api from '../../api'
 import FormField from '../ui/FormField/FormField'
 import './FicheEmploye.css'
@@ -20,6 +23,26 @@ const DOSSIER_STATUT_STYLE = {
 const PIECES_ACCEPT = '.pdf,.jpg,.jpeg,.png,.doc,.docx'
 
 const STATUTS = ['actif', 'mute', 'retraite', 'parti', 'suspendu']
+const TYPE_CONGE_LABELS = {
+  annuel: 'Annuel',
+  maladie: 'Maladie',
+  maternite: 'Maternité',
+  sans_solde: 'Sans solde',
+  exceptionnel: 'Exceptionnel',
+}
+const CONGE_STATUT_LABELS = {
+  en_attente: 'En attente',
+  approuve: 'Approuvé',
+  refuse: 'Refusé',
+}
+const TABS = [
+  { key: 'profil', label: 'Profil', icon: UserRound },
+  { key: 'conges', label: 'Congés', icon: CalendarDays },
+  { key: 'formations', label: 'Formations', icon: GraduationCap },
+  { key: 'documents', label: 'Documents', icon: FileCheck2 },
+  { key: 'historique', label: 'Historique', icon: History },
+  { key: 'observations', label: 'Observations', icon: Briefcase },
+]
 
 const formatDate = (value) => {
   if (!value) return '—'
@@ -28,7 +51,19 @@ const formatDate = (value) => {
   return date.toLocaleDateString('fr-FR')
 }
 
+const congeFileUrl = (congeId) => {
+  const base = (api.defaults.baseURL ?? '').replace(/\/$/, '')
+  return `${base}/conges/${congeId}/fichier`
+}
+
+const getFormationNote = (formation, type) => {
+  const evaluations = Array.isArray(formation?.evaluations) ? formation.evaluations : []
+  const evaluation = evaluations.find((item) => item.type_evaluation === type)
+  return evaluation?.note ?? evaluation?.note_20 ?? null
+}
+
 export default function FicheEmploye({ id, onRetour }) {
+  const navigate = useNavigate()
   const [employe, setEmploye] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -52,6 +87,11 @@ export default function FicheEmploye({ id, onRetour }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [activeTab, setActiveTab] = useState('profil')
+  const [dragActive, setDragActive] = useState(false)
+  const [formationsEmploye, setFormationsEmploye] = useState([])
+  const [formationsLoading, setFormationsLoading] = useState(false)
+  const [formationsError, setFormationsError] = useState(null)
 
   const fetchEmploye = () => {
     return api.get(`/employes/${id}`)
@@ -145,6 +185,21 @@ export default function FicheEmploye({ id, onRetour }) {
     return () => { cancelled = true }
   }, [id])
 
+  useEffect(() => {
+    if (activeTab !== 'formations') return
+    let cancelled = false
+    setFormationsLoading(true)
+    setFormationsError(null)
+    api.get(`/employes/${id}/formations`)
+      .then(({ data }) => {
+        if (cancelled) return
+        setFormationsEmploye(Array.isArray(data) ? data : data?.data ?? [])
+      })
+      .catch(() => { if (!cancelled) setFormationsError('Impossible de charger les formations.') })
+      .finally(() => { if (!cancelled) setFormationsLoading(false) })
+    return () => { cancelled = true }
+  }, [activeTab, id])
+
   if (loading) return <p className="fiche-center">Chargement...</p>
   if (error)   return <p className="fiche-center" style={{ color: '#dc2626' }}>{error}</p>
   if (!employe) return null
@@ -155,6 +210,14 @@ export default function FicheEmploye({ id, onRetour }) {
   const historiqueProfessionnel = (Array.isArray(employe.historique_professionnel) ? employe.historique_professionnel : [])
     .slice()
     .sort((a, b) => new Date(b?.date_debut ?? 0) - new Date(a?.date_debut ?? 0))
+  const demandesConge = (Array.isArray(employe.demandes_conge) ? employe.demandes_conge : [])
+    .slice()
+    .sort((a, b) => new Date(b?.date_debut ?? 0) - new Date(a?.date_debut ?? 0))
+  const congesAvecFichier = demandesConge.filter((conge) => conge?.fichier_nom)
+  const dossierTotal = dossierPersonnel.length
+  const dossierValides = dossierPersonnel.filter((doc) => doc?.statut === 'valide').length
+  const dossierCompleteness = dossierTotal > 0 ? Math.round((dossierValides / dossierTotal) * 100) : 0
+  const dossierAlerts = dossierPersonnel.filter((doc) => ['expire', 'a_renouveler'].includes(doc?.statut)).length
 
   const onDeletePieceJointe = async (pieceId) => {
     if (!pieceId) return
@@ -212,24 +275,62 @@ export default function FicheEmploye({ id, onRetour }) {
       </div>
 
       {deleteConfirm && (
-        <div className="fiche-confirm-box">
-          <p className="fiche-confirm-text">
-            Confirmer la suppression de <strong>{employe.prenom} {employe.nom}</strong> ?
-            Cette action est irréversible.
-          </p>
-          {deleteError && <div className="fiche-form-error">{deleteError}</div>}
-          <div className="fiche-confirm-actions">
-            <button className="fiche-cancel-btn" onClick={() => setDeleteConfirm(false)} disabled={deleting}>
-              Annuler
-            </button>
-            <button className="fiche-danger-btn" onClick={onDelete} disabled={deleting}>
-              {deleting ? 'Suppression...' : 'Confirmer la suppression'}
-            </button>
+        <div className="fiche-overlay" onClick={() => setDeleteConfirm(false)}>
+          <div className="fiche-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Supprimer l’employé</h3>
+            <p>
+              Confirmer la suppression de <strong>{employe.prenom} {employe.nom}</strong> ?
+              Cette action est irréversible.
+            </p>
+            {deleteError && <div className="fiche-form-error">{deleteError}</div>}
+            <div className="fiche-confirm-actions">
+              <button className="fiche-cancel-btn" onClick={() => setDeleteConfirm(false)} disabled={deleting}>
+                Annuler
+              </button>
+              <button className="fiche-danger-btn" onClick={onDelete} disabled={deleting}>
+                {deleting ? 'Suppression...' : 'Confirmer'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* INFOS GÉNÉRALES */}
+      <div className="fiche-summary-card">
+        <div className="fiche-summary-main">
+          <span className="fiche-summary-avatar">{`${employe.prenom?.[0] ?? ''}${employe.nom?.[0] ?? ''}`.toUpperCase()}</span>
+          <div>
+            <h3>{employe.prenom} {employe.nom}</h3>
+            <p>{employe.fonction ?? 'Fonction non renseignée'} · {employe.service?.nom ?? 'Service non renseigné'}</p>
+          </div>
+        </div>
+        <div className="fiche-summary-metrics">
+          <Metric label="Solde congé" value={`${employe.solde_conge ?? 0}j`} tone={Number(employe.solde_conge ?? 0) < 5 ? 'danger' : 'success'} />
+          <Metric label="Dossier complet" value={`${dossierCompleteness}%`} tone={dossierCompleteness < 80 ? 'warning' : 'success'} />
+          <Metric label="Alertes" value={dossierAlerts} tone={dossierAlerts > 0 ? 'danger' : 'success'} />
+        </div>
+      </div>
+
+      <div className="fiche-tabs" role="tablist" aria-label="Sections de la fiche employé">
+        {TABS.map((tab) => {
+          const Icon = tab.icon
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={activeTab === tab.key ? 'active' : ''}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <Icon size={15} aria-hidden="true" />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {activeTab === 'profil' && (
+        <>
       <Section titre="Informations générales">
         <div className="fiche-grid">
           <Info label="Sexe"           value={employe.sexe === 'M' ? 'Masculin' : employe.sexe === 'F' ? 'Féminin' : '—'} />
@@ -252,16 +353,152 @@ export default function FicheEmploye({ id, onRetour }) {
         )}
       </Section>
 
-      {/* SOLDE CONGÉ */}
       <Section titre="Solde congé">
         <div className="fiche-solde-card">
           <span className="fiche-solde-number">{employe.solde_conge ?? 0}</span>
           <span className="fiche-solde-label">jours restants</span>
         </div>
       </Section>
+        </>
+      )}
 
-      {/* DOSSIER PERSONNEL */}
+      {activeTab === 'conges' && (
+        <Section titre="Congés de l’employé">
+          {demandesConge.length === 0 ? (
+            <div className="fiche-empty-state">Aucun congé enregistré pour cet employé.</div>
+          ) : (
+            <div className="fiche-table-wrap">
+              <table className="fiche-table">
+                <thead>
+                  <tr>
+                    <th className="fiche-th">Type</th>
+                    <th className="fiche-th">Période</th>
+                    <th className="fiche-th">Jours</th>
+                    <th className="fiche-th">Solde restant</th>
+                    <th className="fiche-th">Statut</th>
+                    <th className="fiche-th">Références</th>
+                    <th className="fiche-th">Document</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {demandesConge.map((conge) => (
+                    <tr key={conge.id}>
+                      <td className="fiche-td">
+                        <span className="fiche-conge-type">{TYPE_CONGE_LABELS[conge.type_conge] ?? conge.type_conge ?? '—'}</span>
+                      </td>
+                      <td className="fiche-td">{formatDate(conge.date_debut)} → {formatDate(conge.date_fin)}</td>
+                      <td className="fiche-td"><strong>{conge.nombre_jours ?? 0}j</strong></td>
+                      <td className="fiche-td">{conge.solde_restant != null ? `${conge.solde_restant}j` : '—'}</td>
+                      <td className="fiche-td">
+                        <span className={`fiche-conge-statut statut-${conge.statut}`}>
+                          {CONGE_STATUT_LABELS[conge.statut] ?? conge.statut ?? '—'}
+                        </span>
+                      </td>
+                      <td className="fiche-td">
+                        <div className="fiche-conge-refs">
+                          <span>HR: {conge.ref_hraccess || '—'}</span>
+                          <span>ONDA: {conge.ref_onda_ahu || '—'}</span>
+                        </div>
+                      </td>
+                      <td className="fiche-td">
+                        {conge.fichier_nom ? (
+                          <button
+                            type="button"
+                            className="fiche-link-btn"
+                            onClick={() => window.open(congeFileUrl(conge.id), '_blank', 'noopener,noreferrer')}
+                            title={conge.fichier_nom}
+                          >
+                            Télécharger
+                          </button>
+                        ) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {activeTab === 'formations' && (
+        <Section titre="Formations de l'employe">
+          <div className="fiche-section-actions">
+            <button
+              type="button"
+              className="fiche-primary-btn"
+              onClick={() => navigate('/formations', {
+                state: {
+                  employeId: id,
+                  employeName: `${employe.prenom ?? ''} ${employe.nom ?? ''}`.trim(),
+                },
+              })}
+            >
+              Inscrire a une formation
+            </button>
+          </div>
+
+          {formationsLoading ? (
+            <div className="fiche-empty-state">Chargement...</div>
+          ) : formationsError ? (
+            <div className="fiche-empty-state" style={{ color: '#dc2626' }}>{formationsError}</div>
+          ) : formationsEmploye.length === 0 ? (
+            <div className="fiche-empty-state">Aucune formation enregistree pour cet employe.</div>
+          ) : (
+            <div className="fiche-table-wrap">
+              <table className="fiche-table">
+                <thead>
+                  <tr>
+                    <th className="fiche-th">Formation</th>
+                    <th className="fiche-th">Type</th>
+                    <th className="fiche-th">Periode</th>
+                    <th className="fiche-th">Lieu</th>
+                    <th className="fiche-th">Note chaud</th>
+                    <th className="fiche-th">Note froid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formationsEmploye.map((formation) => {
+                    const noteChaud = getFormationNote(formation, 'chaud')
+                    const noteFroid = getFormationNote(formation, 'froid')
+                    return (
+                      <tr key={formation.id}>
+                        <td className="fiche-td">
+                          <strong>{formation.intitule ?? 'Formation'}</strong>
+                          <div className="fiche-file-meta">{formation.organisme ?? formation.plan_formation?.titre ?? formation.planFormation?.titre ?? ''}</div>
+                        </td>
+                        <td className="fiche-td">
+                          <span className={`fiche-formation-type type-${formation.type}`}>
+                            {formation.type === 'externe' ? 'Externe' : 'Interne'}
+                          </span>
+                        </td>
+                        <td className="fiche-td">{formatDate(formation.date_debut)} â†’ {formatDate(formation.date_fin)}</td>
+                        <td className="fiche-td">{formation.lieu ?? 'â€”'}</td>
+                        <td className="fiche-td">
+                          <span className="fiche-note-badge">{noteChaud == null ? 'â€”' : `${noteChaud}/20`}</span>
+                        </td>
+                        <td className="fiche-td">
+                          <span className="fiche-note-badge">{noteFroid == null ? 'â€”' : `${noteFroid}/20`}</span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {activeTab === 'documents' && (
+        <>
       <Section titre="Dossier personnel">
+        {dossierAlerts > 0 && (
+          <div className="fiche-alert">
+            <AlertTriangle size={16} aria-hidden="true" />
+            {dossierAlerts} document(s) expiré(s) ou à renouveler.
+          </div>
+        )}
         {dossierPersonnel.length === 0 ? (
           <div className="fiche-empty-state">Aucun document enregistré.</div>
         ) : (
@@ -298,39 +535,6 @@ export default function FicheEmploye({ id, onRetour }) {
         )}
       </Section>
 
-      {/* HISTORIQUE PROFESSIONNEL */}
-      <Section titre="Historique professionnel">
-        {historiqueProfessionnel.length === 0 ? (
-          <div className="fiche-empty-state">Aucun historique enregistré.</div>
-        ) : (
-          <div className="fiche-table-wrap">
-            <table className="fiche-table">
-              <thead>
-                <tr>
-                  <th className="fiche-th">Poste</th>
-                  <th className="fiche-th">Service</th>
-                  <th className="fiche-th">Période</th>
-                  <th className="fiche-th">Observation</th>
-                </tr>
-              </thead>
-              <tbody>
-                {historiqueProfessionnel.map((h, idx) => (
-                  <tr key={h?.id ?? `${h?.poste ?? 'hist'}-${idx}`}>
-                    <td className="fiche-td">{h?.poste ?? '—'}</td>
-                    <td className="fiche-td">{h?.service?.nom ?? '—'}</td>
-                    <td className="fiche-td">
-                      {formatDate(h?.date_debut)} → {h?.date_fin ? formatDate(h?.date_fin) : 'En cours'}
-                    </td>
-                    <td className="fiche-td">{h?.observation ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Section>
-
-      {/* PIÈCES JOINTES */}
       <Section titre="Pièces jointes">
         {piecesLoading ? (
           <div className="fiche-empty-state">Chargement...</div>
@@ -393,7 +597,18 @@ export default function FicheEmploye({ id, onRetour }) {
         )}
 
         <form onSubmit={onUploadPieceJointe} className="fiche-upload-form">
-          <div className="fiche-upload-grid">
+          <div
+            className={dragActive ? 'fiche-drop-zone active' : 'fiche-drop-zone'}
+            onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={(e) => {
+              e.preventDefault()
+              setDragActive(false)
+              setUploadFile(e.dataTransfer.files?.[0] ?? null)
+            }}
+          >
+            <Paperclip size={18} aria-hidden="true" />
+            <span>{uploadFile ? uploadFile.name : 'Glisser-déposer une pièce jointe ou choisir un fichier'}</span>
             <input
               type="file"
               accept={PIECES_ACCEPT}
@@ -401,6 +616,8 @@ export default function FicheEmploye({ id, onRetour }) {
               key={fileInputKey}
               className="fiche-file-input"
             />
+          </div>
+          <div className="fiche-upload-grid">
             <input
               type="text"
               placeholder="Catégorie (optionnel)"
@@ -415,6 +632,88 @@ export default function FicheEmploye({ id, onRetour }) {
           {uploadError && <div className="fiche-form-error">{uploadError}</div>}
         </form>
       </Section>
+
+      <Section titre="Documents des congés">
+        {congesAvecFichier.length === 0 ? (
+          <div className="fiche-empty-state">Aucun document de congé attaché.</div>
+        ) : (
+          <div className="fiche-table-wrap">
+            <table className="fiche-table">
+              <thead>
+                <tr>
+                  <th className="fiche-th">Congé</th>
+                  <th className="fiche-th">Période</th>
+                  <th className="fiche-th">Fichier</th>
+                  <th className="fiche-th">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {congesAvecFichier.map((conge) => (
+                  <tr key={`conge-file-${conge.id}`}>
+                    <td className="fiche-td">{TYPE_CONGE_LABELS[conge.type_conge] ?? conge.type_conge ?? '—'}</td>
+                    <td className="fiche-td">{formatDate(conge.date_debut)} → {formatDate(conge.date_fin)}</td>
+                    <td className="fiche-td">
+                      <div className="fiche-file-name">{conge.fichier_nom}</div>
+                    </td>
+                    <td className="fiche-td">
+                      <button
+                        type="button"
+                        className="fiche-link-btn"
+                        onClick={() => window.open(congeFileUrl(conge.id), '_blank', 'noopener,noreferrer')}
+                      >
+                        Télécharger
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+        </>
+      )}
+
+      {activeTab === 'historique' && (
+      <Section titre="Historique professionnel">
+        {historiqueProfessionnel.length === 0 ? (
+          <div className="fiche-empty-state">Aucun historique enregistré.</div>
+        ) : (
+          <div className="fiche-table-wrap">
+            <table className="fiche-table">
+              <thead>
+                <tr>
+                  <th className="fiche-th">Poste</th>
+                  <th className="fiche-th">Service</th>
+                  <th className="fiche-th">Période</th>
+                  <th className="fiche-th">Observation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {historiqueProfessionnel.map((h, idx) => (
+                  <tr key={h?.id ?? `${h?.poste ?? 'hist'}-${idx}`}>
+                    <td className="fiche-td">{h?.poste ?? '—'}</td>
+                    <td className="fiche-td">{h?.service?.nom ?? '—'}</td>
+                    <td className="fiche-td">
+                      {formatDate(h?.date_debut)} → {h?.date_fin ? formatDate(h?.date_fin) : 'En cours'}
+                    </td>
+                    <td className="fiche-td">{h?.observation ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+      )}
+
+      {activeTab === 'observations' && (
+        <Section titre="Observations RH">
+          <div className="fiche-observation">
+            {employe.observation || 'Aucune observation enregistrée.'}
+          </div>
+        </Section>
+      )}
 
       {/* MODAL MODIFIER */}
       {editOpen && (
@@ -480,3 +779,11 @@ function Info({ label, value }) {
   )
 }
 
+function Metric({ label, value, tone }) {
+  return (
+    <div className={`fiche-metric fiche-metric-${tone}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  )
+}

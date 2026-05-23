@@ -1,5 +1,6 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { ArrowUpDown, Eye, Plus, SlidersHorizontal, X } from 'lucide-react'
 import api from '../../api'
 import FormField from '../ui/FormField/FormField'
 import './ListeEmployes.css'
@@ -26,6 +27,10 @@ export default function ListeEmployes({ onSelectEmploye }) {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statut, setStatut] = useState('')
+  const [sortKey, setSortKey] = useState('nom')
+  const [sortDir, setSortDir] = useState('asc')
+  const [density, setDensity] = useState('comfortable')
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [loading, setLoading] = useState(false)
 
 const [createOpen, setCreateOpen] = useState(false)
@@ -55,6 +60,32 @@ const [createOpen, setCreateOpen] = useState(false)
     setPage(p)
     fetchEmployes(p)
   }
+
+  const toggleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  const sortedEmployes = [...employes].sort((a, b) => {
+    const getValue = (emp) => {
+      if (sortKey === 'service') return emp.service?.nom ?? ''
+      return emp[sortKey] ?? ''
+    }
+    const av = String(getValue(a)).toLocaleLowerCase('fr-FR')
+    const bv = String(getValue(b)).toLocaleLowerCase('fr-FR')
+    return sortDir === 'asc' ? av.localeCompare(bv, 'fr') : bv.localeCompare(av, 'fr')
+  })
+
+  const activeFilters = [
+    search && { key: 'search', label: `Recherche : ${search}`, clear: () => setSearch('') },
+    statut && { key: 'statut', label: `Statut : ${statut}`, clear: () => setStatut('') },
+  ].filter(Boolean)
+
+  const initials = (emp) => `${emp.prenom?.[0] ?? ''}${emp.nom?.[0] ?? ''}`.toUpperCase() || 'RH'
 
   const openCreate = () => {
     setCreateForm(EMPTY_FORM)
@@ -120,51 +151,116 @@ const [createOpen, setCreateOpen] = useState(false)
           <option value="retraite">Retraité</option>
           <option value="depart_volontaire">Départ volontaire</option>
         </select>
+        <button className="liste-ghost-btn" type="button" onClick={() => setShowAdvanced((v) => !v)}>
+          <SlidersHorizontal size={14} aria-hidden="true" />
+          Filtres
+        </button>
+        <div className="liste-density" aria-label="Densité du tableau">
+          <button type="button" className={density === 'comfortable' ? 'active' : ''} onClick={() => setDensity('comfortable')}>Confort</button>
+          <button type="button" className={density === 'dense' ? 'active' : ''} onClick={() => setDensity('dense')}>Dense</button>
+        </div>
         <button className="liste-add-btn" onClick={openCreate}>
           <Plus size={14} aria-hidden="true" />
           Ajouter un employé
         </button>
       </div>
 
+      {showAdvanced && (
+        <div className="liste-advanced">
+          <div>
+            <span className="liste-advanced-label">Tri actif</span>
+            <strong>{sortKey} · {sortDir === 'asc' ? 'croissant' : 'décroissant'}</strong>
+          </div>
+          <div>
+            <span className="liste-advanced-label">Affichage</span>
+            <strong>{density === 'dense' ? 'Table compacte' : 'Table confortable'}</strong>
+          </div>
+        </div>
+      )}
+
+      {activeFilters.length > 0 && (
+        <div className="liste-filter-chips">
+          {activeFilters.map((filter) => (
+            <button key={filter.key} type="button" onClick={filter.clear}>
+              {filter.label}
+              <X size={13} aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      )}
+
       {loading ? (
         <p className="liste-loading">Chargement...</p>
       ) : (
         <>
-          <div className="liste-table-wrapper">
+          <div className={`liste-table-wrapper liste-density-${density}`}>
             <table className="liste-table">
               <thead className="liste-thead">
                 <tr>
-                  <th className="liste-th">Matricule</th>
-                  <th className="liste-th">Nom complet</th>
-                  <th className="liste-th">Fonction</th>
-                  <th className="liste-th">Service</th>
-                  <th className="liste-th">Date embauche</th>
-                  <th className="liste-th">Statut</th>
+                  {[
+                    ['matricule', 'Matricule'],
+                    ['nom', 'Nom complet'],
+                    ['fonction', 'Fonction'],
+                    ['service', 'Service'],
+                    ['date_embauche', 'Date embauche'],
+                    ['statut', 'Statut'],
+                  ].map(([key, label]) => (
+                    <th key={key} className="liste-th">
+                      <button type="button" onClick={() => toggleSort(key)}>
+                        {label}
+                        <ArrowUpDown size={12} aria-hidden="true" />
+                      </button>
+                    </th>
+                  ))}
+                  <th className="liste-th">Solde</th>
+                  <th className="liste-th">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {employes.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="liste-empty">
+                    <td colSpan={8} className="liste-empty">
                       Aucun employé trouvé.
                     </td>
                   </tr>
                 ) : (
-                  employes.map((emp) => (
-                    <tr
-                      key={emp.id}
-                      className="liste-tr"
-                      onClick={() => onSelectEmploye && onSelectEmploye(emp.id)}
-                    >
+                  sortedEmployes.map((emp) => (
+                    <tr key={emp.id} className="liste-tr">
                       <td className="liste-td">{emp.matricule}</td>
-                      <td className="liste-td">{emp.prenom} {emp.nom}</td>
+                      <td className="liste-td">
+                        <div className="liste-employee-cell">
+                          <span className="liste-avatar">{initials(emp)}</span>
+                          <span>
+                            <strong>{emp.prenom} {emp.nom}</strong>
+                            <small>{emp.categorie ?? 'Catégorie non renseignée'}</small>
+                          </span>
+                        </div>
+                      </td>
                       <td className="liste-td">{emp.fonction ?? '—'}</td>
-                      <td className="liste-td">{emp.service?.nom ?? '—'}</td>
+                      <td className="liste-td">
+                        <span className="liste-service-badge">{emp.service?.nom ?? '—'}</span>
+                      </td>
                       <td className="liste-td">{formatDate(emp.date_embauche)}</td>
                       <td className="liste-td">
                         <span className={`liste-badge ${emp.statut === 'actif' ? 'liste-badge-actif' : 'liste-badge-inactif'}`}>
                           {emp.statut ?? '—'}
                         </span>
+                      </td>
+                      <td className="liste-td">
+                        <span className={Number(emp.solde_conge ?? 0) < 5 ? 'liste-solde low' : 'liste-solde'}>
+                          {emp.solde_conge ?? 0}j
+                        </span>
+                      </td>
+                      <td className="liste-td">
+                        <button
+                          type="button"
+                          className="liste-action-btn"
+                          onClick={() => onSelectEmploye && onSelectEmploye(emp.id)}
+                          aria-label={`Voir la fiche de ${emp.prenom} ${emp.nom}`}
+                        >
+                          <Eye size={14} aria-hidden="true" />
+                          Voir
+                        </button>
                       </td>
                     </tr>
                   ))

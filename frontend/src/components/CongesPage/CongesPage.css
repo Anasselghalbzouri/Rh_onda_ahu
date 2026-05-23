@@ -37,6 +37,55 @@
   flex-wrap: wrap;
 }
 
+.conges-filter-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 250px;
+  padding: 0 10px;
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--neutral-400);
+}
+
+.conges-filter-search input {
+  width: 100%;
+  height: 35px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--neutral-900);
+  font-size: 13px;
+}
+
+.conges-view-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--neutral-100);
+}
+
+.conges-view-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px 11px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--neutral-500);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.conges-view-tabs button.active {
+  background: var(--white);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
 .conges-select {
   padding: 8px 12px;
   border: 1px solid var(--neutral-300);
@@ -149,6 +198,55 @@
 .type-maternite    { background: #FCE7F3;                 color: #9D174D; }
 .type-sans_solde   { background: var(--neutral-100);      color: var(--neutral-500); }
 .type-exceptionnel { background: var(--warning-light);   color: var(--warning); }
+
+.conges-statut-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statut-en_attente { background: var(--warning-light); color: var(--warning); }
+.statut-approuve   { background: var(--success-light); color: var(--success); }
+.statut-refuse     { background: var(--danger-light); color: var(--danger); }
+
+.conges-calendar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+.conges-calendar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--space-4);
+  border: 1px solid var(--neutral-200);
+  border-left: 4px solid var(--secondary);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.conges-calendar-item span {
+  color: var(--neutral-500);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.conges-calendar-item strong {
+  color: var(--neutral-900);
+}
+
+.conges-calendar-item small {
+  color: var(--neutral-500);
+}
+
+.conges-calendar-item.statut-en_attente { border-left-color: var(--warning); }
+.conges-calendar-item.statut-approuve { border-left-color: var(--success); }
+.conges-calendar-item.statut-refuse { border-left-color: var(--danger); }
 
 /* ── Action buttons ────────────────────────────────────────── */
 .conges-actions { display: flex; gap: 6px; }
@@ -347,6 +445,32 @@
   margin-bottom: var(--space-2);
 }
 
+.conges-balance-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--secondary-light);
+}
+
+.conges-balance-preview span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--neutral-500);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.conges-balance-preview strong {
+  color: var(--neutral-900);
+  font-size: 18px;
+}
+
 .conges-file-remove {
   background: none;
   border: none;
@@ -401,3 +525,54 @@
 
 .btn-submit:hover    { background: var(--primary-light); }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-danger {
+  padding: 9px var(--space-6);
+  background: var(--danger);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.conges-confirm {
+  width: min(100%, 460px);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-xl);
+  animation: scaleIn 200ms ease-out;
+}
+
+.conges-confirm h3 {
+  margin: 0 0 var(--space-3);
+  color: var(--neutral-900);
+}
+
+.conges-confirm p {
+  margin: 0;
+  color: var(--neutral-700);
+}
+
+@media (max-width: 720px) {
+  .conges-filter-search,
+  .conges-select,
+  .conges-view-tabs,
+  .conges-add-btn {
+    width: 100%;
+  }
+  .conges-view-tabs,
+  .conges-add-btn {
+    justify-content: center;
+  }
+  .conges-balance-preview {
+    grid-template-columns: 1fr;
+  }
+}

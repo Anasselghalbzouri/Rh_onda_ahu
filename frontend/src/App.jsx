@@ -5,6 +5,8 @@ import Layout from './components/Layout/Layout'
 import Dashboard from './components/Dashboard/Dashboard'
 import PersonnelPage from './components/PersonnelPage/PersonnelPage'
 import CongesPage from './components/CongesPage/CongesPage'
+import FormationsPage from './components/FormationsPage/FormationsPage'
+import MesFormationsPage from './components/MesFormationsPage/MesFormationsPage'
 import Unauthorized from './components/Unauthorized/Unauthorized'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 
@@ -49,9 +51,24 @@ export default function App() {
           <Route index element={<Navigate to="/personnel" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="personnel" element={<PersonnelPage />} />
-<Route path="conges" element={<CongesPage />} />
+          <Route path="conges" element={<CongesPage />} />
+          <Route
+            path="formations"
+            element={
+              <ProtectedRoute allowedRoles={['rh']}>
+                <FormationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="mes-formations"
+            element={
+              <ProtectedRoute allowedRoles={['employe']}>
+                <MesFormationsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="absences" element={<Placeholder title="Absences" />} />
-          <Route path="avances" element={<Placeholder title="Avances" />} />
           <Route path="profil" element={<Placeholder title="Mon profil" />} />
         </Route>
       </Routes>

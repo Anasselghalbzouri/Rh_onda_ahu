@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DemandeConge;
 use App\Models\Employe;
+use App\Models\Formation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -77,6 +78,41 @@ class DashboardController extends Controller
             'par_statut'      => $parStatut,
             'par_fonction'    => $parFonction,
             'par_service'     => $parService,
+        ]);
+    }
+
+    public function formationsStats(): JsonResponse
+    {
+        $annee = now()->year;
+
+        $total = Formation::whereYear('date_debut', $annee)->count();
+
+        $nbEmployesFormes = DB::table('formation_employe')
+            ->join('formation', 'formation.id', '=', 'formation_employe.formation_id')
+            ->whereYear('formation.date_debut', $annee)
+            ->distinct('formation_employe.employe_id')
+            ->count('formation_employe.employe_id');
+
+        $budgetPrevu = Formation::whereYear('date_debut', $annee)->sum('cout');
+
+        $terminees = Formation::whereYear('date_debut', $annee)
+            ->where('statut', 'terminee')->count();
+
+        $tauxCompletion = $total > 0 ? round(($terminees / $total) * 100, 1) : 0;
+
+        $repartitionType = Formation::whereYear('date_debut', $annee)
+            ->select('type', DB::raw('COUNT(*) as total'))
+            ->groupBy('type')
+            ->get()
+            ->map(fn($r) => ['type' => $r->type, 'total' => $r->total]);
+
+        return response()->json([
+            'annee'              => $annee,
+            'total_formations'   => $total,
+            'nb_employes_formes' => $nbEmployesFormes,
+            'budget_prevu'       => (float) $budgetPrevu,
+            'taux_completion'    => $tauxCompletion,
+            'repartition_type'   => $repartitionType,
         ]);
     }
 }

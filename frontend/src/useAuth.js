@@ -14,7 +14,11 @@ export function useAuth() {
   }
 
   const logout = async () => {
-    try { await api.post('/logout') } catch {}
+    try {
+      await api.post('/logout')
+    } catch {
+      // Local logout should still complete if the server session already expired.
+    }
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setToken(null)

@@ -61,7 +61,6 @@ export default function LoginPage({ onLogin }) {
                 placeholder="Ex : 9519"
                 autoComplete="username"
                 required
-                autoFocus
               />
             </div>
 

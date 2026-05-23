@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
 import './Modal.css'
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
