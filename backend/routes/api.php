@@ -9,6 +9,7 @@ use App\Http\Controllers\EvaluationFormationController;
 use App\Http\Controllers\FormationController;
 use App\Http\Controllers\PieceJointeController;
 use App\Http\Controllers\PlanFormationController;
+use App\Models\Service;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -18,6 +19,9 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:rh')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+// Référentiels
+    Route::get('/services', fn () => response()->json(Service::orderBy('nom')->get(['id', 'nom'])));
+
 // T-08 — CRUD Employés
     Route::get('/employes', [EmployeController::class, 'index']);
     Route::post('/employes/bulk-sync', [EmployeController::class, 'bulkSync']); // T-060
@@ -25,7 +29,7 @@ Route::middleware('auth:rh')->group(function () {
     Route::get('/employes/{id}', [EmployeController::class, 'show']);
     Route::put('/employes/{id}', [EmployeController::class, 'update']);
     Route::delete('/employes/{id}', [EmployeController::class, 'destroy']);
-
+    Route::put('/change-password',[AuthController::class ,'changePassword']);
     // MODULE 3 — Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 

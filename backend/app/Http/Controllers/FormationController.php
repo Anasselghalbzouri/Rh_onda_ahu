@@ -29,10 +29,6 @@ class FormationController extends Controller
             $query->whereYear('date_debut', $request->annee);
         }
 
-        if ($request->filled('statut')) {
-            $query->where('statut', $request->statut);
-        }
-
         if ($request->filled('service_id')) {
             $query->whereHas('employes', fn($q) => $q->where('service_id', $request->service_id));
         }
@@ -59,13 +55,12 @@ class FormationController extends Controller
             'intitule'          => 'required|string|max:200',
             'type'              => 'nullable|string',
             'organisme'         => 'nullable|string|max:200',
-            'date_debut'        => 'required|date',
+            'date_debut'        => 'required|date', 
             'date_fin'          => 'required|date|after_or_equal:date_debut',
-            'lieu'              => 'nullable|string|max:200',
-            'budget_prevu'      => 'nullable|numeric|min:0',
-            'niveau'            => 'nullable|string',
-            'mois_prevu'        => 'nullable|integer|between:1,12',
-            'observations'      => 'nullable|string',
+            'lieu'         => 'nullable|string|max:200',
+            'niveau'       => 'nullable|string',
+            'mois_prevu'   => 'nullable|integer|between:1,12',
+            'observations' => 'nullable|string',
         ]);
 
         $formation = Formation::create($data);
@@ -85,11 +80,10 @@ class FormationController extends Controller
             'organisme'         => 'nullable|string|max:200',
             'date_debut'        => 'sometimes|date',
             'date_fin'          => 'sometimes|date|after_or_equal:date_debut',
-            'lieu'              => 'nullable|string|max:200',
-            'budget_prevu'      => 'nullable|numeric|min:0',
-            'niveau'            => 'nullable|string',
-            'mois_prevu'        => 'nullable|integer|between:1,12',
-            'observations'      => 'nullable|string',
+            'lieu'         => 'nullable|string|max:200',
+            'niveau'       => 'nullable|string',
+            'mois_prevu'   => 'nullable|integer|between:1,12',
+            'observations' => 'nullable|string',
         ]);
 
         $formation->update($data);
@@ -159,7 +153,6 @@ class FormationController extends Controller
             'formations.*.duree_jours'    => 'nullable|integer|min:1',
             'formations.*.mois_prevu'     => 'nullable|integer|between:1,12',
             'formations.*.observations'   => 'nullable|string',
-            'formations.*.statut'         => 'nullable|string|in:planifie,en_cours,realise,annule,planifiee,terminee,annulee',
         ]);
 
         $synced = 0;

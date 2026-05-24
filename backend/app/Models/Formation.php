@@ -20,17 +20,14 @@ class Formation extends Model
         'date_debut',
         'date_fin',
         'lieu',
-        'budget_prevu',
-        'niveau',
         'mois_prevu',
         'observations',
     ];
 
     protected $casts = [
-        'date_debut'   => 'date',
-        'date_fin'     => 'date',
-        'budget_prevu' => 'decimal:2',
-        'mois_prevu'   => 'integer',
+        'date_debut' => 'date',
+        'date_fin'   => 'date',
+        'mois_prevu' => 'integer',
     ];
 
     public function planFormation(): BelongsTo

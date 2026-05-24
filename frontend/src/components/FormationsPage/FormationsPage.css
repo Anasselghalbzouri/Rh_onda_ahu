@@ -419,6 +419,119 @@
   font-weight: 700;
 }
 
+/* ── Section inscription par service ── */
+.formation-service-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--neutral-50, #F9FAFB);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+}
+
+.formation-service-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.formation-service-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neutral-700, #374151);
+}
+
+.formation-service-hint {
+  font-size: 11px;
+  color: var(--neutral-400, #9CA3AF);
+  background: var(--neutral-100, #F3F4F6);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.formation-service-select-wrap {
+  display: flex;
+}
+
+.formation-service-select {
+  width: 100%;
+  padding: 8px var(--space-3);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: #fff;
+  color: var(--neutral-700, #374151);
+}
+
+.formation-employe-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.formation-employe-loading,
+.formation-employe-empty {
+  font-size: 13px;
+  color: var(--neutral-400, #9CA3AF);
+  padding: var(--space-2) 0;
+}
+
+.formation-employe-all {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--neutral-200);
+  font-weight: 600;
+}
+
+.formation-employe-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.formation-employe-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 5px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.formation-employe-item:hover {
+  background: var(--neutral-100, #F3F4F6);
+}
+
+.formation-employe-item input[type="checkbox"] {
+  accent-color: var(--primary);
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.formation-employe-name {
+  flex: 1;
+  color: var(--neutral-800, #1F2937);
+}
+
+.formation-employe-meta {
+  font-size: 11px;
+  color: var(--neutral-400, #9CA3AF);
+}
+
+.formation-employe-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--neutral-200);
+}
+
 .formation-panel-overlay {
   position: fixed;
   inset: 0;

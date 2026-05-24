@@ -26,7 +26,12 @@ class EmployeController extends Controller
             $query->where('statut', $statut);
         }
 
-        $employes = $query->orderBy('nom')->paginate(15);
+        if ($serviceId = $request->query('service_id')) {
+            $query->where('service_id', $serviceId);
+        }
+
+        $perPage  = min((int) $request->query('per_page', 15), 200);
+        $employes = $query->orderBy('nom')->paginate($perPage);
 
         return response()->json($employes);
     }

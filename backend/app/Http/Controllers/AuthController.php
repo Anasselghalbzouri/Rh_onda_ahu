@@ -71,7 +71,7 @@ class AuthController extends Controller
 
         if (! Hash::check($request->input('current_password'), $rh->password)) {
             throw ValidationException::withMessages([
-                'current_password' => ['Mot de passe actuel incorrect.'],
+                'current_password' => ['Mot de passe actuel incorrect 😒ok '],
             ]);
         }
 

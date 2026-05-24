@@ -66,7 +66,7 @@ export default function FormationsPage() {
   const [editFormation, setEditFormation] = useState(null)
   const [panelFormation, setPanelFormation] = useState(null)
   const [planModalOpen, setPlanModalOpen] = useState(false)
-  const [planForm, setPlanForm] = useState({ titre: '', annee: String(currentYear), budget_prevu: '' })
+  const [planForm, setPlanForm] = useState({annee: String(currentYear), statut: 'draft', titre: '',  description: '', })
   const [planSaving, setPlanSaving] = useState(false)
   const [planError, setPlanError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
@@ -199,12 +199,14 @@ export default function FormationsPage() {
     setPlanError(null)
     try {
       await api.post('/plans-formation', {
-        titre: planForm.titre,
         annee: Number(planForm.annee),
-        budget_prevu: planForm.budget_prevu ? Number(planForm.budget_prevu) : null,
+        statut: planForm.statut,
+        titre: planForm.titre,
+        description: planForm.description || null,
+        
       })
       setPlanModalOpen(false)
-      setPlanForm({ titre: '', annee: String(currentYear), budget_prevu: '' })
+      setPlanForm({annee: String(currentYear),statut: 'draft' , titre: '',  description: '', })
       await loadPlans()
     } catch (err) {
       const messages = err.response?.data?.errors
@@ -483,14 +485,25 @@ export default function FormationsPage() {
             />
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', fontSize: '13px', fontWeight: 600 }}>
-            Budget prevu (MAD)
-            <input
-              type="number"
-              value={planForm.budget_prevu}
-              onChange={(e) => setPlanForm((p) => ({ ...p, budget_prevu: e.target.value }))}
-              min={0}
-              style={{ padding: '8px var(--space-3)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}
+            Description
+            <textarea
+              value={planForm.description}
+              onChange={(e) => setPlanForm((p) => ({ ...p, description: e.target.value }))}
+              rows={3}
+              style={{ padding: '8px var(--space-3)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-sm)', fontSize: '13px', resize: 'vertical' }}
             />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', fontSize: '13px', fontWeight: 600 }}>
+            Statut
+            <select
+              value={planForm.statut}
+              onChange={(e) => setPlanForm((p) => ({ ...p, statut: e.target.value }))}
+              style={{ padding: '8px var(--space-3)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}
+            >
+              <option value="draft">Brouillon</option>
+              <option value="valide">Valide</option>
+              <option value="clos">Archive</option>
+            </select>
           </label>
           {planError && <div className="formation-error">{planError}</div>}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>

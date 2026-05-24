@@ -33,11 +33,11 @@ class PlanFormationController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'annee'        => 'required|integer|min:2000|max:2100',
-            'titre'        => 'required|string|max:200',
-            'description'  => 'nullable|string',
-            'budget_total' => 'nullable|numeric|min:0',
-            'statut'       => 'sometimes|string|in:draft,valide,clos',
+            'annee' => 'required|integer|min:2000|max:2100',
+            'statut' => 'sometimes|string|in:draft,valide,archive',
+            'titre' => 'required|string|max:200',
+            'description' => 'nullable|string',
+
         ]);
 
         $plan = PlanFormation::create($data);
@@ -50,11 +50,10 @@ class PlanFormationController extends Controller
         $plan = PlanFormation::findOrFail($id);
 
         $data = $request->validate([
-            'annee'        => 'sometimes|integer|min:2000|max:2100',
-            'titre'        => 'sometimes|string|max:200',
-            'description'  => 'nullable|string',
-            'budget_total' => 'nullable|numeric|min:0',
-            'statut'       => 'sometimes|string|in:draft,valide,clos',
+            'annee' => 'sometimes|integer|min:2000|max:2100',
+            'titre' => 'sometimes|string|max:200',
+            'description' => 'nullable|string',
+            'statut' => 'sometimes|string|in:draft,valide,clos',
         ]);
 
         $plan->update($data);

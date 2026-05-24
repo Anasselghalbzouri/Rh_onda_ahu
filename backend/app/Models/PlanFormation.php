@@ -11,14 +11,13 @@ class PlanFormation extends Model
 
     protected $fillable = [
         'annee',
+        'statut',
         'titre',
         'description',
-        'budget_total',
-        'statut',
+
     ];
 
     protected $casts = [
-        'budget_total' => 'decimal:2',
         'annee'        => 'integer',
     ];
 

@@ -12,17 +12,29 @@ const EMPTY_FORM = {
   date_debut: '',
   date_fin: '',
   lieu: '',
-  budget_prevu: '',
   niveau: '',
 }
 
 const fieldValue = (value) => value ?? ''
 
 export default function FormationFormModal({ isOpen, onClose, onSaved, formation, plans = [] }) {
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [saving, setSaving] = useState(false)
-  const [errors, setErrors] = useState({})
+  const [form, setForm]                   = useState(EMPTY_FORM)
+  const [saving, setSaving]               = useState(false)
+  const [errors, setErrors]               = useState({})
 
+  const [services, setServices]           = useState([])
+  const [serviceId, setServiceId]         = useState('')
+  const [employes, setEmployes]           = useState([])
+  const [loadingEmployes, setLoadingEmployes] = useState(false)
+  const [selectedEmployes, setSelectedEmployes] = useState([])
+
+  // Charger les services une seule fois à l'ouverture
+  useEffect(() => {
+    if (!isOpen) return
+    api.get('/services').then(({ data }) => setServices(data)).catch(() => {})
+  }, [isOpen])
+
+  // Réinitialiser le formulaire à chaque ouverture
   useEffect(() => {
     if (!isOpen) return
     setForm({
@@ -33,11 +45,23 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
       date_debut: formation?.date_debut?.slice(0, 10) ?? '',
       date_fin: formation?.date_fin?.slice(0, 10) ?? '',
       lieu: fieldValue(formation?.lieu),
-      budget_prevu: fieldValue(formation?.budget_prevu ?? formation?.cout),
       niveau: fieldValue(formation?.niveau),
     })
     setErrors({})
+    setServiceId('')
+    setEmployes([])
+    setSelectedEmployes([])
   }, [formation, isOpen])
+
+  // Charger les employés du service sélectionné
+  useEffect(() => {
+    if (!serviceId) { setEmployes([]); setSelectedEmployes([]); return }
+    setLoadingEmployes(true)
+    api.get('/employes', { params: { service_id: serviceId, statut: 'actif', per_page: 200 } })
+      .then(({ data }) => setEmployes(data.data ?? []))
+      .catch(() => setEmployes([]))
+      .finally(() => setLoadingEmployes(false))
+  }, [serviceId])
 
   if (!isOpen) return null
 
@@ -47,20 +71,29 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
     setErrors((prev) => ({ ...prev, [name]: null, general: null }))
   }
 
+  const toggleEmploye = (id) => {
+    setSelectedEmployes((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
+  const toggleAll = () => {
+    setSelectedEmployes((prev) =>
+      prev.length === employes.length ? [] : employes.map((e) => e.id)
+    )
+  }
+
   const submit = async (event) => {
     event.preventDefault()
     setSaving(true)
     setErrors({})
 
-    const budget = form.budget_prevu === '' ? null : Number(form.budget_prevu)
     const payload = {
       ...form,
       plan_formation_id: form.plan_formation_id || null,
       organisme: form.organisme || null,
       lieu: form.lieu || null,
       niveau: form.niveau || null,
-      budget_prevu: budget,
-      cout: budget,
     }
 
     try {
@@ -68,6 +101,16 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
         ? api.put(`/formations/${formation.id}`, payload)
         : api.post('/formations', payload)
       const { data } = await request
+
+      // Inscrire les employés sélectionnés
+      if (selectedEmployes.length > 0) {
+        await Promise.all(
+          selectedEmployes.map((eid) =>
+            api.post(`/formations/${data.id}/employes`, { employe_id: eid })
+          )
+        )
+      }
+
       onSaved?.(data)
       onClose()
     } catch (err) {
@@ -84,6 +127,8 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
       setSaving(false)
     }
   }
+
+  const allSelected = employes.length > 0 && selectedEmployes.length === employes.length
 
   return (
     <Modal
@@ -159,14 +204,6 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
             error={errors.lieu}
           />
           <FormField
-            label="Budget prevu"
-            name="budget_prevu"
-            type="number"
-            value={form.budget_prevu}
-            onChange={onChange}
-            error={errors.budget_prevu ?? errors.cout}
-          />
-          <FormField
             label="Niveau"
             name="niveau"
             type="select"
@@ -180,6 +217,67 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
               { value: 'expert', label: 'Expert' },
             ]}
           />
+        </div>
+
+        {/* ── Section inscription par service ── */}
+        <div className="formation-service-section">
+          <div className="formation-service-header">
+            <span className="formation-service-title">Inscrire des employes par service</span>
+            <span className="formation-service-hint">Optionnel</span>
+          </div>
+          <div className="formation-service-select-wrap">
+            <select
+              value={serviceId}
+              onChange={(e) => setServiceId(e.target.value)}
+              className="formation-service-select"
+            >
+              <option value="">— Choisir un service —</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>{s.nom}</option>
+              ))}
+            </select>
+          </div>
+
+          {serviceId && (
+            <div className="formation-employe-list">
+              {loadingEmployes ? (
+                <div className="formation-employe-loading">Chargement...</div>
+              ) : employes.length === 0 ? (
+                <div className="formation-employe-empty">Aucun employe actif dans ce service</div>
+              ) : (
+                <>
+                  <label className="formation-employe-item formation-employe-all">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                    />
+                    <span>Tout selectionner ({employes.length})</span>
+                  </label>
+                  <div className="formation-employe-scroll">
+                    {employes.map((emp) => (
+                      <label key={emp.id} className="formation-employe-item">
+                        <input
+                          type="checkbox"
+                          checked={selectedEmployes.includes(emp.id)}
+                          onChange={() => toggleEmploye(emp.id)}
+                        />
+                        <span className="formation-employe-name">
+                          {emp.prenom} {emp.nom}
+                        </span>
+                        <span className="formation-employe-meta">{emp.matricule}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedEmployes.length > 0 && (
+                    <div className="formation-employe-count">
+                      {selectedEmployes.length} employe{selectedEmployes.length > 1 ? 's' : ''} selectionne{selectedEmployes.length > 1 ? 's' : ''}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {errors.general && <div className="formation-form-error">{errors.general}</div>}

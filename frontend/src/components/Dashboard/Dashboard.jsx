@@ -71,11 +71,12 @@ export default function Dashboard() {
   const [formationStatsError, setFormationStatsError] = useState(false)
 
   useEffect(() => {
-    api.get('/dashboard/stats')
+    setLoading(true)
+    api.get('/dashboard/stats', { params: { period } })
       .then(r => setStats(r.data))
       .catch(() => setError('Impossible de charger les statistiques.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [period])
 
   useEffect(() => {
     api.get('/dashboard/formations-stats')
@@ -126,7 +127,7 @@ export default function Dashboard() {
       path: '/conges',
     },
     {
-      label: 'Congés ce mois',
+      label: period === 'today' ? 'Congés aujourd\'hui' : period === 'week' ? 'Congés cette sem.' : period === 'year' ? 'Congés cette année' : 'Congés ce mois',
       value: stats.conges_ce_mois,
       color: '#F59E0B',
       bg: 'rgba(245,158,11,0.1)',
@@ -299,7 +300,7 @@ export default function Dashboard() {
             <div className="dash-chart-title">Actions RH</div>
             <p>Priorités opérationnelles issues des données disponibles.</p>
           </div>
-          <span>{period === 'month' ? 'Ce mois' : 'Vue active'}</span>
+          <span>{{ today: "Aujourd'hui", week: 'Cette semaine', month: 'Ce mois', year: 'Cette année' }[period]}</span>
         </div>
         <div className="dash-action-list">
           {urgentActions.map((item) => {

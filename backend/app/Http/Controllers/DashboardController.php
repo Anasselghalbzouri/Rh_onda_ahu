@@ -12,16 +12,22 @@ class DashboardController extends Controller
 {
     public function stats(): JsonResponse
     {
-        $today     = now()->toDateString();
-        $debutMois = now()->startOfMonth()->toDateString();
-        $finMois   = now()->endOfMonth()->toDateString();
+        $period = request()->query('period', 'month');
+        $today  = now()->toDateString();
+
+        [$debut, $fin] = match ($period) {
+            'today' => [$today, $today],
+            'week'  => [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()],
+            'year'  => [now()->startOfYear()->toDateString(), now()->endOfYear()->toDateString()],
+            default => [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()],
+        };
 
         // ── KPIs ──
-        $totalEmployes = Employe::count();
-        $congesEnCours = DemandeConge::where('date_debut', '<=', $today)
-            ->where('date_fin', '>=', $today)->count();
-        $congesCeMois  = DemandeConge::where('date_debut', '<=', $finMois)
-            ->where('date_fin', '>=', $debutMois)->count();
+        $totalEmployes = Employe::where('statut','!=','retraite')->count();
+        $congesEnCours = DemandeConge::where('date_debut', '<=', $fin)
+            ->where('date_fin', '>=', $debut)->count();
+        $congesCeMois  = DemandeConge::where('date_debut', '<=', $fin)
+            ->where('date_fin', '>=', $debut)->count();
         $soldeMoyen    = round((float) Employe::avg('solde_conge'), 1);
 
         // ── Congés par type ──
@@ -87,13 +93,13 @@ class DashboardController extends Controller
 
         $total = Formation::whereYear('date_debut', $annee)->count();
 
-        $nbEmployesFormes = DB::table('formation_employe')
-            ->join('formation', 'formation.id', '=', 'formation_employe.formation_id')
+        $nbEmployesFormes = DB::table('employe_formation')
+            ->join('formation', 'formation.id', '=', 'employe_formation.formation_id')
             ->whereYear('formation.date_debut', $annee)
-            ->distinct('formation_employe.employe_id')
-            ->count('formation_employe.employe_id');
+            ->distinct('employe_formation.employe_id')
+            ->count('employe_formation.employe_id');
 
-        $budgetPrevu = Formation::whereYear('date_debut', $annee)->sum('cout');
+        $budgetPrevu = 0;
 
         $terminees = Formation::whereYear('date_debut', $annee)
             ->where('statut', 'terminee')->count();
