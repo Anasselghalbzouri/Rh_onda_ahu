@@ -83,4 +83,6 @@ Route::middleware('auth:rh')->group(function () {
 
     // Dashboard — stats formations
     Route::get('/dashboard/formations-stats',             [DashboardController::class, 'formationsStats']);
+    Route::get('/dashboard/pyramide-ages',                [DashboardController::class, 'pyramideAges']);
+    Route::get('/dashboard/anciennete',                   [DashboardController::class, 'anciennete']);
 });

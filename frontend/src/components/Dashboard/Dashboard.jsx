@@ -4,10 +4,11 @@ import {
   BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid, Legend,
   PieChart, Pie,
+  AreaChart, Area, ReferenceLine,
 } from 'recharts'
 import {
   AlertTriangle, ArrowRight, CalendarCheck, FileWarning,
-  Users, GraduationCap, UserCheck, Percent,
+  Users, GraduationCap, UserCheck, Percent, Calendar,
 } from 'lucide-react'
 import api from '../../api'
 import './Dashboard.css'
@@ -63,6 +64,8 @@ export default function Dashboard() {
   const [period, setPeriod]   = useState('month')
   const [formationStats, setFormationStats] = useState(null)
   const [formationStatsError, setFormationStatsError] = useState(false)
+  const [pyramideAges, setPyramideAges]     = useState([])
+  const [anciennete, setAnciennete]         = useState([])
 
   useEffect(() => {
     setLoading(true)
@@ -76,6 +79,11 @@ export default function Dashboard() {
     api.get('/dashboard/formations-stats')
       .then(({ data }) => { setFormationStats(data); setFormationStatsError(false) })
       .catch(() => { setFormationStats(null); setFormationStatsError(true) })
+  }, [])
+
+  useEffect(() => {
+    api.get('/dashboard/pyramide-ages').then(({ data }) => setPyramideAges(data)).catch(() => {})
+    api.get('/dashboard/anciennete').then(({ data }) => setAnciennete(data)).catch(() => {})
   }, [])
 
   if (loading) return (
@@ -119,6 +127,14 @@ export default function Dashboard() {
   const barTypeData = (stats.par_type || []).map(r => ({
     name: TYPE_LABELS[r.type] ?? r.type, total: r.total, fill: TYPE_COLORS[r.type] ?? '#94A3B8',
   }))
+
+  // Pyramide des âges — hommes as negative (butterfly chart)
+  const pyramideData = [...pyramideAges].reverse().map(r => ({
+    tranche: r.tranche,
+    hommes:  -r.hommes,
+    femmes:  r.femmes,
+  }))
+  const pyramideMax = pyramideAges.reduce((m, r) => Math.max(m, r.hommes, r.femmes), 1)
 
   const formationTypeData = (formationStats?.repartition_type || []).map(row => ({
     name: row.type === 'externe' ? 'Externe' : 'Interne',
@@ -235,6 +251,20 @@ export default function Dashboard() {
             <div className="dash-kpi-value dash-kpi-compact" style={{ color: '#EC4899' }}>{pctFemmes} %</div>
           </div>
         </button>
+
+        {/* Âge moyen */}
+        <button type="button" className="dash-kpi-card" onClick={() => navigate('/personnel')}>
+          <div className="dash-kpi-top">
+            <span className="dash-kpi-label">Âge moyen</span>
+            <div className="dash-kpi-icon" style={{ background: 'rgba(245,158,11,0.1)' }} aria-hidden="true">
+              <Calendar size={20} color="#F59E0B" />
+            </div>
+          </div>
+          <div className="dash-kpi-value" style={{ color: '#F59E0B' }}>
+            {stats.age_moyen ?? '—'} <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--neutral-500)' }}>ans</span>
+          </div>
+          <div className="dash-kpi-trend">Moyenne des employés actifs</div>
+        </button>
       </div>
 
       <div className="dash-charts-grid dash-charts-2col">
@@ -275,6 +305,65 @@ export default function Dashboard() {
                   {serviceData.map((e, i) => <Cell key={i} fill={e.fill} />)}
                 </Bar>
               </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      <div className="dash-charts-grid dash-charts-2col">
+        {/* Pyramide des âges */}
+        <div className="dash-chart-card">
+          <div className="dash-chart-title">Pyramide des âges</div>
+          <div className="dash-pyramid-legend">
+            <span style={{ color: '#0D8BFF' }}><span className="dash-sexe-dot" style={{ background: '#0D8BFF', display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} />Hommes</span>
+            <span style={{ color: '#EC4899' }}><span className="dash-sexe-dot" style={{ background: '#EC4899', display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} />Femmes</span>
+          </div>
+          {pyramideData.length === 0 ? <EmptyState /> : (
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={pyramideData} layout="vertical" margin={{ top: 4, right: 20, left: 48, bottom: 0 }} barCategoryGap="20%">
+                <XAxis
+                  type="number"
+                  domain={[-pyramideMax - 1, pyramideMax + 1]}
+                  tickFormatter={v => Math.abs(v)}
+                  tick={{ fontSize: 10, fill: '#6B7280' }}
+                />
+                <YAxis type="category" dataKey="tranche" tick={{ fontSize: 10, fill: '#6B7280' }} width={48} />
+                <Tooltip
+                  formatter={(value, name) => [Math.abs(value), name === 'hommes' ? 'Hommes' : 'Femmes']}
+                  contentStyle={{ fontSize: '0.8rem', borderRadius: 8, border: '1px solid #E5E7EB' }}
+                />
+                <ReferenceLine x={0} stroke="#E5E7EB" strokeWidth={1} />
+                <Bar dataKey="hommes" name="hommes" fill="#0D8BFF" radius={[4, 0, 0, 4]} />
+                <Bar dataKey="femmes" name="femmes" fill="#EC4899" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Courbe d'ancienneté */}
+        <div className="dash-chart-card">
+          <div className="dash-chart-title">Ancienneté moyenne — distribution</div>
+          {anciennete.length === 0 ? <EmptyState /> : (
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={anciennete} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="ancGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#10B981" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="tranche" tick={{ fontSize: 10, fill: '#6B7280' }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6B7280' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone" dataKey="total" name="Employés"
+                  stroke="#10B981" strokeWidth={2.5}
+                  fill="url(#ancGradient)"
+                  dot={{ r: 4, fill: '#10B981', stroke: '#fff', strokeWidth: 2 }}
+                  activeDot={{ r: 6 }}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </div>

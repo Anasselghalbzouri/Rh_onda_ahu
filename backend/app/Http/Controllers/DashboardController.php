@@ -29,6 +29,10 @@ class DashboardController extends Controller
         $congesCeMois  = DemandeConge::where('date_debut', '<=', $fin)
             ->where('date_fin', '>=', $debut)->count();
         $soldeMoyen    = round((float) Employe::avg('solde_conge'), 1);
+        $ageMoyen      = round((float) Employe::where('statut', '!=', 'retraite')
+            ->whereNotNull('date_naissance')
+            ->selectRaw('AVG(TIMESTAMPDIFF(YEAR, date_naissance, CURDATE())) as age_moyen')
+            ->value('age_moyen'), 1);
 
         // ── Congés par type ──
         $parType = DemandeConge::select('type_conge', DB::raw('COUNT(*) as total'))
@@ -78,6 +82,7 @@ class DashboardController extends Controller
             'conges_en_cours' => $congesEnCours,
             'conges_ce_mois'  => $congesCeMois,
             'solde_moyen'     => $soldeMoyen,
+            'age_moyen'       => $ageMoyen,
             'par_type'        => $parType,
             'tendance'        => $tendance,
             'par_sexe'        => $parSexe,
@@ -85,6 +90,62 @@ class DashboardController extends Controller
             'par_fonction'    => $parFonction,
             'par_service'     => $parService,
         ]);
+    }
+
+    public function pyramideAges(): JsonResponse
+    {
+        $tranches = [
+            ['label' => '20-24', 'min' => 20, 'max' => 24],
+            ['label' => '25-29', 'min' => 25, 'max' => 29],
+            ['label' => '30-34', 'min' => 30, 'max' => 34],
+            ['label' => '35-39', 'min' => 35, 'max' => 39],
+            ['label' => '40-44', 'min' => 40, 'max' => 44],
+            ['label' => '45-49', 'min' => 45, 'max' => 49],
+            ['label' => '50-54', 'min' => 50, 'max' => 54],
+            ['label' => '55-59', 'min' => 55, 'max' => 59],
+            ['label' => '60+',   'min' => 60, 'max' => 100],
+        ];
+
+        $data = [];
+        foreach ($tranches as $t) {
+            $bornMax = now()->subYears($t['min'])->toDateString();
+            $bornMin = now()->subYears($t['max'] + 1)->addDay()->toDateString();
+            $data[] = [
+                'tranche' => $t['label'],
+                'hommes'  => Employe::where('statut', '!=', 'retraite')->where('sexe', 'M')
+                    ->whereNotNull('date_naissance')->whereBetween('date_naissance', [$bornMin, $bornMax])->count(),
+                'femmes'  => Employe::where('statut', '!=', 'retraite')->where('sexe', 'F')
+                    ->whereNotNull('date_naissance')->whereBetween('date_naissance', [$bornMin, $bornMax])->count(),
+            ];
+        }
+
+        return response()->json($data);
+    }
+
+    public function anciennete(): JsonResponse
+    {
+        $tranches = [
+            ['label' => '< 5 ans',   'min' => 0,  'max' => 4],
+            ['label' => '5-9 ans',   'min' => 5,  'max' => 9],
+            ['label' => '10-14 ans', 'min' => 10, 'max' => 14],
+            ['label' => '15-19 ans', 'min' => 15, 'max' => 19],
+            ['label' => '20-24 ans', 'min' => 20, 'max' => 24],
+            ['label' => '25-29 ans', 'min' => 25, 'max' => 29],
+            ['label' => '>= 30 ans', 'min' => 30, 'max' => 99],
+        ];
+
+        $data = [];
+        foreach ($tranches as $t) {
+            $dateMax = now()->subYears($t['min'])->toDateString();
+            $dateMin = now()->subYears($t['max'] + 1)->addDay()->toDateString();
+            $data[] = [
+                'tranche' => $t['label'],
+                'total'   => Employe::where('statut', '!=', 'retraite')->whereNotNull('date_embauche')
+                    ->whereBetween('date_embauche', [$dateMin, $dateMax])->count(),
+            ];
+        }
+
+        return response()->json($data);
     }
 
     public function formationsStats(): JsonResponse
