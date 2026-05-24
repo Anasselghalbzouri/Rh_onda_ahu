@@ -102,7 +102,7 @@ class DashboardController extends Controller
         $budgetPrevu = 0;
 
         $terminees = Formation::whereYear('date_debut', $annee)
-            ->where('statut', 'terminee')->count();
+            ->whereDate('date_fin', '<', now()->toDateString())->count();
 
         $tauxCompletion = $total > 0 ? round(($terminees / $total) * 100, 1) : 0;
 
@@ -112,13 +112,25 @@ class DashboardController extends Controller
             ->get()
             ->map(fn($r) => ['type' => $r->type, 'total' => $r->total]);
 
+        $repartitionService = DB::table('employe_formation')
+            ->join('formation', 'formation.id', '=', 'employe_formation.formation_id')
+            ->join('employe', 'employe.id', '=', 'employe_formation.employe_id')
+            ->join('service', 'service.id', '=', 'employe.service_id')
+            ->whereYear('formation.date_debut', $annee)
+            ->select('service.nom as service', DB::raw('COUNT(DISTINCT employe_formation.employe_id) as total'))
+            ->groupBy('service.id', 'service.nom')
+            ->orderByDesc('total')
+            ->limit(8)
+            ->get()
+            ->map(fn($r) => ['service' => $r->service, 'total' => $r->total]);
+
         return response()->json([
-            'annee'              => $annee,
-            'total_formations'   => $total,
-            'nb_employes_formes' => $nbEmployesFormes,
-            'budget_prevu'       => (float) $budgetPrevu,
-            'taux_completion'    => $tauxCompletion,
-            'repartition_type'   => $repartitionType,
+            'annee'               => $annee,
+            'total_formations'    => $total,
+            'nb_employes_formes'  => $nbEmployesFormes,
+            'taux_completion'     => $tauxCompletion,
+            'repartition_type'    => $repartitionType,
+            'repartition_service' => $repartitionService,
         ]);
     }
 }

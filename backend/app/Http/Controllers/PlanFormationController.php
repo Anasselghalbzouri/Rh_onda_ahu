@@ -25,7 +25,11 @@ class PlanFormationController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $plan = PlanFormation::withCount('formations')->with('formations')->findOrFail($id);
+        $plan = PlanFormation::withCount('formations')
+            ->with(['formations' => function ($q) {
+                $q->with('employes:id,matricule,nom,prenom')->orderBy('date_debut');
+            }])
+            ->findOrFail($id);
 
         return response()->json($plan);
     }

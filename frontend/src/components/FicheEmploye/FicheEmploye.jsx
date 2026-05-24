@@ -56,11 +56,6 @@ const congeFileUrl = (congeId) => {
   return `${base}/conges/${congeId}/fichier`
 }
 
-const getFormationNote = (formation, type) => {
-  const evaluations = Array.isArray(formation?.evaluations) ? formation.evaluations : []
-  const evaluation = evaluations.find((item) => item.type_evaluation === type)
-  return evaluation?.note ?? evaluation?.note_20 ?? null
-}
 
 export default function FicheEmploye({ id, onRetour }) {
   const navigate = useNavigate()
@@ -277,7 +272,7 @@ export default function FicheEmploye({ id, onRetour }) {
       {deleteConfirm && (
         <div className="fiche-overlay" onClick={() => setDeleteConfirm(false)}>
           <div className="fiche-confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Supprimer l’employé</h3>
+            <h3>Supprimer l'employé</h3>
             <p>
               Confirmer la suppression de <strong>{employe.prenom} {employe.nom}</strong> ?
               Cette action est irréversible.
@@ -363,7 +358,7 @@ export default function FicheEmploye({ id, onRetour }) {
       )}
 
       {activeTab === 'conges' && (
-        <Section titre="Congés de l’employé">
+        <Section titre="Congés de l'employé">
           {demandesConge.length === 0 ? (
             <div className="fiche-empty-state">Aucun congé enregistré pour cet employé.</div>
           ) : (
@@ -442,51 +437,91 @@ export default function FicheEmploye({ id, onRetour }) {
             <div className="fiche-empty-state">Chargement...</div>
           ) : formationsError ? (
             <div className="fiche-empty-state" style={{ color: '#dc2626' }}>{formationsError}</div>
-          ) : formationsEmploye.length === 0 ? (
-            <div className="fiche-empty-state">Aucune formation enregistree pour cet employe.</div>
-          ) : (
-            <div className="fiche-table-wrap">
-              <table className="fiche-table">
-                <thead>
-                  <tr>
-                    <th className="fiche-th">Formation</th>
-                    <th className="fiche-th">Type</th>
-                    <th className="fiche-th">Periode</th>
-                    <th className="fiche-th">Lieu</th>
-                    <th className="fiche-th">Note chaud</th>
-                    <th className="fiche-th">Note froid</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formationsEmploye.map((formation) => {
-                    const noteChaud = getFormationNote(formation, 'chaud')
-                    const noteFroid = getFormationNote(formation, 'froid')
-                    return (
-                      <tr key={formation.id}>
-                        <td className="fiche-td">
-                          <strong>{formation.intitule ?? 'Formation'}</strong>
-                          <div className="fiche-file-meta">{formation.organisme ?? formation.plan_formation?.titre ?? formation.planFormation?.titre ?? ''}</div>
-                        </td>
-                        <td className="fiche-td">
-                          <span className={`fiche-formation-type type-${formation.type}`}>
-                            {formation.type === 'externe' ? 'Externe' : 'Interne'}
+          ) : (() => {
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const planifiees = formationsEmploye.filter(f => new Date(f.date_debut) > today)
+            const passees    = formationsEmploye.filter(f => new Date(f.date_debut) <= today)
+            return (
+              <>
+                {/* ── Formations planifiées ── */}
+                <div className="fiche-formation-sub-title">
+                  Formations planifiées
+                  <span className="fiche-formation-sub-count">{planifiees.length}</span>
+                </div>
+                {planifiees.length === 0 ? (
+                  <div className="fiche-empty-state fiche-empty-sm">Aucune formation planifiée.</div>
+                ) : (
+                  <div className="fiche-planifiees-grid">
+                    {planifiees.map((f) => (
+                      <div key={f.id} className="fiche-planifiee-card">
+                        <div className="fiche-planifiee-header">
+                          <span className="fiche-formation-name-badge">{f.intitule ?? 'Formation'}</span>
+                          <span className={`fiche-formation-type type-${f.type}`}>
+                            {f.type === 'externe' ? 'Externe' : 'Interne'}
                           </span>
-                        </td>
-                        <td className="fiche-td">{formatDate(formation.date_debut)} â†’ {formatDate(formation.date_fin)}</td>
-                        <td className="fiche-td">{formation.lieu ?? 'â€”'}</td>
-                        <td className="fiche-td">
-                          <span className="fiche-note-badge">{noteChaud == null ? 'â€”' : `${noteChaud}/20`}</span>
-                        </td>
-                        <td className="fiche-td">
-                          <span className="fiche-note-badge">{noteFroid == null ? 'â€”' : `${noteFroid}/20`}</span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        </div>
+                        {(f.plan_formation?.titre ?? f.planFormation?.titre) && (
+                          <div className="fiche-planifiee-plan">
+                            <span className="fiche-planifiee-plan-label">Plan</span>
+                            {f.plan_formation?.titre ?? f.planFormation?.titre}
+                          </div>
+                        )}
+                        {f.organisme && (
+                          <div className="fiche-planifiee-org">{f.organisme}</div>
+                        )}
+                        <div className="fiche-planifiee-meta">
+                          <span>📅 {formatDate(f.date_debut)} → {formatDate(f.date_fin)}</span>
+                          {f.lieu && <span>📍 {f.lieu}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── Historique formations ── */}
+                <div className="fiche-formation-sub-title" style={{ marginTop: '20px' }}>
+                  Historique
+                  <span className="fiche-formation-sub-count">{passees.length}</span>
+                </div>
+                {passees.length === 0 ? (
+                  <div className="fiche-empty-state fiche-empty-sm">Aucune formation passée.</div>
+                ) : (
+                  <div className="fiche-table-wrap">
+                    <table className="fiche-table">
+                      <thead>
+                        <tr>
+                          <th className="fiche-th">Formation</th>
+                          <th className="fiche-th">Type</th>
+                          <th className="fiche-th">Période</th>
+                          <th className="fiche-th">Lieu</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {passees.map((formation) => (
+                          <tr key={formation.id}>
+                            <td className="fiche-td">
+                              <span className="fiche-formation-name-badge">
+                                {formation.intitule ?? 'Formation'}
+                              </span>
+                              <div className="fiche-file-meta">{formation.organisme ?? formation.plan_formation?.titre ?? formation.planFormation?.titre ?? ''}</div>
+                            </td>
+                            <td className="fiche-td">
+                              <span className={`fiche-formation-type type-${formation.type}`}>
+                                {formation.type === 'externe' ? 'Externe' : 'Interne'}
+                              </span>
+                            </td>
+                            <td className="fiche-td">{formatDate(formation.date_debut)} → {formatDate(formation.date_fin)}</td>
+                            <td className="fiche-td">{formation.lieu ?? '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </Section>
       )}
 

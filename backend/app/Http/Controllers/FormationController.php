@@ -55,11 +55,11 @@ class FormationController extends Controller
             'intitule'          => 'required|string|max:200',
             'type'              => 'nullable|string',
             'organisme'         => 'nullable|string|max:200',
-            'date_debut'        => 'required|date', 
+            'date_debut'        => 'required|date',
             'date_fin'          => 'required|date|after_or_equal:date_debut',
             'lieu'         => 'nullable|string|max:200',
             'niveau'       => 'nullable|string',
-            'mois_prevu'   => 'nullable|integer|between:1,12',
+            // 'mois_prevu'   => 'nullable|integer|between:1,12',
             'observations' => 'nullable|string',
         ]);
 

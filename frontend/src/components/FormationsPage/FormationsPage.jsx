@@ -66,10 +66,12 @@ export default function FormationsPage() {
   const [editFormation, setEditFormation] = useState(null)
   const [panelFormation, setPanelFormation] = useState(null)
   const [planModalOpen, setPlanModalOpen] = useState(false)
+  const [editPlan, setEditPlan] = useState(null)
   const [planForm, setPlanForm] = useState({annee: String(currentYear), statut: 'draft', titre: '',  description: '', })
   const [planSaving, setPlanSaving] = useState(false)
   const [planError, setPlanError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [deletingPlanId, setDeletingPlanId] = useState(null)
 
   const loadPlans = useCallback(async () => {
     setPlansLoading(true)
@@ -142,7 +144,7 @@ export default function FormationsPage() {
   const togglePlan = (planId) => {
     const next = expandedPlanId === planId ? null : planId
     setExpandedPlanId(next)
-    if (next) loadPlanDetail(next)
+    if (next) loadPlanDetail(next, true)
   }
 
   const validatePlan = async (planId) => {
@@ -193,24 +195,68 @@ export default function FormationsPage() {
     }
   }
 
+  const openCreatePlan = () => {
+    setEditPlan(null)
+    setPlanForm({ annee: String(currentYear), statut: 'draft', titre: '', description: '' })
+    setPlanError(null)
+    setPlanModalOpen(true)
+  }
+
+  const openEditPlan = (plan, e) => {
+    e.stopPropagation()
+    setEditPlan(plan)
+    setPlanForm({
+      annee: String(plan.annee ?? currentYear),
+      statut: plan.statut ?? 'draft',
+      titre: plan.titre ?? '',
+      description: plan.description ?? '',
+    })
+    setPlanError(null)
+    setPlanModalOpen(true)
+  }
+
+  const deletePlan = async (plan, e) => {
+    e.stopPropagation()
+    if (!window.confirm(`Supprimer le plan "${plan.titre}" ?`)) return
+    setDeletingPlanId(plan.id)
+    try {
+      await api.delete(`/plans-formation/${plan.id}`)
+      await loadPlans()
+      if (expandedPlanId === plan.id) setExpandedPlanId(null)
+    } catch (err) {
+      alert(err.response?.data?.message ?? 'Impossible de supprimer ce plan.')
+    } finally {
+      setDeletingPlanId(null)
+    }
+  }
+
   const submitPlan = async (event) => {
     event.preventDefault()
     setPlanSaving(true)
     setPlanError(null)
     try {
-      await api.post('/plans-formation', {
+      const payload = {
         annee: Number(planForm.annee),
         statut: planForm.statut,
         titre: planForm.titre,
         description: planForm.description || null,
-        
-      })
+      }
+      if (editPlan) {
+        await api.put(`/plans-formation/${editPlan.id}`, payload)
+      } else {
+        await api.post('/plans-formation', payload)
+      }
       setPlanModalOpen(false)
-      setPlanForm({annee: String(currentYear),statut: 'draft' , titre: '',  description: '', })
+      setEditPlan(null)
+      setPlanForm({ annee: String(currentYear), statut: 'draft', titre: '', description: '' })
       await loadPlans()
+      if (editPlan && expandedPlanId === editPlan.id) {
+        setPlanDetails((prev) => { const n = { ...prev }; delete n[editPlan.id]; return n })
+        loadPlanDetail(editPlan.id, true)
+      }
     } catch (err) {
       const messages = err.response?.data?.errors
-      setPlanError(messages ? Object.values(messages).flat().join(' - ') : 'Impossible de creer le plan.')
+      setPlanError(messages ? Object.values(messages).flat().join(' - ') : `Impossible de ${editPlan ? 'modifier' : 'creer'} le plan.`)
     } finally {
       setPlanSaving(false)
     }
@@ -257,7 +303,7 @@ export default function FormationsPage() {
               <h3>Plans annuels</h3>
               <p>Validation et lecture detaillee des formations planifiees.</p>
             </div>
-            <button type="button" className="formation-btn-primary" onClick={() => setPlanModalOpen(true)}>
+            <button type="button" className="formation-btn-primary" onClick={openCreatePlan}>
               <Plus size={14} aria-hidden="true" />
               Creer plan
             </button>
@@ -277,16 +323,37 @@ export default function FormationsPage() {
                 const planFormations = Array.isArray(detail?.formations) ? detail.formations : []
                 return (
                   <article key={plan.id} className="formation-plan-item">
-                    <button type="button" className="formation-plan-summary" onClick={() => togglePlan(plan.id)}>
-                      <span className="formation-plan-main">
-                        <strong>{plan.titre ?? `Plan ${plan.annee ?? ''}`}</strong>
-                        <small>{plan.annee ?? '-'} - {plan.formations_count ?? planFormations.length ?? 0} formations</small>
-                      </span>
-                      <span className={`formation-status status-${plan.statut ?? 'draft'}`}>
-                        {PLAN_STATUS_LABEL[plan.statut] ?? plan.statut ?? 'Brouillon'}
-                      </span>
-                      <ChevronDown className={isOpen ? 'open' : ''} size={18} aria-hidden="true" />
-                    </button>
+                    <div className="formation-plan-summary-wrap">
+                      <button type="button" className="formation-plan-summary" onClick={() => togglePlan(plan.id)}>
+                        <span className="formation-plan-main">
+                          <strong>{plan.titre ?? `Plan ${plan.annee ?? ''}`}</strong>
+                          <small>{plan.annee ?? '-'} - {plan.formations_count ?? planFormations.length ?? 0} formations</small>
+                        </span>
+                        <span className={`formation-status status-${plan.statut ?? 'draft'}`}>
+                          {PLAN_STATUS_LABEL[plan.statut] ?? plan.statut ?? 'Brouillon'}
+                        </span>
+                        <ChevronDown className={isOpen ? 'open' : ''} size={18} aria-hidden="true" />
+                      </button>
+                      <div className="formation-plan-actions">
+                        <button
+                          type="button"
+                          className="formation-icon-btn"
+                          onClick={(e) => openEditPlan(plan, e)}
+                          aria-label="Modifier le plan"
+                        >
+                          <Pencil size={14} aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          className="formation-icon-btn danger"
+                          onClick={(e) => deletePlan(plan, e)}
+                          disabled={deletingPlanId === plan.id}
+                          aria-label="Supprimer le plan"
+                        >
+                          <Trash2 size={14} aria-hidden="true" />
+                        </button>
+                      </div>
+                    </div>
 
                     {isOpen && (
                       <div className="formation-plan-body">
@@ -307,15 +374,37 @@ export default function FormationsPage() {
                         ) : (
                           <div className="formation-plan-list">
                             {planFormations.map((formation) => (
-                              <div key={formation.id} className="formation-plan-row">
-                                <GraduationCap size={17} aria-hidden="true" />
-                                <span>
-                                  <strong>{formation.intitule}</strong>
-                                  <small>{formatDate(formation.date_debut)} - {formatDate(formation.date_fin)} - {formation.lieu ?? 'Lieu non renseigne'}</small>
-                                </span>
-                                <span className={`formation-type type-${formation.type}`}>
-                                  {FORMATION_TYPE_LABEL[formation.type] ?? formation.type}
-                                </span>
+                              <div key={formation.id} className="formation-plan-card">
+                                <div className="formation-plan-card-header">
+                                  <GraduationCap size={16} aria-hidden="true" className="formation-plan-card-icon" />
+                                  <div className="formation-plan-card-meta">
+                                    <strong className="formation-plan-card-title">{formation.intitule}</strong>
+                                    <div className="formation-plan-card-details">
+                                      <span>📅 {formatDate(formation.date_debut)} — {formatDate(formation.date_fin)}</span>
+                                      {formation.lieu && <span>📍 {formation.lieu}</span>}
+                                      <span className={`formation-type type-${formation.type}`}>
+                                        {FORMATION_TYPE_LABEL[formation.type] ?? formation.type}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                {Array.isArray(formation.employes) && formation.employes.length > 0 ? (
+                                  <div className="formation-plan-employes">
+                                    <span className="formation-plan-employes-label">
+                                      Inscrits ({formation.employes.length})
+                                    </span>
+                                    <div className="formation-plan-employes-list">
+                                      {formation.employes.map((emp) => (
+                                        <span key={emp.id} className="formation-plan-employe-chip">
+                                          {emp.prenom} {emp.nom}
+                                          <small>{emp.matricule}</small>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="formation-plan-employes-empty">Aucun inscrit</div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -460,7 +549,7 @@ export default function FormationsPage() {
         />
       )}
 
-      <Modal isOpen={planModalOpen} onClose={() => setPlanModalOpen(false)} title="Nouveau plan de formation" size="sm">
+      <Modal isOpen={planModalOpen} onClose={() => { setPlanModalOpen(false); setEditPlan(null) }} title={editPlan ? 'Modifier le plan' : 'Nouveau plan de formation'} size="sm">
         <form onSubmit={submitPlan} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', fontSize: '13px', fontWeight: 600 }}>
             Titre
@@ -507,11 +596,11 @@ export default function FormationsPage() {
           </label>
           {planError && <div className="formation-error">{planError}</div>}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
-            <button type="button" className="eval-btn-secondary" onClick={() => setPlanModalOpen(false)} disabled={planSaving}>
+            <button type="button" className="eval-btn-secondary" onClick={() => { setPlanModalOpen(false); setEditPlan(null) }} disabled={planSaving}>
               Annuler
             </button>
             <button type="submit" className="formation-btn-primary" disabled={planSaving}>
-              {planSaving ? 'Creation...' : 'Creer'}
+              {planSaving ? (editPlan ? 'Modification...' : 'Creation...') : (editPlan ? 'Mettre a jour' : 'Creer')}
             </button>
           </div>
         </form>

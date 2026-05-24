@@ -86,7 +86,7 @@ class FormationExport
             'Date', 'Collaborateur', 'Cours', 'Service', 'Suivi', 'Remarque',
         ]], null, 'A1');
 
-        $rows = DB::table('formation_employe as fe')
+        $rows = DB::table('employe_formation as fe')
             ->join('employe as e', 'e.id', '=', 'fe.employe_id')
             ->join('formation as f', 'f.id', '=', 'fe.formation_id')
             ->leftJoin('cours as c', 'c.id', '=', 'f.cours_id')

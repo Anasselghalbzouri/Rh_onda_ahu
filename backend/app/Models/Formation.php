@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Formation extends Model
 {
     protected $table = 'formation';
+    public $timestamps = false;
 
     protected $fillable = [
         'plan_formation_id',
@@ -20,6 +21,7 @@ class Formation extends Model
         'date_debut',
         'date_fin',
         'lieu',
+        'niveau',
         'mois_prevu',
         'observations',
     ];

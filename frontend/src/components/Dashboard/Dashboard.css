@@ -275,6 +275,47 @@
   font-weight: 500;
 }
 
+/* ── Split KPI card (% H | % F) ────────────────────────────── */
+.dash-kpi-split {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.dash-kpi-split-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-4);
+}
+
+.dash-kpi-split-divider {
+  width: 1px;
+  background: var(--neutral-200);
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+/* ── KPI 3-col variant ─────────────────────────────────────── */
+.dash-kpi-3col {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .dash-kpi-3col { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .dash-kpi-3col { grid-template-columns: 1fr; }
+}
+
+/* ── Statut full-width card ────────────────────────────────── */
+.dash-statut-full {
+  margin-bottom: var(--space-4);
+}
+
 /* ── Chart grids ───────────────────────────────────────────── */
 .dash-charts-grid {
   display: grid;

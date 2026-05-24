@@ -27,6 +27,7 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
   const [employes, setEmployes]           = useState([])
   const [loadingEmployes, setLoadingEmployes] = useState(false)
   const [selectedEmployes, setSelectedEmployes] = useState([])
+  const [searchEmploye, setSearchEmploye] = useState('')
 
   // Charger les services une seule fois à l'ouverture
   useEffect(() => {
@@ -71,6 +72,18 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
     setErrors((prev) => ({ ...prev, [name]: null, general: null }))
   }
 
+  // Quand on choisit un service dans le champ Collaborateur :
+  // - met à jour l'intitulé avec le nom du service
+  // - charge les employés de ce service
+  const onServiceChange = (e) => {
+    const id = e.target.value
+    const nom = services.find((s) => String(s.id) === id)?.nom ?? ''
+    setServiceId(id)
+    setSearchEmploye('')
+    setForm((prev) => ({ ...prev, intitule: nom }))
+    setErrors((prev) => ({ ...prev, intitule: null, general: null }))
+  }
+
   const toggleEmploye = (id) => {
     setSelectedEmployes((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -78,8 +91,10 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
   }
 
   const toggleAll = () => {
+    const ids = filteredEmployes.map((e) => e.id)
+    const allChecked = ids.every((id) => selectedEmployes.includes(id))
     setSelectedEmployes((prev) =>
-      prev.length === employes.length ? [] : employes.map((e) => e.id)
+      allChecked ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])]
     )
   }
 
@@ -128,7 +143,16 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
     }
   }
 
-  const allSelected = employes.length > 0 && selectedEmployes.length === employes.length
+  const filteredEmployes = employes.filter((emp) => {
+    const q = searchEmploye.toLowerCase()
+    return (
+      emp.nom?.toLowerCase().includes(q) ||
+      emp.prenom?.toLowerCase().includes(q) ||
+      emp.matricule?.toLowerCase().includes(q)
+    )
+  })
+
+  const allSelected = filteredEmployes.length > 0 && filteredEmployes.every((e) => selectedEmployes.includes(e.id))
 
   return (
     <Modal
@@ -150,14 +174,24 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
               label: `${plan.titre ?? 'Plan'} - ${plan.annee ?? ''}`,
             }))}
           />
-          <FormField
-            label="Intitule"
-            name="intitule"
-            value={form.intitule}
-            onChange={onChange}
-            error={errors.intitule}
-            required
-          />
+
+          {/* Collaborateur = sélecteur de service qui pilote aussi l'intitulé */}
+          <div className="ff-field">
+            <label className="ff-label">Collaborateur</label>
+            <select
+              value={serviceId}
+              onChange={onServiceChange}
+              className={`ff-input${errors.intitule ? ' ff-has-error' : ''}`}
+              required
+            >
+              <option value="">— Choisir un service —</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>{s.nom}</option>
+              ))}
+            </select>
+            {errors.intitule && <span className="ff-error">{errors.intitule}</span>}
+          </div>
+
           <FormField
             label="Type"
             name="type"
@@ -219,26 +253,13 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
           />
         </div>
 
-        {/* ── Section inscription par service ── */}
-        <div className="formation-service-section">
-          <div className="formation-service-header">
-            <span className="formation-service-title">Inscrire des employes par service</span>
-            <span className="formation-service-hint">Optionnel</span>
-          </div>
-          <div className="formation-service-select-wrap">
-            <select
-              value={serviceId}
-              onChange={(e) => setServiceId(e.target.value)}
-              className="formation-service-select"
-            >
-              <option value="">— Choisir un service —</option>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>{s.nom}</option>
-              ))}
-            </select>
-          </div>
-
-          {serviceId && (
+        {/* ── Liste des employés du service sélectionné ── */}
+        {serviceId && (
+          <div className="formation-service-section">
+            <div className="formation-service-header">
+              <span className="formation-service-title">Inscrire des employes par service</span>
+              <span className="formation-service-hint">Optionnel</span>
+            </div>
             <div className="formation-employe-list">
               {loadingEmployes ? (
                 <div className="formation-employe-loading">Chargement...</div>
@@ -246,16 +267,25 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
                 <div className="formation-employe-empty">Aucun employe actif dans ce service</div>
               ) : (
                 <>
+                  <input
+                    type="text"
+                    className="formation-employe-search"
+                    placeholder="Rechercher par nom, prénom ou matricule..."
+                    value={searchEmploye}
+                    onChange={(e) => setSearchEmploye(e.target.value)}
+                  />
                   <label className="formation-employe-item formation-employe-all">
                     <input
                       type="checkbox"
                       checked={allSelected}
                       onChange={toggleAll}
                     />
-                    <span>Tout selectionner ({employes.length})</span>
+                    <span>Tout selectionner ({filteredEmployes.length})</span>
                   </label>
                   <div className="formation-employe-scroll">
-                    {employes.map((emp) => (
+                    {filteredEmployes.length === 0 ? (
+                      <div className="formation-employe-empty">Aucun résultat</div>
+                    ) : filteredEmployes.map((emp) => (
                       <label key={emp.id} className="formation-employe-item">
                         <input
                           type="checkbox"
@@ -277,8 +307,8 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
                 </>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {errors.general && <div className="formation-form-error">{errors.general}</div>}
 
