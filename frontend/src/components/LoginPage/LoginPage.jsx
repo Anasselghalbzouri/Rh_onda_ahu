@@ -37,16 +37,7 @@ export default function LoginPage({ onLogin }) {
     <main className="login-page">
       <section className="login-shell" aria-label="Connexion">
         <div className="login-card">
-          <div className="login-logo">
-            <div className="login-logo-mark" aria-hidden="true">RH</div>
-            <div className="login-logo-text">
-              <span className="login-logo-name">RH ONDA</span>
-              <span className="login-logo-sub">Aéroport AHU</span>
-            </div>
-          </div>
-
           <div className="login-heading">
-            <p>Portail RH</p>
             <h2>Connexion</h2>
           </div>
 

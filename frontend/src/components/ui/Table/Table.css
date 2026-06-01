@@ -1,5 +1,4 @@
-/* ── UI Table ───────────────────────────────────────────────── */
-.ui-table-wrapper {
+﻿.ui-table-wrapper {
   width: 100%;
   overflow-x: auto;
   border-radius: var(--radius-lg);

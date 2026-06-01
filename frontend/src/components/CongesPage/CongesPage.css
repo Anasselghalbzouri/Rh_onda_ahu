@@ -1,7 +1,5 @@
-/* ── Congés Page ───────────────────────────────────────────── */
 .conges-container { padding: 0; }
 
-/* ── Page header ───────────────────────────────────────────── */
 .conges-page-header {
   margin-bottom: var(--space-6);
 }
@@ -20,7 +18,6 @@
   margin: 0;
 }
 
-/* ── Toolbar ───────────────────────────────────────────────── */
 .conges-toolbar {
   display: flex;
   align-items: center;
@@ -121,7 +118,6 @@
   transform: translateY(-1px);
 }
 
-/* ── States ────────────────────────────────────────────────── */
 .conges-loading {
   text-align: center;
   color: var(--neutral-500);
@@ -129,7 +125,6 @@
   font-size: 14px;
 }
 
-/* ── Table wrapper ─────────────────────────────────────────── */
 .conges-table-wrapper {
   overflow-x: auto;
   border-radius: var(--radius-lg);
@@ -183,7 +178,6 @@
 .conges-solde      { color: var(--success); font-weight: 600; text-align: center; }
 .conges-ref        { font-size: 12px; color: var(--neutral-500); font-family: ui-monospace, monospace; }
 
-/* Type badges */
 .conges-type-badge {
   display: inline-flex;
   align-items: center;
@@ -248,7 +242,6 @@
 .conges-calendar-item.statut-approuve { border-left-color: var(--success); }
 .conges-calendar-item.statut-refuse { border-left-color: var(--danger); }
 
-/* ── Action buttons ────────────────────────────────────────── */
 .conges-actions { display: flex; gap: 6px; }
 
 .btn-edit,
@@ -274,7 +267,6 @@
 .btn-delete:hover { background: #FECACA; transform: scale(1.05); }
 .btn-file:hover   { background: #A7F3D0; transform: scale(1.05); }
 
-/* ── Pagination ────────────────────────────────────────────── */
 .conges-pagination {
   display: flex;
   align-items: center;
@@ -302,7 +294,6 @@
   border-color: var(--neutral-300);
 }
 
-/* ── Modal overlay ─────────────────────────────────────────── */
 .conges-overlay {
   position: fixed;
   inset: 0;
@@ -341,7 +332,6 @@
   margin-bottom: var(--space-2);
 }
 
-/* ── Form fields ───────────────────────────────────────────── */
 .conges-field {
   position: relative;
   display: flex;
@@ -380,7 +370,6 @@
   box-shadow: 0 0 0 3px rgba(13,139,255,0.1);
 }
 
-/* ── Section label ─────────────────────────────────────────── */
 .conges-section-label {
   font-size: 11px;
   font-weight: 600;
@@ -392,7 +381,6 @@
   border-bottom: 1px solid var(--neutral-200);
 }
 
-/* ── Autocomplete ──────────────────────────────────────────── */
 .conges-suggestions {
   position: absolute;
   top: calc(100% - 2px);
@@ -418,7 +406,6 @@
 .conges-suggestions li:hover { background: var(--neutral-100); }
 .emp-solde { color: var(--neutral-400); font-size: 12px; }
 
-/* ── File zone ─────────────────────────────────────────────── */
 .conges-file-zone {
   border: 2px dashed var(--neutral-300);
   border-radius: var(--radius-md);
@@ -483,11 +470,9 @@
 
 .conges-file-remove:hover { text-decoration: underline; }
 
-/* ── Errors ────────────────────────────────────────────────── */
 .field-error { font-size: 12px; color: var(--danger); }
 .mt-1        { margin-top: 4px; }
 
-/* ── Modal actions ─────────────────────────────────────────── */
 .conges-modal-actions {
   display: flex;
   justify-content: flex-end;

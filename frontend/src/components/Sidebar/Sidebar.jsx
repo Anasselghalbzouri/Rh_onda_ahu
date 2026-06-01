@@ -42,7 +42,7 @@ export default function Sidebar({ role }) {
   return (
     <nav className="sidebar" aria-label="Navigation principale">
       <div className="sidebar-brand">
-        <div className="sidebar-brand-logo" aria-hidden="true">RH</div>
+        <img src="/airports_morocco_logo.png" alt="Airports of Morocco" className="sidebar-brand-logo" />
         <div className="sidebar-brand-text">
           <span className="sidebar-brand-main">RH ONDA</span>
           <span className="sidebar-brand-sub">Aéroport AHU</span>

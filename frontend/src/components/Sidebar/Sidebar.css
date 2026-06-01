@@ -1,5 +1,4 @@
-/* ── Sidebar ────────────────────────────────────────────────── */
-.sidebar {
+﻿.sidebar {
   width: 240px;
   flex-shrink: 0;
   display: flex;
@@ -9,7 +8,6 @@
   padding: var(--space-6) var(--space-4);
 }
 
-/* ── Brand ─────────────────────────────────────────────────── */
 .sidebar-brand {
   display: flex;
   align-items: center;
@@ -20,17 +18,9 @@
 }
 
 .sidebar-brand-logo {
-  width: 36px;
-  height: 36px;
-  background: var(--primary);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: 0.5px;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
@@ -54,7 +44,6 @@
   letter-spacing: 0.8px;
 }
 
-/* ── Nav label ─────────────────────────────────────────────── */
 .sidebar-nav-label {
   font-size: 11px;
   font-weight: 600;
@@ -64,7 +53,6 @@
   padding: 0 var(--space-3) var(--space-2);
 }
 
-/* ── Menu ──────────────────────────────────────────────────── */
 .sidebar-menu {
   list-style: none;
   display: flex;
@@ -120,7 +108,6 @@
   color: var(--white);
 }
 
-/* ── Footer ────────────────────────────────────────────────── */
 .sidebar-footer {
   padding-top: var(--space-4);
   border-top: 1px solid var(--neutral-200);

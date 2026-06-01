@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('formation', function (Blueprint $table) {
-            // cours_id already exists in this DB — skip
+            // cours_id peut déjà exister si la migration a été jouée sur une base plus récente — on vérifie avant d'ajouter.
             if (!Schema::hasColumn('formation', 'cours_id')) {
                 $table->unsignedBigInteger('cours_id')->nullable()->after('plan_formation_id');
                 $table->foreign('cours_id')->references('id')->on('cours')->nullOnDelete();

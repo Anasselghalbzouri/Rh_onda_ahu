@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Laravel retourne 401 → token invalide ou expiré → redirect login
+// Si le serveur renvoie un 401, le token est expiré ou invalide — on nettoie et on redirige vers la connexion.
 api.interceptors.response.use(
   (response) => response,
   (error) => {

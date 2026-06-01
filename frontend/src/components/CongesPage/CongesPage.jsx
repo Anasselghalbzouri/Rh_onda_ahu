@@ -58,16 +58,14 @@ export default function CongesPage() {
   const [loading, setLoading]           = useState(false)
   const [viewMode, setViewMode]         = useState('table')
 
-  // Modal saisie (create / edit)
   const [modalOpen, setModalOpen]       = useState(false)
-  const [editTarget, setEditTarget]     = useState(null) // null = create, objet = edit
+  const [editTarget, setEditTarget]     = useState(null)
   const [form, setForm]                 = useState(EMPTY_FORM)
   const [formErrors, setFormErrors]     = useState({})
   const [saving, setSaving]             = useState(false)
   const [fichierFile, setFichierFile]   = useState(null)
   const fileInputRef                    = useRef(null)
 
-  // Autocomplete employé
   const [empSearch, setEmpSearch]       = useState('')
   const [empSuggestions, setEmpSuggestions] = useState([])
   const [selectedEmpSolde, setSelectedEmpSolde] = useState(null)
@@ -75,7 +73,6 @@ export default function CongesPage() {
   const [deleteError, setDeleteError] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
-  // ── Fetch ──────────────────────────────────────────────────
   const fetchConges = async (p = 1) => {
     setLoading(true)
     try {
@@ -94,7 +91,6 @@ export default function CongesPage() {
   useEffect(() => { setPage(1); fetchConges(1) }, [filterType, filterEmp, filterStatut])
   const handlePage = (p) => { setPage(p); fetchConges(p) }
 
-  // ── Recherche employé ──────────────────────────────────────
   const onEmpSearchChange = async (q) => {
     setEmpSearch(q)
     if (q.length < 2) { setEmpSuggestions([]); return }
@@ -123,7 +119,6 @@ export default function CongesPage() {
     setEmpSuggestions([])
   }
 
-  // ── Ouvrir modal ───────────────────────────────────────────
   const openCreate = () => {
     setEditTarget(null)
     setForm(EMPTY_FORM)
@@ -157,12 +152,11 @@ export default function CongesPage() {
     setModalOpen(true)
   }
 
-  // ── Champs formulaire ──────────────────────────────────────
   const onFormChange = (e) => {
     const { name, value } = e.target
     setForm((prev) => {
       const next = { ...prev, [name]: value }
-      // Pré-remplir nombre_jours automatiquement quand les dates changent
+      // Le nombre de jours est recalculé automatiquement à chaque modification des dates.
       if (name === 'date_debut' || name === 'date_fin') {
         const debut = name === 'date_debut' ? value : prev.date_debut
         const fin   = name === 'date_fin'   ? value : prev.date_fin
@@ -174,7 +168,6 @@ export default function CongesPage() {
     setFormErrors((f) => ({ ...f, [name]: null }))
   }
 
-  // ── Soumission ─────────────────────────────────────────────
   const onSubmit = async (e) => {
     e.preventDefault()
     setFormErrors({})
@@ -212,7 +205,6 @@ export default function CongesPage() {
     }
   }
 
-  // ── Supprimer ──────────────────────────────────────────────
   const handleDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
@@ -228,7 +220,6 @@ export default function CongesPage() {
     }
   }
 
-  // ── Télécharger fichier ────────────────────────────────────
   const downloadFichier = (id) => {
     const base = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '')
     window.open(`${base}/api/conges/${id}/fichier`, '_blank')
@@ -238,7 +229,6 @@ export default function CongesPage() {
   const remainingPreview = selectedEmpSolde == null ? null : Math.max(0, Number(selectedEmpSolde) - requestedDays)
   const calendarRows = conges.slice(0, 8)
 
-  // ── Rendu ──────────────────────────────────────────────────
   return (
     <div className="conges-container">
 
@@ -247,7 +237,6 @@ export default function CongesPage() {
         <h2 className="conges-title">Suivi des Congés</h2>
       </div>
 
-      {/* Toolbar */}
       <div className="conges-toolbar">
         <div className="conges-filters">
           <select className="conges-select" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
@@ -290,7 +279,6 @@ export default function CongesPage() {
         </button>
       </div>
 
-      {/* Table */}
       {loading ? (
         <p className="conges-loading">Chargement...</p>
       ) : (
@@ -384,7 +372,6 @@ export default function CongesPage() {
         </>
       )}
 
-      {/* MODAL SAISIE */}
       {modalOpen && (
         <div className="conges-overlay" onClick={() => setModalOpen(false)}>
           <div className="conges-modal" onClick={(e) => e.stopPropagation()}>
@@ -393,7 +380,6 @@ export default function CongesPage() {
             </h3>
             <form onSubmit={onSubmit}>
 
-              {/* Employé — seulement à la création */}
               {!editTarget && (
                 <div className="conges-field conges-field-full">
                   <label>Employé *</label>
@@ -420,7 +406,6 @@ export default function CongesPage() {
                 </div>
               )}
 
-              {/* Type + Dates */}
               <div className="conges-modal-grid">
                 <div className="conges-field">
                   <label>Type de congé *</label>
@@ -461,7 +446,6 @@ export default function CongesPage() {
                 </div>
               )}
 
-              {/* Références */}
               <div className="conges-section-label">Références</div>
               <div className="conges-modal-grid">
                 <div className="conges-field">
@@ -488,13 +472,11 @@ export default function CongesPage() {
                 </div>
               </div>
 
-              {/* Motif */}
               <div className="conges-field conges-field-full">
                 <label>Observation</label>
                 <textarea name="motif" value={form.motif} onChange={onFormChange} rows={2} placeholder="Remarque éventuelle..." />
               </div>
 
-              {/* Document physique */}
               <div className="conges-section-label">Document physique (dossier)</div>
               <div className="conges-field conges-field-full">
                 <label>Importer un document (PDF, Word, image — max 10 Mo)</label>

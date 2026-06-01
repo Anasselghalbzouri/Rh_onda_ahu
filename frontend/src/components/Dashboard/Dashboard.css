@@ -1,9 +1,7 @@
-/* ── Dashboard ─────────────────────────────────────────────── */
 .dash-container {
   max-width: 1200px;
 }
 
-/* ── Page header ───────────────────────────────────────────── */
 .dash-page-header {
   display: flex;
   align-items: flex-start;
@@ -62,7 +60,6 @@
 .dash-skeleton-card { height: 132px; }
 .dash-skeleton-chart { height: 270px; }
 
-/* ── States ────────────────────────────────────────────────── */
 .dash-loading {
   display: flex;
   align-items: center;
@@ -94,7 +91,6 @@
   font-size: 14px;
 }
 
-/* ── Section label ─────────────────────────────────────────── */
 .dash-section-title {
   font-size: 11px;
   font-weight: 600;
@@ -104,7 +100,6 @@
   margin: var(--space-6) 0 var(--space-4);
 }
 
-/* ── KPI Grid ──────────────────────────────────────────────── */
 .dash-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -275,7 +270,6 @@
   font-weight: 500;
 }
 
-/* ── Split KPI card (% H | % F) ────────────────────────────── */
 .dash-kpi-split {
   display: flex;
   align-items: stretch;
@@ -298,7 +292,6 @@
   flex-shrink: 0;
 }
 
-/* ── KPI 3-col variant ─────────────────────────────────────── */
 .dash-kpi-3col {
   grid-template-columns: repeat(3, 1fr);
 }
@@ -311,12 +304,10 @@
   .dash-kpi-3col { grid-template-columns: 1fr; }
 }
 
-/* ── Statut full-width card ────────────────────────────────── */
 .dash-statut-full {
   margin-bottom: var(--space-4);
 }
 
-/* ── Chart grids ───────────────────────────────────────────── */
 .dash-charts-grid {
   display: grid;
   gap: var(--space-4);
@@ -379,7 +370,6 @@
   font-size: 13px;
 }
 
-/* ── Sexe donut legend ─────────────────────────────────────── */
 .dash-sexe-wrap {
   display: flex;
   align-items: center;
@@ -412,7 +402,6 @@
 .dash-sexe-val  { font-weight: 700; color: var(--neutral-900); }
 .dash-sexe-pct  { color: var(--neutral-400); font-size: 12px; }
 
-/* ── Pyramide legend ───────────────────────────────────────── */
 .dash-pyramid-legend {
   display: flex;
   gap: var(--space-4);
@@ -422,7 +411,6 @@
   color: var(--neutral-600);
 }
 
-/* ── Tooltip ───────────────────────────────────────────────── */
 .dash-tooltip {
   background: var(--white);
   border: 1px solid var(--neutral-200);

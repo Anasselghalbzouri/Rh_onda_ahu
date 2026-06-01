@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreign('formation_id')->references('id')->on('formation')->cascadeOnDelete();
             $table->unsignedBigInteger('employe_id');
             $table->foreign('employe_id')->references('id')->on('employe')->cascadeOnDelete();
-            $table->string('statut', 20)->default('inscrit'); // inscrit | present | absent | certifie
+            $table->string('statut', 20)->default('inscrit');
             $table->timestamps();
 
             $table->unique(['formation_id', 'employe_id']);

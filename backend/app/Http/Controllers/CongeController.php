@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Storage;
 
 class CongeController extends Controller
 {
-    // GET /api/conges?employe_id=&type_conge=&statut=&page=
     public function index(Request $request): JsonResponse
     {
         $q = DemandeConge::with(['employe:id,matricule,nom,prenom,solde_conge'])
@@ -29,7 +28,6 @@ class CongeController extends Controller
         return response()->json($q->paginate(15));
     }
 
-    // GET /api/conges/{id}
     public function show(int $id): JsonResponse
     {
         $conge = DemandeConge::with([
@@ -39,7 +37,6 @@ class CongeController extends Controller
         return response()->json($conge);
     }
 
-    // POST /api/conges  — saisie directe d'un congé (multipart/form-data)
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -54,13 +51,13 @@ class CongeController extends Controller
             'fichier'      => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
         ]);
 
-        // Utiliser la valeur manuelle si fournie, sinon calculer
         if (empty($data['nombre_jours'])) {
             $data['nombre_jours'] = $this->countJours($data['date_debut'], $data['date_fin']);
         }
-        $data['statut']       = 'approuve'; // saisie directe = déjà validé
+        // Un congé saisi manuellement par le RH est considéré comme déjà approuvé.
+        $data['statut']       = 'approuve';
 
-        // Déduire du solde congé de l'employé
+        // Le solde de l'employé est décrémenté immédiatement à la saisie.
         $employe = Employe::findOrFail($data['employe_id']);
         $nouveau_solde = max(0, $employe->solde_conge - $data['nombre_jours']);
         $employe->update(['solde_conge' => $nouveau_solde]);
@@ -79,7 +76,6 @@ class CongeController extends Controller
         return response()->json($conge, 201);
     }
 
-    // PUT /api/conges/{id}
     public function update(Request $request, int $id): JsonResponse
     {
         $conge = DemandeConge::with('employe')->findOrFail($id);
@@ -95,11 +91,11 @@ class CongeController extends Controller
             'fichier'      => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
         ]);
 
-        // Recalcul du solde si dates ou nombre_jours changent
+        // Si les dates ou le nombre de jours sont modifiés, le solde est recalculé en fonction de la différence.
         $ancienJours = $conge->nombre_jours;
         if (isset($data['date_debut']) || isset($data['date_fin']) || isset($data['nombre_jours'])) {
             if (!empty($data['nombre_jours'])) {
-                // Valeur manuelle prioritaire
+                // La valeur saisie manuellement est prioritaire sur le calcul automatique.
             } else {
                 $debut = $data['date_debut'] ?? $conge->date_debut->format('Y-m-d');
                 $fin   = $data['date_fin']   ?? $conge->date_fin->format('Y-m-d');
@@ -128,12 +124,11 @@ class CongeController extends Controller
         return response()->json($conge->fresh('employe:id,matricule,nom,prenom,solde_conge'));
     }
 
-    // DELETE /api/conges/{id} — recrédite le solde
     public function destroy(int $id): JsonResponse
     {
         $conge = DemandeConge::with('employe')->findOrFail($id);
 
-        // Recréditer les jours au solde de l'employé
+        // La suppression d'un congé recrédite automatiquement les jours au solde de l'employé.
         $employe = $conge->employe;
         if ($employe) {
             $employe->update([
@@ -150,7 +145,6 @@ class CongeController extends Controller
         return response()->json(['message' => 'Congé supprimé, solde recrédité.']);
     }
 
-    // GET /api/conges/{id}/fichier
     public function downloadFichier(int $id): mixed
     {
         $conge = DemandeConge::findOrFail($id);

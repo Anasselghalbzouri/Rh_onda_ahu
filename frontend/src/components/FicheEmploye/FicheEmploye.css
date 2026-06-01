@@ -1,5 +1,4 @@
-/* ── Fiche Employé ─────────────────────────────────────────── */
-.fiche-container {
+﻿.fiche-container {
   max-width: 1100px;
 }
 
@@ -9,7 +8,6 @@
   color: var(--neutral-500);
 }
 
-/* ── Header bar ────────────────────────────────────────────── */
 .fiche-header {
   display: flex;
   align-items: center;
@@ -114,7 +112,6 @@
 
 .fiche-del-btn:hover { background: #FECACA; }
 
-/* ── Confirm box ───────────────────────────────────────────── */
 .fiche-confirm-modal {
   width: min(100%, 460px);
   background: var(--white);
@@ -258,7 +255,6 @@
   color: var(--white);
 }
 
-/* ── Sections ──────────────────────────────────────────────── */
 .fiche-section {
   background: var(--white);
   border: 1px solid var(--neutral-200);
@@ -283,7 +279,6 @@
   margin-bottom: var(--space-4);
 }
 
-/* ── Info grid ─────────────────────────────────────────────── */
 .fiche-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -332,7 +327,6 @@
   font-weight: 700;
 }
 
-/* ── Solde ─────────────────────────────────────────────────── */
 .fiche-solde-card {
   display: flex;
   align-items: baseline;
@@ -350,7 +344,6 @@
   color: var(--neutral-500);
 }
 
-/* ── Empty state ───────────────────────────────────────────── */
 .fiche-empty-state {
   padding: var(--space-3) var(--space-4);
   background: var(--neutral-50);
@@ -360,7 +353,6 @@
   font-size: 13px;
 }
 
-/* ── Table ─────────────────────────────────────────────────── */
 .fiche-table-wrap { overflow-x: auto; }
 
 .fiche-table {
@@ -415,7 +407,6 @@
   color: var(--secondary);
 }
 
-/* ── Formations sub-sections ───────────────────────────────── */
 .fiche-formation-sub-title {
   display: flex;
   align-items: center;
@@ -447,7 +438,6 @@
   font-size: 13px;
 }
 
-/* ── Planifiées grid ───────────────────────────────────────── */
 .fiche-planifiees-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -513,7 +503,6 @@
   color: var(--neutral-600);
 }
 
-/* ── Formation name badge ──────────────────────────────────── */
 .fiche-formation-name-badge {
   display: inline-flex;
   align-items: center;
@@ -579,7 +568,6 @@
   font-size: 12px;
 }
 
-/* ── Actions ───────────────────────────────────────────────── */
 .fiche-actions {
   display: flex;
   gap: var(--space-2);
@@ -616,7 +604,6 @@
 
 .fiche-delete-btn:hover { background: #FECACA; }
 
-/* ── Upload form ───────────────────────────────────────────── */
 .fiche-upload-form {
   margin-top: var(--space-4);
   padding-top: var(--space-4);
@@ -717,7 +704,6 @@
 .fiche-file-name { font-weight: 600; }
 .fiche-file-meta { font-size: 12px; color: var(--neutral-400); }
 
-/* ── Modal ─────────────────────────────────────────────────── */
 .fiche-overlay {
   position: fixed;
   inset: 0;

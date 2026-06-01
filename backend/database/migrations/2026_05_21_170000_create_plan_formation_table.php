@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('titre', 200);
             $table->text('description')->nullable();
             $table->decimal('budget_total', 12, 2)->nullable();
-            $table->string('statut', 20)->default('draft'); // draft | valide | clos
+            $table->string('statut', 20)->default('draft');
             $table->timestamps();
         });
     }

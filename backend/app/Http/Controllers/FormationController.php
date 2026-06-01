@@ -11,8 +11,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FormationController extends Controller
 {
-    // ── CRUD Formation ──────────────────────────────────────────────────────
-
     public function index(Request $request): JsonResponse
     {
         $query = Formation::with('planFormation:id,titre,annee')->withCount('employes');
@@ -59,7 +57,6 @@ class FormationController extends Controller
             'date_fin'          => 'required|date|after_or_equal:date_debut',
             'lieu'         => 'nullable|string|max:200',
             'niveau'       => 'nullable|string',
-            // 'mois_prevu'   => 'nullable|integer|between:1,12',
             'observations' => 'nullable|string',
         ]);
 
@@ -97,8 +94,6 @@ class FormationController extends Controller
 
         return response()->json(null, 204);
     }
-
-    // ── Inscriptions ────────────────────────────────────────────────────────
 
     public function inscrire(Request $request, int $id): JsonResponse
     {

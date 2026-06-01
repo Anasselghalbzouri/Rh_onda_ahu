@@ -1,4 +1,4 @@
-.formations-container {
+﻿.formations-container {
   max-width: 1200px;
 }
 
@@ -522,7 +522,6 @@
   font-weight: 700;
 }
 
-/* ── Section inscription par service ── */
 .formation-service-section {
   display: flex;
   flex-direction: column;

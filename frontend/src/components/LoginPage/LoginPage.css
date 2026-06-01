@@ -1,13 +1,27 @@
-/* ── Login Page ─────────────────────────────────────────────── */
-.login-page {
+﻿.login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-4);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/back_onda.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
 }
 
 .login-shell {
+  position: relative;
+  z-index: 1;
   width: 100%;
   display: flex;
   align-items: center;
@@ -16,15 +30,16 @@
 
 .login-card {
   width: min(100%, 440px);
-  background: var(--white);
-  border: 1px solid var(--neutral-200);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   padding: var(--space-8);
   animation: scaleIn 250ms ease-out;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
-/* ── Brand mark ────────────────────────────────────────────── */
 .login-logo {
   display: flex;
   align-items: center;
@@ -33,17 +48,9 @@
 }
 
 .login-logo-mark {
-  width: 44px;
-  height: 44px;
-  background: var(--primary);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: 0.5px;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
 }
 
 .login-logo-text {
@@ -54,19 +61,18 @@
 .login-logo-name {
   font-size: 16px;
   font-weight: 700;
-  color: var(--neutral-900);
+  color: #ffffff;
   line-height: 1.2;
 }
 
 .login-logo-sub {
   font-size: 11px;
   font-weight: 500;
-  color: var(--neutral-500);
+  color: rgba(255, 255, 255, 0.75);
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
 
-/* ── Heading ───────────────────────────────────────────────── */
 .login-heading {
   margin-bottom: var(--space-6);
 }
@@ -74,7 +80,7 @@
 .login-heading p {
   font-size: 12px;
   font-weight: 600;
-  color: var(--secondary);
+  color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   margin-bottom: 6px;
@@ -83,12 +89,11 @@
 .login-heading h2 {
   font-size: 28px;
   font-weight: 700;
-  color: var(--neutral-900);
+  color: #ffffff;
   margin: 0;
   line-height: 1.2;
 }
 
-/* ── Form ──────────────────────────────────────────────────── */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -104,32 +109,33 @@
 .form-field label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--neutral-700);
+  color: #ffffff;
 }
 
 .form-field input {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid var(--neutral-300);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--radius-md);
-  background: var(--neutral-50);
-  color: var(--neutral-900);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #ffffff;
   font-size: 14px;
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
   outline: none;
 }
 
 .form-field input:focus {
-  border-color: var(--secondary);
-  background: var(--white);
-  box-shadow: 0 0 0 3px rgba(13, 139, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
 }
 
 .form-field input::placeholder {
-  color: var(--neutral-400);
+  color: rgba(255, 255, 255, 0.55);
 }
 
-/* ── Password row ──────────────────────────────────────────── */
 .password-field {
   display: flex;
   gap: var(--space-2);
@@ -143,10 +149,12 @@
 
 .ghost-button {
   padding: 0 14px;
-  border: 1px solid var(--neutral-300);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--radius-md);
-  background: var(--white);
-  color: var(--neutral-700);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #ffffff;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -155,11 +163,10 @@
 }
 
 .ghost-button:hover {
-  background: var(--neutral-100);
-  border-color: var(--neutral-400);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.65);
 }
 
-/* ── Error ─────────────────────────────────────────────────── */
 .login-error {
   display: flex;
   align-items: flex-start;
@@ -173,16 +180,17 @@
   line-height: 1.45;
 }
 
-/* ── Submit ────────────────────────────────────────────────── */
 .submit-button {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   padding: 12px var(--space-6);
-  background: var(--primary);
-  color: var(--white);
-  border: none;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
@@ -192,9 +200,9 @@
 }
 
 .submit-button:hover:not(:disabled) {
-  background: var(--primary-light);
+  background: rgba(255, 255, 255, 0.35);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(30, 58, 95, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .submit-button:active:not(:disabled) {
@@ -202,11 +210,10 @@
 }
 
 .submit-button:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* ── Spinner ───────────────────────────────────────────────── */
 .spinner {
   width: 16px;
   height: 16px;

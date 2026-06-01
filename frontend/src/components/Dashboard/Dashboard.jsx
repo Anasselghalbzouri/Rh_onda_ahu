@@ -7,8 +7,7 @@ import {
   AreaChart, Area, ReferenceLine,
 } from 'recharts'
 import {
-  AlertTriangle, ArrowRight, CalendarCheck, FileWarning,
-  Users, GraduationCap, UserCheck, Percent, Calendar,
+  Users, GraduationCap, UserCheck, Percent, Calendar, CalendarCheck,
 } from 'lucide-react'
 import api from '../../api'
 import './Dashboard.css'
@@ -103,8 +102,6 @@ export default function Dashboard() {
   )
   if (error) return <div className="dash-error">{error}</div>
 
-  /* ── Data transforms ─────────────────────────────────── */
-
   const sexeData = (stats.par_sexe || []).map(r => ({
     name: r.sexe === 'M' ? 'Hommes' : r.sexe === 'F' ? 'Femmes' : r.sexe,
     value: r.total,
@@ -128,7 +125,7 @@ export default function Dashboard() {
     name: TYPE_LABELS[r.type] ?? r.type, total: r.total, fill: TYPE_COLORS[r.type] ?? '#94A3B8',
   }))
 
-  // Pyramide des âges — hommes as negative (butterfly chart)
+  // Pour le graphique en papillon, les hommes sont représentés en valeur négative sur l'axe X.
   const pyramideData = [...pyramideAges].reverse().map(r => ({
     tranche: r.tranche,
     hommes:  -r.hommes,
@@ -145,34 +142,11 @@ export default function Dashboard() {
     name: r.service, total: r.total, fill: PALETTE[i % PALETTE.length],
   }))
 
-  const lowBalance = Math.max(0, Math.round((stats.total_employes ?? 0) * 0.08))
-  const periodLabel = { today: "Aujourd'hui", week: 'Cette semaine', month: 'Ce mois', year: 'Cette année' }[period]
 
-  const urgentActions = [
-    {
-      title: 'Congés à suivre',
-      detail: `${stats.conges_en_cours ?? 0} congés actifs aujourd'hui`,
-      value: stats.conges_en_cours ?? 0,
-      icon: CalendarCheck, color: 'success', path: '/conges',
-    },
-    {
-      title: 'Soldes faibles',
-      detail: `Solde moyen actuel : ${stats.solde_moyen ?? 0} jours`,
-      value: lowBalance,
-      icon: AlertTriangle, color: 'warning', path: '/personnel',
-    },
-    {
-      title: 'Dossiers à compléter',
-      detail: 'Contrôler les pièces jointes et statuts dossier',
-      value: stats.total_employes ?? 0,
-      icon: FileWarning, color: 'info', path: '/personnel',
-    },
-  ]
 
   return (
     <div className="dash-container">
 
-      {/* ── Header ── */}
       <div className="dash-page-header">
         <div>
           <p className="dash-page-subtitle">Piloter et suivre les ressources humaines</p>
@@ -192,10 +166,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ══ SECTION 1 — EFFECTIF & RÉPARTITION ══ */}
+     
       <div className="dash-section-title">Effectif &amp; Répartition</div>
       <div className="dash-kpi-grid">
-        {/* Effectif total */}
+       
         <button type="button" className="dash-kpi-card" onClick={() => navigate('/personnel')}>
           <div className="dash-kpi-top">
             <span className="dash-kpi-label">Effectif total</span>
@@ -205,8 +179,6 @@ export default function Dashboard() {
           </div>
           <div className="dash-kpi-value" style={{ color: '#0D8BFF' }}>{stats.total_employes}</div>
         </button>
-
-        {/* Carte combinée Hommes | Femmes */}
         <button type="button" className="dash-kpi-card dash-kpi-split" onClick={() => navigate('/personnel')}>
           <div className="dash-kpi-split-side">
             <div className="dash-kpi-top">
@@ -229,7 +201,6 @@ export default function Dashboard() {
           </div>
         </button>
 
-        {/* Carte combinée % Hommes | % Femmes */}
         <button type="button" className="dash-kpi-card dash-kpi-split" onClick={() => navigate('/personnel')}>
           <div className="dash-kpi-split-side">
             <div className="dash-kpi-top">
@@ -243,7 +214,7 @@ export default function Dashboard() {
           <div className="dash-kpi-split-divider" />
           <div className="dash-kpi-split-side">
             <div className="dash-kpi-top">
-              <span className="dash-kpi-label">% Femmes</span>
+              <span className="dash-kpi-label">% Femmes </span>
               <div className="dash-kpi-icon" style={{ background: 'rgba(236,72,153,0.1)' }} aria-hidden="true">
                 <Percent size={18} color="#EC4899" />
               </div>
@@ -252,7 +223,6 @@ export default function Dashboard() {
           </div>
         </button>
 
-        {/* Âge moyen */}
         <button type="button" className="dash-kpi-card" onClick={() => navigate('/personnel')}>
           <div className="dash-kpi-top">
             <span className="dash-kpi-label">Âge moyen</span>
@@ -311,7 +281,6 @@ export default function Dashboard() {
       </div>
 
       <div className="dash-charts-grid dash-charts-2col">
-        {/* Pyramide des âges */}
         <div className="dash-chart-card">
           <div className="dash-chart-title">Pyramide des âges</div>
           <div className="dash-pyramid-legend">
@@ -340,7 +309,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Courbe d'ancienneté */}
         <div className="dash-chart-card">
           <div className="dash-chart-title">Ancienneté moyenne — distribution</div>
           {anciennete.length === 0 ? <EmptyState /> : (
@@ -369,7 +337,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ══ SECTION 2 — FORMATIONS ══ */}
       <div className="dash-section-title">Formations</div>
       <div className="dash-kpi-grid dash-kpi-3col">
         {[
@@ -426,7 +393,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ══ SECTION 3 — PROFIL DU PERSONNEL ══ */}
       <div className="dash-section-title">Profil du Personnel</div>
       <div className="dash-chart-card dash-statut-full">
         <div className="dash-chart-title">Répartition par statut</div>
@@ -477,7 +443,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ══ SECTION 4 — CONGÉS ══ */}
       <div className="dash-section-title">Congés</div>
       <div className="dash-kpi-grid dash-kpi-3col">
         {[
@@ -539,33 +504,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ══ SECTION 5 — ACTIONS RH ══ */}
-      <div className="dash-section-title">Actions RH</div>
-      <div className="dash-actions-card">
-        <div className="dash-actions-header">
-          <div>
-            <div className="dash-chart-title">Priorités opérationnelles</div>
-            <p>Issues des données disponibles.</p>
-          </div>
-          <span>{periodLabel}</span>
-        </div>
-        <div className="dash-action-list">
-          {urgentActions.map((item) => {
-            const Icon = item.icon
-            return (
-              <button key={item.title} type="button" onClick={() => navigate(item.path)} className={`dash-action-item dash-action-${item.color}`}>
-                <span className="dash-action-icon"><Icon size={18} aria-hidden="true" /></span>
-                <span className="dash-action-copy">
-                  <strong>{item.title}</strong>
-                  <small>{item.detail}</small>
-                </span>
-                <span className="dash-action-value">{item.value}</span>
-                <ArrowRight size={16} aria-hidden="true" />
-              </button>
-            )
-          })}
-        </div>
-      </div>
 
 
     </div>

@@ -294,7 +294,6 @@ const [createOpen, setCreateOpen] = useState(false)
         </>
       )}
 
-      {/* MODAL CRÉER EMPLOYÉ */}
       {createOpen && (
         <div className="liste-overlay" onClick={() => setCreateOpen(false)}>
           <div className="liste-modal" onClick={(e) => e.stopPropagation()}>

@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreign('formation_id')->references('id')->on('formation')->cascadeOnDelete();
             $table->unsignedBigInteger('employe_id');
             $table->foreign('employe_id')->references('id')->on('employe')->cascadeOnDelete();
-            $table->unsignedTinyInteger('note')->nullable(); // 1–5
+            $table->unsignedTinyInteger('note')->nullable();
             $table->text('commentaire')->nullable();
             $table->date('date_evaluation');
             $table->timestamps();

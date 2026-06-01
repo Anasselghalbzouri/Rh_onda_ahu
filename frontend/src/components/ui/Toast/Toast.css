@@ -1,5 +1,4 @@
-/* ── Toast ──────────────────────────────────────────────────── */
-.toast {
+﻿.toast {
   position: fixed;
   bottom: var(--space-6);
   right: var(--space-6);

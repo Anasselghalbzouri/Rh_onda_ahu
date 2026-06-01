@@ -1,3 +1,4 @@
+# Claude / outils internes
 /.claude
 /CLAUDE.md
 /AGENTS.md
@@ -5,3 +6,37 @@
 /PLAN_URGENCE_2026-05-14.md
 /frontend/AGENTS.md
 *.stackdump
+
+# Documents internes (planning, rapports PFE)
+/ANALYSE_PROJET_RH_ONDA.md
+/ARCHITECTURE_MVC_RH_ONDA.md
+/BigDay.md
+/SPRINT_1_REVIEW.md
+/SPRINT_3_PLANNING.md
+/RH_ONDA_UI_UX_Specification.md
+/*.docx
+/rapport_pff_web_full_stack.docx
+
+# Scripts de génération locale
+/generate_rapport.py
+/generate_rapport_v2.py
+/capture_screens.py
+
+# Anciennes captures (remplacées par cap_*.png)
+/screen_*.jpg
+/screens/
+
+# Logo dupliqué à la racine
+/logo.webp
+
+# Dépendances Node racine (pas utilisées)
+/node_modules/
+/package.json
+/package-lock.json
+
+# UML
+/diagrammes_UML_RH_AHU.pdf
+/uml_screens/
+
+# Fichier batch Windows
+/start_servers.bat

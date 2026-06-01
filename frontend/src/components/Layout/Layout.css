@@ -1,9 +1,9 @@
-/* ── Layout Shell ──────────────────────────────────────────── */
-.layout-root {
+﻿.layout-root {
   display: flex;
   width: 100%;
   min-height: 100vh;
   padding: var(--space-4);
+  background: linear-gradient(160deg, #87ceeb 0%, #2176c7 28%, #0d2f5e 55%, #f97316 80%, #ffffff 100%);
 }
 
 .layout-shell {
@@ -17,7 +17,6 @@
   width: 100%;
 }
 
-/* ── Main area ─────────────────────────────────────────────── */
 .layout-main {
   display: flex;
   flex-direction: column;
@@ -26,7 +25,6 @@
   min-width: 0;
 }
 
-/* ── Top header ────────────────────────────────────────────── */
 .layout-header {
   display: flex;
   align-items: center;
@@ -168,7 +166,6 @@
   line-height: 17px;
 }
 
-/* ── Notification dropdown panel ───────────────────────────── */
 .layout-notif-panel {
   position: absolute;
   top: calc(100% + 10px);
@@ -328,7 +325,6 @@
   color: var(--danger);
 }
 
-/* ── Content area ──────────────────────────────────────────── */
 .layout-content {
   flex: 1;
   overflow-y: auto;

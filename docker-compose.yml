@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+
+  # ── MySQL 8.0 ─────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: rh_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: rh_onda_ahu
+      MYSQL_USER: rh_user
+      MYSQL_PASSWORD: rh_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"   # Excel VBA se connecte ici
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend Laravel ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rh_backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      APP_NAME: "RH Onda AHU"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: http://localhost
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: rh_onda_ahu
+      DB_USERNAME: rh_user
+      DB_PASSWORD: rh_pass
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      FILESYSTEM_DISK: local
+    volumes:
+      - storage_data:/var/www/html/storage/app
+      - logs_data:/var/www/html/storage/logs
+    expose:
+      - "9000"
+
+  # ── Frontend React ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rh_frontend
+    restart: always
+    expose:
+      - "80"
+
+  # ── Nginx ─────────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: rh_nginx
+    restart: always
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+volumes:
+  mysql_data:
+  storage_data:
+  logs_data:

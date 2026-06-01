@@ -29,13 +29,11 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
   const [selectedEmployes, setSelectedEmployes] = useState([])
   const [searchEmploye, setSearchEmploye] = useState('')
 
-  // Charger les services une seule fois à l'ouverture
   useEffect(() => {
     if (!isOpen) return
     api.get('/services').then(({ data }) => setServices(data)).catch(() => {})
   }, [isOpen])
 
-  // Réinitialiser le formulaire à chaque ouverture
   useEffect(() => {
     if (!isOpen) return
     setForm({
@@ -54,7 +52,6 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
     setSelectedEmployes([])
   }, [formation, isOpen])
 
-  // Charger les employés du service sélectionné
   useEffect(() => {
     if (!serviceId) { setEmployes([]); setSelectedEmployes([]); return }
     setLoadingEmployes(true)
@@ -72,9 +69,7 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
     setErrors((prev) => ({ ...prev, [name]: null, general: null }))
   }
 
-  // Quand on choisit un service dans le champ Collaborateur :
-  // - met à jour l'intitulé avec le nom du service
-  // - charge les employés de ce service
+  // Choisir un service pré-remplit l'intitulé de la formation avec le nom du service et charge la liste de ses employés.
   const onServiceChange = (e) => {
     const id = e.target.value
     const nom = services.find((s) => String(s.id) === id)?.nom ?? ''
@@ -117,7 +112,6 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
         : api.post('/formations', payload)
       const { data } = await request
 
-      // Inscrire les employés sélectionnés
       if (selectedEmployes.length > 0) {
         await Promise.all(
           selectedEmployes.map((eid) =>
@@ -175,7 +169,6 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
             }))}
           />
 
-          {/* Collaborateur = sélecteur de service qui pilote aussi l'intitulé */}
           <div className="ff-field">
             <label className="ff-label">Collaborateur</label>
             <select
@@ -253,7 +246,6 @@ export default function FormationFormModal({ isOpen, onClose, onSaved, formation
           />
         </div>
 
-        {/* ── Liste des employés du service sélectionné ── */}
         {serviceId && (
           <div className="formation-service-section">
             <div className="formation-service-header">

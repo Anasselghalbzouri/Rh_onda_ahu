@@ -16,13 +16,13 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('employe_id');
             $table->unsignedBigInteger('rh_id')->nullable();
-            $table->string('type_conge', 50);          // annuel, maladie, maternite, sans_solde, exceptionnel
+            $table->string('type_conge', 50);
             $table->date('date_debut');
             $table->date('date_fin');
             $table->unsignedSmallInteger('nombre_jours');
             $table->float('solde_restant')->nullable();
             $table->text('motif')->nullable();
-            $table->string('statut', 20)->default('en_attente'); // en_attente, approuve, refuse
+            $table->string('statut', 20)->default('en_attente');
             $table->date('date_decision')->nullable();
             $table->text('commentaire_rh')->nullable();
             $table->timestamps();

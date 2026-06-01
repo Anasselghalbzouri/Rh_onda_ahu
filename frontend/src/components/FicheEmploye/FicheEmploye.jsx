@@ -253,7 +253,6 @@ export default function FicheEmploye({ id, onRetour }) {
   return (
     <div className="fiche-container">
 
-      {/* HEADER */}
       <div className="fiche-header">
         <button className="fiche-retour-btn" onClick={onRetour}>← Retour</button>
         <div className="fiche-header-info">
@@ -444,7 +443,6 @@ export default function FicheEmploye({ id, onRetour }) {
             const passees    = formationsEmploye.filter(f => new Date(f.date_debut) <= today)
             return (
               <>
-                {/* ── Formations planifiées ── */}
                 <div className="fiche-formation-sub-title">
                   Formations planifiées
                   <span className="fiche-formation-sub-count">{planifiees.length}</span>
@@ -479,7 +477,6 @@ export default function FicheEmploye({ id, onRetour }) {
                   </div>
                 )}
 
-                {/* ── Historique formations ── */}
                 <div className="fiche-formation-sub-title" style={{ marginTop: '20px' }}>
                   Historique
                   <span className="fiche-formation-sub-count">{passees.length}</span>
@@ -750,7 +747,6 @@ export default function FicheEmploye({ id, onRetour }) {
         </Section>
       )}
 
-      {/* MODAL MODIFIER */}
       {editOpen && (
         <div className="fiche-overlay" onClick={() => setEditOpen(false)}>
           <div className="fiche-modal" onClick={(e) => e.stopPropagation()}>

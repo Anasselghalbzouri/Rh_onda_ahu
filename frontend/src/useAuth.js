@@ -17,7 +17,7 @@ export function useAuth() {
     try {
       await api.post('/logout')
     } catch {
-      // Local logout should still complete if the server session already expired.
+      // La déconnexion locale doit quand même s'exécuter si la session serveur est déjà expirée.
     }
     localStorage.removeItem('token')
     localStorage.removeItem('user')

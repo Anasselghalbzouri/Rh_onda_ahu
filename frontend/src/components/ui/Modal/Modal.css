@@ -1,5 +1,4 @@
-/* ── Modal ──────────────────────────────────────────────────── */
-.modal-overlay {
+﻿.modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(17, 24, 39, 0.5);

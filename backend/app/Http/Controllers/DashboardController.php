@@ -22,8 +22,7 @@ class DashboardController extends Controller
             default => [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()],
         };
 
-        // ── KPIs ──
-        $totalEmployes = Employe::where('statut','!=','retraite')->count();
+        $totalEmployes = Employe::where('statut', 'actif')->count();
         $congesEnCours = DemandeConge::where('date_debut', '<=', $fin)
             ->where('date_fin', '>=', $debut)->count();
         $congesCeMois  = DemandeConge::where('date_debut', '<=', $fin)
@@ -34,12 +33,10 @@ class DashboardController extends Controller
             ->selectRaw('AVG(TIMESTAMPDIFF(YEAR, date_naissance, CURDATE())) as age_moyen')
             ->value('age_moyen'), 1);
 
-        // ── Congés par type ──
         $parType = DemandeConge::select('type_conge', DB::raw('COUNT(*) as total'))
             ->groupBy('type_conge')->orderByDesc('total')->get()
             ->map(fn($r) => ['type' => $r->type_conge, 'total' => $r->total]);
 
-        // ── Tendance 6 mois ──
         $tendance = collect();
         for ($i = 5; $i >= 0; $i--) {
             $m     = now()->subMonths($i);
@@ -52,25 +49,22 @@ class DashboardController extends Controller
             ]);
         }
 
-        // ── Répartition par sexe ──
         $parSexe = Employe::select('sexe', DB::raw('COUNT(*) as total'))
+            ->where('statut', 'actif')
             ->whereNotNull('sexe')
             ->groupBy('sexe')->get()
             ->map(fn($r) => ['sexe' => strtoupper($r->sexe), 'total' => $r->total]);
 
-        // ── Répartition par statut ──
         $parStatut = Employe::select('statut', DB::raw('COUNT(*) as total'))
             ->whereNotNull('statut')
             ->groupBy('statut')->orderByDesc('total')->get()
             ->map(fn($r) => ['statut' => $r->statut, 'total' => $r->total]);
 
-        // ── Top 8 fonctions ──
         $parFonction = Employe::select('fonction', DB::raw('COUNT(*) as total'))
             ->whereNotNull('fonction')->where('fonction', '!=', '')
             ->groupBy('fonction')->orderByDesc('total')->limit(8)->get()
             ->map(fn($r) => ['fonction' => $r->fonction, 'total' => $r->total]);
 
-        // ── Top 8 services ──
         $parService = Employe::select('service.nom as service', DB::raw('COUNT(employe.id) as total'))
             ->join('service', 'employe.service_id', '=', 'service.id')
             ->groupBy('service.id', 'service.nom')
