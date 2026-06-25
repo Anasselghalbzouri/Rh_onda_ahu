@@ -40,3 +40,8 @@
 
 # Fichier batch Windows
 /start_servers.bat
+
+# Données sensibles employés (RH)
+/vba/Classeur1.xlsx
+/vba/RH_Formations_ONDA.xlsx
+backend/database/*.sqlite
