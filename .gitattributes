@@ -1,0 +1,5 @@
+# Les scripts shell exécutés dans les conteneurs Linux doivent garder des fins
+# de ligne LF, même clonés/édités sous Windows (sinon l'entrypoint échoue avec
+# "exec: no such file or directory").
+*.sh text eol=lf
+docker/backend-entrypoint.sh text eol=lf

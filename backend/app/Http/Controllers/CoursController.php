@@ -50,4 +50,37 @@ class CoursController extends Controller
 
         return response()->json(null, 204);
     }
+
+    public function bulkSync(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'cours'                    => 'required|array|min:1',
+            'cours.*.theme'            => 'required|string|max:255',
+            'cours.*.description'      => 'nullable|string',
+            'cours.*.duree_jours'      => 'nullable|integer|min:1|max:365',
+        ]);
+
+        $created = 0;
+        $updated = 0;
+        $results = [];
+
+        foreach ($data['cours'] as $row) {
+            $fields = array_intersect_key($row, array_flip(['description', 'duree_jours']));
+
+            $cours = Cours::updateOrCreate(
+                ['theme' => $row['theme']],
+                $fields
+            );
+
+            $cours->wasRecentlyCreated ? $created++ : $updated++;
+            $results[] = ['theme' => $row['theme'], 'status' => $cours->wasRecentlyCreated ? 'created' : 'updated'];
+        }
+
+        return response()->json([
+            'total'   => count($data['cours']),
+            'created' => $created,
+            'updated' => $updated,
+            'results' => $results,
+        ]);
+    }
 }

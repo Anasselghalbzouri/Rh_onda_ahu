@@ -122,30 +122,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-.liste-advanced {
-  display: flex;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-  padding: var(--space-4);
-  border: 1px solid var(--neutral-200);
-  border-radius: var(--radius-lg);
-  background: var(--neutral-50);
-}
-
-.liste-advanced > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.liste-advanced-label {
-  color: var(--neutral-500);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .liste-filter-chips {
   display: flex;
   flex-wrap: wrap;
@@ -444,9 +420,6 @@
   .liste-density {
     width: 100%;
     justify-content: center;
-  }
-  .liste-advanced {
-    flex-direction: column;
   }
   .liste-pagination {
     flex-direction: column;

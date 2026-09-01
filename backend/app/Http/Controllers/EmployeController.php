@@ -2,13 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\EmployeExport;
 use App\Models\Employe;
+use App\Models\Notification;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeController extends Controller
 {
     public function index(Request $request): JsonResponse
+    {
+        $perPage  = min((int) $request->query('per_page', 15), 200);
+        $employes = $this->filtered($request)->paginate($perPage);
+
+        return response()->json($employes);
+    }
+
+    /**
+     * Export Excel des employés — applique les mêmes filtres que la liste
+     * (recherche / statut / service) pour coller à ce que l'utilisateur voit.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $employes = $this->filtered($request)->get();
+
+        return (new EmployeExport($employes))->download();
+    }
+
+    /** Construit la requête filtrée partagée par index() et export(). */
+    private function filtered(Request $request): Builder
     {
         $query = Employe::with('service');
 
@@ -29,10 +53,7 @@ class EmployeController extends Controller
             $query->where('service_id', $serviceId);
         }
 
-        $perPage  = min((int) $request->query('per_page', 15), 200);
-        $employes = $query->orderBy('nom')->paginate($perPage);
-
-        return response()->json($employes);
+        return $query->orderBy('nom');
     }
 
     public function show(string $id): JsonResponse
@@ -146,7 +167,8 @@ class EmployeController extends Controller
 
         $results  = [];
         $created  = 0;
-        $updated  = 0;
+        $modified = 0;
+        $unchanged = 0;
 
         $syncFields = [
             'nom', 'prenom', 'sexe', 'date_naissance', 'date_embauche',
@@ -157,7 +179,7 @@ class EmployeController extends Controller
 
         foreach ($data['employes'] as $row) {
             $fields = array_intersect_key($row, array_flip($syncFields));
-            
+
             $fields['solde_conge'] = $fields['solde_conge'] ?? 0;
             $fields['statut']      = $fields['statut'] ?? 'actif';
 
@@ -166,18 +188,34 @@ class EmployeController extends Controller
                 $fields
             );
 
-            $status = $employe->wasRecentlyCreated ? 'created' : 'updated';
-            $employe->wasRecentlyCreated ? $created++ : $updated++;
+            // wasChanged() ne compte que les vraies modifications de champs :
+            // un ré-enregistrement Excel sans changement de données n'est pas
+            // compté (voir Notification::recordExcelSync).
+            if ($employe->wasRecentlyCreated) {
+                $status = 'created';
+                $created++;
+            } elseif ($employe->wasChanged()) {
+                $status = 'modified';
+                $modified++;
+            } else {
+                $status = 'unchanged';
+                $unchanged++;
+            }
 
             $results[] = ['matricule' => $row['matricule'], 'status' => $status];
         }
 
+        // Notification uniquement s'il y a eu un vrai changement.
+        Notification::recordExcelSync($created, $modified, 'bulk-sync');
+
         return response()->json([
-            'total'   => count($data['employes']),
-            'created' => $created,
-            'updated' => $updated,
-            'errors'  => 0,
-            'results' => $results,
+            'total'     => count($data['employes']),
+            'created'   => $created,
+            'updated'   => $modified,   // rétro-compatibilité : "updated" = modifiés réels
+            'modified'  => $modified,
+            'unchanged' => $unchanged,
+            'errors'    => 0,
+            'results'   => $results,
         ]);
     }
 }

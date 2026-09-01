@@ -1,3 +1,6 @@
+# Env racine pour docker-compose (contient APP_KEY — ne pas committer)
+/.env
+
 # Claude / outils internes
 /.claude
 /CLAUDE.md
@@ -44,4 +47,30 @@
 # Données sensibles employés (RH)
 /vba/Classeur1.xlsx
 /vba/RH_Formations_ONDA.xlsx
+/modele_import_employes.xlsx
+/modele_import_employes_export.xlsx
+/~$modele_import_employes.xlsx
+/Tableau de Suivi de Formation siège.xlsx
+/PS09_Rapport d'activité  Tremistriel _ 2025.xlsx
+/vba/__pycache__/
 backend/database/*.sqlite
+
+# Sauvegardes automatiques de la base (contiennent des donnees employes reelles)
+/sauvegardes/
+
+# Version portable (sans Docker) : runtime PHP telecharge + dossier livrable
+/tools/
+/livraison-portable/
+
+# Watcher de synchronisation automatique (secrets + journaux + sauvegardes)
+/vba/watch_config.ini
+/vba/watch.log
+/vba/.rh_sync_state.json
+/*.backup-*.xlsx
+
+# Livrables de build / installeurs (générés, ne pas versionner)
+/livraison-hostinger/
+/livraison-hostinger-test/
+/livraison-hostinger.zip
+/livraison-hostinger-test.zip
+/*.msi

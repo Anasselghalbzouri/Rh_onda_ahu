@@ -7,6 +7,7 @@ import PersonnelPage from './components/PersonnelPage/PersonnelPage'
 import CongesPage from './components/CongesPage/CongesPage'
 import FormationsPage from './components/FormationsPage/FormationsPage'
 import MesFormationsPage from './components/MesFormationsPage/MesFormationsPage'
+import RapportActivitePage from './components/RapportActivitePage/RapportActivitePage'
 import Unauthorized from './components/Unauthorized/Unauthorized'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 
@@ -65,6 +66,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['employe']}>
                 <MesFormationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="rapport-activite"
+            element={
+              <ProtectedRoute allowedRoles={['rh']}>
+                <RapportActivitePage />
               </ProtectedRoute>
             }
           />

@@ -1,0 +1,1732 @@
+{
+  "info": {
+    "_postman_id": "1f7a0d2e-7f45-4e5a-9f59-rh-onda-ahu-api",
+    "name": "RH ONDA AHU API",
+    "description": "Postman collection for the RH ONDA AHU Laravel API. Import this collection, set `baseUrl` if needed, run Login, then use the authenticated requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": []
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": []
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employeId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "employeMatricule",
+      "value": "EMP001",
+      "type": "string"
+    },
+    {
+      "key": "serviceId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "congeId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pieceJointeId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "planFormationId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "formationId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "coursId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "evaluationId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Public login plus protected RH session endpoints.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matricule\": \"RH001\",\n  \"password\": \"secret\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "Authenticates an RH user and stores the returned Sanctum token in the collection variable `token`."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            },
+            "description": "Deletes the current bearer token."
+          },
+          "response": []
+        },
+        {
+          "name": "Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": "Returns the authenticated RH profile."
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"old-password\",\n  \"password\": \"new-password\",\n  \"password_confirmation\": \"new-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "change-password"
+              ]
+            },
+            "description": "Updates the authenticated RH user's password. New password must be confirmed and at least 4 characters."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reference Data",
+      "item": [
+        {
+          "name": "List Services",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services"
+              ]
+            },
+            "description": "Returns service IDs and names ordered by name."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/employes?search=&statut=actif&service_id={{serviceId}}&per_page=15&page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "statut",
+                  "value": "actif"
+                },
+                {
+                  "key": "service_id",
+                  "value": "{{serviceId}}"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Paginated employee list. `per_page` defaults to 15 and is capped at 200."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matricule\": \"EMP001\",\n  \"nom\": \"Alami\",\n  \"prenom\": \"Sara\",\n  \"sexe\": \"F\",\n  \"date_naissance\": \"1990-04-15\",\n  \"date_embauche\": \"2015-09-01\",\n  \"categorie\": \"Cadre\",\n  \"echelle\": \"11\",\n  \"echelon\": \"3\",\n  \"entite\": \"ONDA\",\n  \"fonction\": \"Responsable RH\",\n  \"qualification\": \"Master RH\",\n  \"service_id\": {{serviceId}},\n  \"affectation\": \"Casablanca\",\n  \"date_affectation\": \"2020-01-01\",\n  \"solde_conge\": 18,\n  \"statut\": \"actif\",\n  \"observation\": \"Aucune\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/employes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes"
+              ]
+            },
+            "description": "Creates an employee. Required fields: matricule, nom, prenom, sexe."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employee by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/employes/{{employeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes",
+                "{{employeId}}"
+              ]
+            },
+            "description": "Gets an employee by numeric ID. The same endpoint also accepts a matricule."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employee by Matricule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/employes/{{employeMatricule}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes",
+                "{{employeMatricule}}"
+              ]
+            },
+            "description": "Gets an employee by matricule."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fonction\": \"Responsable RH Senior\",\n  \"solde_conge\": 20,\n  \"statut\": \"actif\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/employes/{{employeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes",
+                "{{employeId}}"
+              ]
+            },
+            "description": "Updates employee fields. All request fields are optional."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/employes/{{employeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes",
+                "{{employeId}}"
+              ]
+            },
+            "description": "Deletes an employee."
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Sync Employees",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employes\": [\n    {\n      \"matricule\": \"EMP001\",\n      \"nom\": \"Alami\",\n      \"prenom\": \"Sara\",\n      \"sexe\": \"F\",\n      \"fonction\": \"Responsable RH\",\n      \"solde_conge\": 18,\n      \"statut\": \"actif\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/employes/bulk-sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes",
+                "bulk-sync"
+              ]
+            },
+            "description": "Upserts 1 to 500 employees by matricule."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Leave Requests",
+      "item": [
+        {
+          "name": "List Leave Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conges?employe_id={{employeId}}&type_conge=annuel&statut=approuve&page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conges"
+              ],
+              "query": [
+                {
+                  "key": "employe_id",
+                  "value": "{{employeId}}"
+                },
+                {
+                  "key": "type_conge",
+                  "value": "annuel"
+                },
+                {
+                  "key": "statut",
+                  "value": "approuve"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Paginated leave requests with employee summary."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "employe_id",
+                  "value": "{{employeId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "type_conge",
+                  "value": "annuel",
+                  "type": "text"
+                },
+                {
+                  "key": "date_debut",
+                  "value": "2026-06-01",
+                  "type": "text"
+                },
+                {
+                  "key": "date_fin",
+                  "value": "2026-06-05",
+                  "type": "text"
+                },
+                {
+                  "key": "motif",
+                  "value": "Conge annuel",
+                  "type": "text"
+                },
+                {
+                  "key": "ref_hraccess",
+                  "value": "HR-2026-001",
+                  "type": "text"
+                },
+                {
+                  "key": "ref_onda_ahu",
+                  "value": "ONDA-AHU-001",
+                  "type": "text"
+                },
+                {
+                  "key": "fichier",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/conges",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conges"
+              ]
+            },
+            "description": "Creates an approved direct leave entry. Optional file accepts PDF, JPG, JPEG, PNG, DOC, or DOCX up to 10 MB."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Leave Request",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conges/{{congeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conges",
+                "{{congeId}}"
+              ]
+            },
+            "description": "Gets a leave request with employee summary."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Leave Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "date_fin",
+                  "value": "2026-06-06",
+                  "type": "text"
+                },
+                {
+                  "key": "motif",
+                  "value": "Conge annuel prolonge",
+                  "type": "text"
+                },
+                {
+                  "key": "fichier",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/conges/{{congeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conges",
+                "{{congeId}}"
+              ]
+            },
+            "description": "Updates leave details. Date or day-count changes recalculate the employee leave balance."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Leave Request",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conges/{{congeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conges",
+                "{{congeId}}"
+              ]
+            },
+            "description": "Deletes a leave request and credits the days back to the employee balance."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Leave Attachment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conges/{{congeId}}/fichier",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conges",
+                "{{congeId}}",
+                "fichier"
+              ]
+            },
+            "description": "Downloads the attached leave file, or returns 404 when no file exists."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Employee Attachments",
+      "item": [
+        {
+          "name": "List Employee Attachments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/employes/{{employeId}}/pieces-jointes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes",
+                "{{employeId}}",
+                "pieces-jointes"
+              ]
+            },
+            "description": "Lists active attachments for an employee."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Employee Attachment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "fichier",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "categorie",
+                  "value": "Identite",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Copie CIN",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/employes/{{employeId}}/pieces-jointes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes",
+                "{{employeId}}",
+                "pieces-jointes"
+              ]
+            },
+            "description": "Uploads an employee attachment. File is required and must be PDF, JPG, JPEG, PNG, DOC, or DOCX up to 5 MB."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Attachment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pieces-jointes/{{pieceJointeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pieces-jointes",
+                "{{pieceJointeId}}"
+              ]
+            },
+            "description": "Deletes the stored file and marks the attachment inactive."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Training Plans",
+      "item": [
+        {
+          "name": "List Training Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/plans-formation?annee=2026&statut=draft&page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans-formation"
+              ],
+              "query": [
+                {
+                  "key": "annee",
+                  "value": "2026"
+                },
+                {
+                  "key": "statut",
+                  "value": "draft"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Paginated training plans with formations_count."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Training Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"annee\": 2026,\n  \"titre\": \"Plan de formation 2026\",\n  \"description\": \"Plan annuel\",\n  \"statut\": \"draft\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/plans-formation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans-formation"
+              ]
+            },
+            "description": "Creates a training plan. Create accepts status draft, valide, or archive."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Training Plan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/plans-formation/{{planFormationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans-formation",
+                "{{planFormationId}}"
+              ]
+            },
+            "description": "Gets a plan with formations_count and formations."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Training Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Plan de formation 2026 - revise\",\n  \"statut\": \"valide\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/plans-formation/{{planFormationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans-formation",
+                "{{planFormationId}}"
+              ]
+            },
+            "description": "Updates a training plan. Update accepts status draft, valide, or clos."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Training Plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/plans-formation/{{planFormationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans-formation",
+                "{{planFormationId}}"
+              ]
+            },
+            "description": "Deletes a plan only when its status is draft."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Formations",
+      "item": [
+        {
+          "name": "List Formations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formations?plan_id={{planFormationId}}&type=interne&annee=2026&service_id={{serviceId}}&page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations"
+              ],
+              "query": [
+                {
+                  "key": "plan_id",
+                  "value": "{{planFormationId}}"
+                },
+                {
+                  "key": "type",
+                  "value": "interne"
+                },
+                {
+                  "key": "annee",
+                  "value": "2026"
+                },
+                {
+                  "key": "service_id",
+                  "value": "{{serviceId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Paginated formations with plan summary and employes_count."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Formation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_formation_id\": {{planFormationId}},\n  \"cours_id\": {{coursId}},\n  \"intitule\": \"Management d'equipe\",\n  \"type\": \"interne\",\n  \"organisme\": \"ONDA Academy\",\n  \"date_debut\": \"2026-07-01\",\n  \"date_fin\": \"2026-07-03\",\n  \"lieu\": \"Casablanca\",\n  \"niveau\": \"avance\",\n  \"observations\": \"Session prioritaire\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations"
+              ]
+            },
+            "description": "Creates a formation. Required fields: intitule, date_debut, date_fin."
+          },
+          "response": []
+        },
+        {
+          "name": "Export Formations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/formations/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "export"
+              ]
+            },
+            "description": "Streams the formation export download."
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Sync Formations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formations\": [\n    {\n      \"intitule\": \"Management d'equipe\",\n      \"organisme\": \"ONDA Academy\",\n      \"duree_jours\": 3,\n      \"mois_prevu\": 7,\n      \"observations\": \"Session prioritaire\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formations/bulk-sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "bulk-sync"
+              ]
+            },
+            "description": "Upserts formations by intitule and mois_prevu."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Formation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formations/{{formationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "{{formationId}}"
+              ]
+            },
+            "description": "Gets a formation with plan, employees, evaluations, and employes_count."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Formation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"organisme\": \"ONDA Academy\",\n  \"lieu\": \"Rabat\",\n  \"mois_prevu\": 7,\n  \"observations\": \"Lieu modifie\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formations/{{formationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "{{formationId}}"
+              ]
+            },
+            "description": "Updates a formation."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Formation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formations/{{formationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "{{formationId}}"
+              ]
+            },
+            "description": "Deletes a formation."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Formation Registrations",
+      "item": [
+        {
+          "name": "Register Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employe_id\": {{employeId}},\n  \"statut\": \"inscrit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formations/{{formationId}}/employes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "{{formationId}}",
+                "employes"
+              ]
+            },
+            "description": "Registers an employee for a formation."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Registration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"present\",\n  \"suivi\": true,\n  \"remarque\": \"Presence confirmee\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formations/{{formationId}}/employes/{{employeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "{{formationId}}",
+                "employes",
+                "{{employeId}}"
+              ]
+            },
+            "description": "Updates the employee formation pivot data."
+          },
+          "response": []
+        },
+        {
+          "name": "Unregister Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formations/{{formationId}}/employes/{{employeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "{{formationId}}",
+                "employes",
+                "{{employeId}}"
+              ]
+            },
+            "description": "Removes an employee from a formation."
+          },
+          "response": []
+        },
+        {
+          "name": "List Employee Formations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/employes/{{employeId}}/formations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "employes",
+                "{{employeId}}",
+                "formations"
+              ]
+            },
+            "description": "Lists formations for one employee, ordered by newest start date."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Formation Evaluations",
+      "item": [
+        {
+          "name": "List Formation Evaluations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formations/{{formationId}}/evaluations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "{{formationId}}",
+                "evaluations"
+              ]
+            },
+            "description": "Lists evaluations for a formation."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Evaluation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employe_id\": {{employeId}},\n  \"type\": \"chaud\",\n  \"note\": 16,\n  \"commentaire\": \"Formation utile\",\n  \"efficace\": true,\n  \"date_eval\": \"2026-07-04\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formations/{{formationId}}/evaluations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formations",
+                "{{formationId}}",
+                "evaluations"
+              ]
+            },
+            "description": "Creates a chaud or froid evaluation. Note accepts 0 to 20."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Evaluation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": 18,\n  \"commentaire\": \"Tres utile\",\n  \"efficace\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/evaluations/{{evaluationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "evaluations",
+                "{{evaluationId}}"
+              ]
+            },
+            "description": "Updates an evaluation."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Evaluation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/evaluations/{{evaluationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "evaluations",
+                "{{evaluationId}}"
+              ]
+            },
+            "description": "Deletes an evaluation."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "item": [
+        {
+          "name": "List Courses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cours",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cours"
+              ]
+            },
+            "description": "Lists courses ordered by theme."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"theme\": \"Management\",\n  \"description\": \"Techniques de management\",\n  \"duree_jours\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cours",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cours"
+              ]
+            },
+            "description": "Creates a course. `duree_jours` must be between 1 and 365."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Course",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cours/{{coursId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cours",
+                "{{coursId}}"
+              ]
+            },
+            "description": "Gets one course."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Techniques de management operationnel\",\n  \"duree_jours\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cours/{{coursId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cours",
+                "{{coursId}}"
+              ]
+            },
+            "description": "Updates course fields."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Course",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cours/{{coursId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cours",
+                "{{coursId}}"
+              ]
+            },
+            "description": "Deletes a course."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "HR Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/stats?period=month",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month"
+                }
+              ]
+            },
+            "description": "Returns HR leave and employee KPIs. Period accepts today, week, month, or year."
+          },
+          "response": []
+        },
+        {
+          "name": "Formation Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/formations-stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "formations-stats"
+              ]
+            },
+            "description": "Returns current-year formation KPIs."
+          },
+          "response": []
+        },
+        {
+          "name": "Age Pyramid",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/pyramide-ages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "pyramide-ages"
+              ]
+            },
+            "description": "Returns employee counts by age range and sex."
+          },
+          "response": []
+        },
+        {
+          "name": "Seniority Distribution",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/anciennete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "anciennete"
+              ]
+            },
+            "description": "Returns active employee counts by seniority range."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

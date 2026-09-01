@@ -1,0 +1,150 @@
+.rapport-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.rapport-page-header {
+  display: flex;
+  flex-direction: column;
+}
+
+.rapport-page-subtitle {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--neutral-500);
+  font-weight: 500;
+}
+
+.rapport-page-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--neutral-900);
+}
+
+.rapport-card {
+  background: var(--white);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.rapport-intro {
+  margin: 0;
+  font-size: 13px;
+  color: var(--neutral-600);
+  line-height: 1.5;
+}
+
+.rapport-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.rapport-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+.rapport-field select {
+  padding: 8px var(--space-3);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--neutral-50);
+}
+
+.rapport-field select:focus {
+  outline: none;
+  border-color: var(--secondary);
+  background: var(--white);
+}
+
+.rapport-actions {
+  display: flex;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.rapport-btn-secondary {
+  padding: var(--space-2) var(--space-4);
+  background: var(--neutral-100);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--neutral-700);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.rapport-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.rapport-btn-primary:disabled,
+.rapport-btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rapport-error {
+  padding: var(--space-3);
+  background: var(--danger-light);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.rapport-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.rapport-preview-group {
+  background: var(--neutral-50);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.rapport-preview-group h4 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  color: var(--primary);
+}
+
+.rapport-preview-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--neutral-700);
+}

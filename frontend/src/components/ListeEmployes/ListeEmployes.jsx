@@ -1,9 +1,30 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
-import { ArrowUpDown, Eye, Plus, SlidersHorizontal, X } from 'lucide-react'
+import { ArrowUpDown, Download, Eye, FileSpreadsheet, Plus, X } from 'lucide-react'
 import api from '../../api'
 import FormField from '../ui/FormField/FormField'
+import ImportExcelModal from '../ui/ImportExcelModal/ImportExcelModal'
 import './ListeEmployes.css'
+
+const EMPLOYE_IMPORT_FIELDS = [
+  { key: 'matricule', label: 'Matricule', required: true },
+  { key: 'nom', label: 'Nom', required: true },
+  { key: 'prenom', label: 'Prenom', required: true },
+  { key: 'sexe', label: 'Sexe' },
+  { key: 'date_naissance', label: 'Date naissance' },
+  { key: 'date_embauche', label: 'Date embauche' },
+  { key: 'categorie', label: 'Categorie' },
+  { key: 'echelle', label: 'Echelle' },
+  { key: 'echelon', label: 'Echelon' },
+  { key: 'entite', label: 'Entite' },
+  { key: 'fonction', label: 'Fonction' },
+  { key: 'qualification', label: 'Qualification' },
+  { key: 'affectation', label: 'Affectation' },
+  { key: 'date_affectation', label: 'Date affectation' },
+  { key: 'solde_conge', label: 'Solde conge' },
+  { key: 'statut', label: 'Statut' },
+  { key: 'observation', label: 'Observation' },
+]
 
 const formatDate = (value) => {
   if (!value) return '—'
@@ -27,22 +48,25 @@ export default function ListeEmployes({ onSelectEmploye }) {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statut, setStatut] = useState('')
+  const [serviceId, setServiceId] = useState('')
+  const [services, setServices] = useState([])
   const [sortKey, setSortKey] = useState('nom')
   const [sortDir, setSortDir] = useState('asc')
   const [density, setDensity] = useState('comfortable')
-  const [showAdvanced, setShowAdvanced] = useState(false)
   const [loading, setLoading] = useState(false)
 
 const [createOpen, setCreateOpen] = useState(false)
   const [createForm, setCreateForm] = useState(EMPTY_FORM)
   const [createErrors, setCreateErrors] = useState({})
   const [createSaving, setCreateSaving] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   const fetchEmployes = async (p = 1) => {
     setLoading(true)
     try {
       const { data } = await api.get('/employes', {
-        params: { page: p, search, statut },
+        params: { page: p, search, statut, service_id: serviceId },
       })
       setEmployes(data.data)
       setMeta(data)
@@ -52,13 +76,42 @@ const [createOpen, setCreateOpen] = useState(false)
   }
 
   useEffect(() => {
+    api.get('/services')
+      .then(({ data }) => setServices(data))
+      .catch(() => setServices([]))
+  }, [])
+
+  useEffect(() => {
     setPage(1)
     fetchEmployes(1)
-  }, [search, statut])
+  }, [search, statut, serviceId])
 
   const handlePage = (p) => {
     setPage(p)
     fetchEmployes(p)
+  }
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const response = await api.get('/employes/export', {
+        params: { search, statut, service_id: serviceId },
+        responseType: 'blob',
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      const date = new Date().toISOString().slice(0, 10)
+      link.download = `personnel_${date}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      // silencieux : l'utilisateur peut réessayer
+    } finally {
+      setExporting(false)
+    }
   }
 
   const toggleSort = (key) => {
@@ -83,6 +136,11 @@ const [createOpen, setCreateOpen] = useState(false)
   const activeFilters = [
     search && { key: 'search', label: `Recherche : ${search}`, clear: () => setSearch('') },
     statut && { key: 'statut', label: `Statut : ${statut}`, clear: () => setStatut('') },
+    serviceId && {
+      key: 'service',
+      label: `Service : ${services.find((s) => String(s.id) === String(serviceId))?.nom ?? serviceId}`,
+      clear: () => setServiceId(''),
+    },
   ].filter(Boolean)
 
   const initials = (emp) => `${emp.prenom?.[0] ?? ''}${emp.nom?.[0] ?? ''}`.toUpperCase() || 'RH'
@@ -151,32 +209,34 @@ const [createOpen, setCreateOpen] = useState(false)
           <option value="retraite">Retraité</option>
           <option value="depart_volontaire">Départ volontaire</option>
         </select>
-        <button className="liste-ghost-btn" type="button" onClick={() => setShowAdvanced((v) => !v)}>
-          <SlidersHorizontal size={14} aria-hidden="true" />
-          Filtres
-        </button>
+        <select
+          className="liste-select"
+          value={serviceId}
+          onChange={(e) => setServiceId(e.target.value)}
+          aria-label="Filtrer par service"
+        >
+          <option value="">Tous les services</option>
+          {services.map((s) => (
+            <option key={s.id} value={s.id}>{s.nom}</option>
+          ))}
+        </select>
         <div className="liste-density" aria-label="Densité du tableau">
           <button type="button" className={density === 'comfortable' ? 'active' : ''} onClick={() => setDensity('comfortable')}>Confort</button>
           <button type="button" className={density === 'dense' ? 'active' : ''} onClick={() => setDensity('dense')}>Dense</button>
         </div>
+        <button className="liste-ghost-btn" type="button" onClick={handleExport} disabled={exporting}>
+          <Download size={14} aria-hidden="true" />
+          {exporting ? 'Export...' : 'Exporter Excel'}
+        </button>
+        <button className="liste-ghost-btn" type="button" onClick={() => setImportOpen(true)}>
+          <FileSpreadsheet size={14} aria-hidden="true" />
+          Importer Excel
+        </button>
         <button className="liste-add-btn" onClick={openCreate}>
           <Plus size={14} aria-hidden="true" />
           Ajouter un employé
         </button>
       </div>
-
-      {showAdvanced && (
-        <div className="liste-advanced">
-          <div>
-            <span className="liste-advanced-label">Tri actif</span>
-            <strong>{sortKey} · {sortDir === 'asc' ? 'croissant' : 'décroissant'}</strong>
-          </div>
-          <div>
-            <span className="liste-advanced-label">Affichage</span>
-            <strong>{density === 'dense' ? 'Table compacte' : 'Table confortable'}</strong>
-          </div>
-        </div>
-      )}
 
       {activeFilters.length > 0 && (
         <div className="liste-filter-chips">
@@ -335,6 +395,21 @@ const [createOpen, setCreateOpen] = useState(false)
           </div>
         </div>
       )}
+
+      <ImportExcelModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        title="Importer des employés depuis Excel"
+        description="Le fichier doit contenir au minimum les colonnes Matricule, Nom et Prénom. Un employé existant (même matricule) sera mis à jour, sinon il sera créé."
+        fields={EMPLOYE_IMPORT_FIELDS}
+        templateFilename="modele-employes.xlsx"
+        onImport={async (rows) => {
+          const { data } = await api.post('/employes/bulk-sync', { employes: rows })
+          setPage(1)
+          fetchEmployes(1)
+          return data
+        }}
+      />
     </div>
   )
 }

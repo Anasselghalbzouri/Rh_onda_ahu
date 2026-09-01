@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Calendar, UserCircle,
-  CalendarCheck, BarChart3, GraduationCap,
+  CalendarCheck, BarChart3, GraduationCap, FileSpreadsheet,
 } from 'lucide-react'
 import './Sidebar.css'
 
@@ -14,6 +14,7 @@ const ICONS = {
   absences:  CalendarCheck,
   profil:    UserCircle,
   stats:     BarChart3,
+  'rapport-activite': FileSpreadsheet,
 }
 
 const MENU_BY_ROLE = {
@@ -22,6 +23,7 @@ const MENU_BY_ROLE = {
     { key: 'personnel', label: 'Personnel',        path: '/personnel' },
     { key: 'conges',    label: 'Congés',            path: '/conges'   },
     { key: 'formations', label: 'Formations',       path: '/formations' },
+    { key: 'rapport-activite', label: 'Rapport PS09', path: '/rapport-activite' },
     { key: 'absences',  label: 'Absences',          path: '/absences' },
   ],
   dg: [
@@ -69,9 +71,7 @@ export default function Sidebar({ role }) {
         })}
       </ul>
 
-      <div className="sidebar-footer">
-        <p className="sidebar-version">RH ONDA v1.0</p>
-      </div>
+
     </nav>
   )
 }

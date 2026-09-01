@@ -1,0 +1,29 @@
+# Contexte de build = racine du dépôt. On exclut tout ce qui est lourd,
+# reconstruit dans l'image, ou sensible/inutile aux conteneurs.
+
+# Dépendances reconstruites dans les images
+**/node_modules
+**/vendor
+frontend/dist
+
+# Secrets / env (les vraies valeurs viennent de docker-compose)
+/.env
+backend/.env
+
+# La base est montée en volume, pas copiée dans l'image
+backend/database/*.sqlite
+backend/database/*.sqlite-journal
+
+# Git / logs / caches
+.git
+.gitignore
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+**/__pycache__
+
+# Outils Excel/VBA et documents — inutiles aux conteneurs, souvent sensibles
+vba/
+/*.xlsx
+/*.docx
+uml_screens/
+screens/

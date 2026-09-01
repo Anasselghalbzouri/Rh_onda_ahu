@@ -1,12 +1,21 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { CheckCircle2, ChevronDown, GraduationCap, Pencil, Plus, Search, Trash2, Users } from 'lucide-react'
+import { CheckCircle2, ChevronDown, FileSpreadsheet, GraduationCap, Pencil, Plus, Search, Trash2, Users } from 'lucide-react'
 import api from '../../api'
 import FormationFormModal from './FormationFormModal'
 import InscriptionPanel from './InscriptionPanel'
 import Modal from '../ui/Modal/Modal'
+import ImportExcelModal from '../ui/ImportExcelModal/ImportExcelModal'
 import './FormationsPage.css'
+
+const FORMATION_IMPORT_FIELDS = [
+  { key: 'intitule', label: 'Intitule', required: true },
+  { key: 'organisme', label: 'Organisme' },
+  { key: 'duree_jours', label: 'Duree jours' },
+  { key: 'mois_prevu', label: 'Mois prevu' },
+  { key: 'observations', label: 'Observations' },
+]
 
 const PLAN_STATUS_LABEL = {
   draft: 'Brouillon',
@@ -72,6 +81,7 @@ export default function FormationsPage() {
   const [planError, setPlanError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [deletingPlanId, setDeletingPlanId] = useState(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const loadPlans = useCallback(async () => {
     setPlansLoading(true)
@@ -269,6 +279,10 @@ export default function FormationsPage() {
           <p className="formations-page-subtitle">Planifier, suivre et inscrire les employes</p>
           <h2 className="formations-title">Formations</h2>
         </div>
+        <button type="button" className="formation-btn-secondary" onClick={() => setImportOpen(true)}>
+          <FileSpreadsheet size={15} aria-hidden="true" />
+          Importer Excel
+        </button>
         <button type="button" className="formation-btn-primary" onClick={openCreate}>
           <Plus size={15} aria-hidden="true" />
           Nouvelle formation
@@ -605,6 +619,20 @@ export default function FormationsPage() {
           </div>
         </form>
       </Modal>
+
+      <ImportExcelModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        title="Importer des formations depuis Excel"
+        description="Le fichier doit contenir au minimum la colonne Intitule. Les formations sont regroupees par intitule + mois prevu."
+        fields={FORMATION_IMPORT_FIELDS}
+        templateFilename="modele-formations.xlsx"
+        onImport={async (rows) => {
+          const { data } = await api.post('/formations/bulk-sync', { formations: rows })
+          loadFormations(1)
+          return data
+        }}
+      />
     </div>
   )
 }

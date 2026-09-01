@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { CalendarDays, KeyRound, LogOut, Search, ArrowRight } from 'lucide-react'
 import api from '../../api'
 import Sidebar from '../Sidebar/Sidebar'
+import NotificationBell from '../NotificationBell/NotificationBell'
 import ChangePasswordModal from '../ChangePasswordModal/ChangePasswordModal'
 import './Layout.css'
 
@@ -90,6 +91,8 @@ export default function Layout({ user, onLogout }) {
               <CalendarDays size={14} aria-hidden="true" />
               {dateLabel}
             </span>
+
+            <NotificationBell />
 
             <span className="layout-user-name">
               {user?.prenom && user?.nom

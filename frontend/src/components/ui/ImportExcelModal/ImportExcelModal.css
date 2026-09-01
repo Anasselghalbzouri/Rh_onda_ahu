@@ -1,0 +1,123 @@
+.import-excel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.import-excel-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--neutral-600);
+}
+
+.import-excel-template-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  background: var(--neutral-50);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  color: var(--neutral-700);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.import-excel-template-btn:hover {
+  background: var(--secondary-light);
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+.import-excel-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border: 1px dashed var(--neutral-300);
+  border-radius: var(--radius-lg);
+  color: var(--neutral-500);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.import-excel-dropzone:hover {
+  background: var(--secondary-light);
+  border-color: var(--secondary);
+}
+
+.import-excel-error {
+  padding: var(--space-3);
+  background: var(--danger-light);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.import-excel-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--secondary-light);
+  border-radius: var(--radius-md);
+  color: var(--secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.import-excel-result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.import-excel-result-chip {
+  padding: var(--space-1) var(--space-3);
+  background: var(--success-light);
+  border-radius: var(--radius-full);
+  color: var(--success);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.import-excel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.import-excel-cancel-btn {
+  padding: var(--space-2) var(--space-4);
+  background: var(--neutral-100);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--neutral-700);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.import-excel-submit-btn {
+  padding: var(--space-2) var(--space-4);
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--white);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.import-excel-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
