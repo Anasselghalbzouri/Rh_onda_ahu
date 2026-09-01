@@ -44,13 +44,46 @@ jobs:
       - name: Copie du SPA compilé dans backend/public
         run: cp -r frontend/build/. backend/public/
 
+      - name: Vérifier la configuration de déploiement
+        id: deploy_config
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST || vars.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER || vars.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || vars.SSH_PORT || '22' }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH }}
+        run: |
+          missing=()
+          [[ -z "$SSH_PRIVATE_KEY" ]] && missing+=("SSH_PRIVATE_KEY")
+          [[ -z "$SSH_HOST" ]] && missing+=("SSH_HOST")
+          [[ -z "$SSH_USER" ]] && missing+=("SSH_USER")
+          [[ -z "$DEPLOY_PATH" ]] && missing+=("DEPLOY_PATH")
+
+          if ((${#missing[@]} > 0)); then
+            echo "::notice title=Deploy skipped::Paramètres manquants: ${missing[*]}"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "SSH_PRIVATE_KEY<<EOF"
+            echo "$SSH_PRIVATE_KEY"
+            echo "EOF"
+            echo "SSH_HOST=$SSH_HOST"
+            echo "SSH_USER=$SSH_USER"
+            echo "SSH_PORT=$SSH_PORT"
+            echo "DEPLOY_PATH=$DEPLOY_PATH"
+          } >> "$GITHUB_ENV"
+
       # 4) Prépare la clé SSH pour joindre Hostinger
       - name: Configuration SSH
+        if: steps.deploy_config.outputs.enabled == 'true'
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       # 5) Envoie SEULEMENT le code vers le serveur.
       #    Exclusions critiques : la base SQLite en production, le .env du
@@ -58,9 +91,10 @@ jobs:
       #    logs) ne sont JAMAIS écrasés. --delete nettoie le vieux code mais
       #    respecte ces exclusions.
       - name: Déploiement via rsync
+        if: steps.deploy_config.outputs.enabled == 'true'
         run: |
           rsync -az --delete \
-            -e "ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }}" \
+            -e "ssh -i ~/.ssh/id_deploy -p $SSH_PORT" \
             --exclude='.env' \
             --exclude='.git' \
             --exclude='storage/' \
@@ -68,17 +102,22 @@ jobs:
             --exclude='database/*.sqlite' \
             --exclude='database/*.sqlite-journal' \
             backend/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+            "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
 
       # 6) Applique les migrations et recache la config, côté serveur.
       #    migrate --force ne touche qu'au SCHÉMA, jamais aux données.
       - name: Migrations + cache (sur le serveur)
+        if: steps.deploy_config.outputs.enabled == 'true'
         run: |
-          ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "cd ${{ secrets.DEPLOY_PATH }} && \
+          ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" \
+            "$SSH_USER@$SSH_HOST" \
+            "cd $DEPLOY_PATH && \
              php artisan migrate --force && \
              php artisan storage:link || true && \
              php artisan config:cache && \
              php artisan route:cache && \
              php artisan view:cache"
+
+      - name: Déploiement ignoré (configuration incomplète)
+        if: steps.deploy_config.outputs.enabled != 'true'
+        run: echo "Déploiement ignoré car la configuration SSH est incomplète."
