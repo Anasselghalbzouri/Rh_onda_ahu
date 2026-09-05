@@ -89,7 +89,7 @@ export default function Dashboard() {
     <div className="dash-container">
       <div className="dash-page-header">
         <p className="dash-page-subtitle">Piloter et suivre les ressources humaines</p>
-        <h2 className="dash-title">Dashboard RH</h2>
+        <h2 className="dash-title">Dashboard RH </h2>
       </div>
       <div className="dash-kpi-grid">
         {[1,2,3,4].map(i => <div key={i} className="dash-skeleton-card" />)}
