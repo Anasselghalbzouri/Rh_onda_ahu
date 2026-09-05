@@ -150,7 +150,7 @@ export default function Dashboard() {
       <div className="dash-page-header">
         <div>
           <p className="dash-page-subtitle">Piloter et suivre les ressources humaines</p>
-          <h2 className="dash-title">Dashboard RH Anass</h2>
+          <h2 className="dash-title">Dashboard RH</h2>
         </div>
         <div className="dash-period-tabs" aria-label="Période du dashboard">
           {[
