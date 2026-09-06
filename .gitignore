@@ -1,76 +1,12 @@
 # Env racine pour docker-compose (contient APP_KEY — ne pas committer)
 /.env
 
+# Fichiers archivés (docs, rapports, captures, livrables, vba, .bat) — non nécessaires pour faire tourner le projet
+/_archive/
+
 # Claude / outils internes
 /.claude
 /CLAUDE.md
-/AGENTS.md
-/JOURNAL.md
-/PLAN_URGENCE_2026-05-14.md
-/frontend/AGENTS.md
 *.stackdump
 
-# Documents internes (planning, rapports PFE)
-/ANALYSE_PROJET_RH_ONDA.md
-/ARCHITECTURE_MVC_RH_ONDA.md
-/BigDay.md
-/SPRINT_1_REVIEW.md
-/SPRINT_3_PLANNING.md
-/RH_ONDA_UI_UX_Specification.md
-/*.docx
-/rapport_pff_web_full_stack.docx
-
-# Scripts de génération locale
-/generate_rapport.py
-/generate_rapport_v2.py
-/capture_screens.py
-
-# Anciennes captures (remplacées par cap_*.png)
-/screen_*.jpg
-/screens/
-
-# Logo dupliqué à la racine
-/logo.webp
-
-# Dépendances Node racine (pas utilisées)
-/node_modules/
-/package.json
-/package-lock.json
-
-# UML
-/diagrammes_UML_RH_AHU.pdf
-/uml_screens/
-
-# Fichier batch Windows
-/start_servers.bat
-
-# Données sensibles employés (RH)
-/vba/Classeur1.xlsx
-/vba/RH_Formations_ONDA.xlsx
-/modele_import_employes.xlsx
-/modele_import_employes_export.xlsx
-/~$modele_import_employes.xlsx
-/Tableau de Suivi de Formation siège.xlsx
-/PS09_Rapport d'activité  Tremistriel _ 2025.xlsx
-/vba/__pycache__/
 backend/database/*.sqlite
-
-# Sauvegardes automatiques de la base (contiennent des donnees employes reelles)
-/sauvegardes/
-
-# Version portable (sans Docker) : runtime PHP telecharge + dossier livrable
-/tools/
-/livraison-portable/
-
-# Watcher de synchronisation automatique (secrets + journaux + sauvegardes)
-/vba/watch_config.ini
-/vba/watch.log
-/vba/.rh_sync_state.json
-/*.backup-*.xlsx
-
-# Livrables de build / installeurs (générés, ne pas versionner)
-/livraison-hostinger/
-/livraison-hostinger-test/
-/livraison-hostinger.zip
-/livraison-hostinger-test.zip
-/*.msi
