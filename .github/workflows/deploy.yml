@@ -63,7 +63,25 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "mkdir -p '${{ secrets.DEPLOY_PATH }}'"
 
-      # 6) Envoie SEULEMENT le code vers le serveur.
+      # 6) storage/ est volontairement exclu du rsync (pour ne jamais écraser
+      #    logs/uploads/sessions existants) — mais sur un serveur neuf, cette
+      #    arborescence n'a donc jamais été créée du tout. Laravel exige que
+      #    ces dossiers existent (ex. storage/framework/views, requis par
+      #    `php artisan view:cache`). mkdir -p est idempotent : sans effet une
+      #    fois ces dossiers déjà présents lors des déploiements suivants.
+      - name: Provisionnement de storage/ (si absent)
+        run: |
+          ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "mkdir -p '${{ secrets.DEPLOY_PATH }}/storage/app/public' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/framework/cache/data' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/framework/sessions' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/framework/testing' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/framework/views' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/logs' && \
+             chmod -R 775 '${{ secrets.DEPLOY_PATH }}/storage'"
+
+      # 7) Envoie SEULEMENT le code vers le serveur.
       #    Exclusions critiques : la base SQLite en production, le .env du
       #    serveur (contient l'APP_KEY stable) et storage/ (uploads, sessions,
       #    logs) ne sont JAMAIS écrasés. --delete nettoie le vieux code mais
@@ -81,7 +99,7 @@ jobs:
             backend/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
-      # 7) Applique les migrations et recache la config, côté serveur.
+      # 8) Applique les migrations et recache la config, côté serveur.
       #    migrate --force ne touche qu'au SCHÉMA, jamais aux données.
       - name: Migrations + cache (sur le serveur)
         run: |
