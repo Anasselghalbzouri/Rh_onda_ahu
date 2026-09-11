@@ -52,6 +52,34 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
+      # TEMP DEBUG — à retirer une fois DEPLOY_PATH confirmé correct.
+      # N'affiche jamais la valeur du secret : GitHub la masque automatiquement
+      # (elle apparaîtrait comme ***), donc on vérifie longueur/format à la place,
+      # et on teste l'existence du dossier cible + de son parent sur le serveur.
+      - name: "[DEBUG] Vérifier DEPLOY_PATH"
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          echo "Longueur de DEPLOY_PATH : ${#DEPLOY_PATH}"
+          if [ -z "$DEPLOY_PATH" ]; then
+            echo "::error::DEPLOY_PATH est vide ou non défini."
+          fi
+          case "$DEPLOY_PATH" in
+            /*) echo "Commence par / : oui" ;;
+            *)  echo "Commence par / : non (chemin relatif — vérifier que c'est voulu)" ;;
+          esac
+          case "$DEPLOY_PATH" in
+            */) echo "Se termine par / : oui" ;;
+            *)  echo "Se termine par / : non" ;;
+          esac
+
+          ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "DEPLOY_PATH='$DEPLOY_PATH'; \
+             if [ -d \"\$DEPLOY_PATH\" ]; then echo 'Dossier cible : existe déjà'; else echo 'Dossier cible : MANQUANT'; fi; \
+             PARENT=\$(dirname \"\$DEPLOY_PATH\"); \
+             if [ -d \"\$PARENT\" ]; then echo \"Dossier parent (\$PARENT) : existe\"; else echo \"Dossier parent (\$PARENT) : MANQUANT\"; fi"
+
       # 5) Envoie SEULEMENT le code vers le serveur.
       #    Exclusions critiques : la base SQLite en production, le .env du
       #    serveur (contient l'APP_KEY stable) et storage/ (uploads, sessions,
