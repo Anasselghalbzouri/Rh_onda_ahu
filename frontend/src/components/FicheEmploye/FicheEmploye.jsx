@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Briefcase, CalendarDays, FileCheck2, GraduationCap, History, Paperclip, UserRound } from 'lucide-react'
 import api from '../../api'
 import FormField from '../ui/FormField/FormField'
+import Badge from '../ui/Badge/Badge'
+import { DOCUMENT_CATEGORIES, DOCUMENT_STATUT_LABELS, DOCUMENT_STATUT_VARIANTS } from '../../constants/documentsEmployes'
+import { telechargerPieceJointe } from '../../utils/telechargerPieceJointe'
 import './FicheEmploye.css'
 
 const STATUT_STYLE = {
@@ -69,6 +72,8 @@ export default function FicheEmploye({ id, onRetour }) {
 
   const [uploadFile, setUploadFile] = useState(null)
   const [uploadCategorie, setUploadCategorie] = useState('')
+  const [uploadDateExpiration, setUploadDateExpiration] = useState('')
+  const [uploadObligatoire, setUploadObligatoire] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState(null)
   const [fileInputKey, setFileInputKey] = useState(0)
@@ -236,11 +241,15 @@ export default function FicheEmploye({ id, onRetour }) {
       const form = new FormData()
       form.append('fichier', uploadFile)
       form.append('categorie', uploadCategorie)
+      if (uploadDateExpiration) form.append('date_expiration', uploadDateExpiration)
+      form.append('obligatoire', uploadObligatoire ? '1' : '0')
       await api.post(`/employes/${id}/pieces-jointes`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       setUploadFile(null)
       setUploadCategorie('')
+      setUploadDateExpiration('')
+      setUploadObligatoire(false)
       setFileInputKey((k) => k + 1)
       await fetchPiecesJointes()
     } catch {
@@ -581,6 +590,8 @@ export default function FicheEmploye({ id, onRetour }) {
                 <tr>
                   <th className="fiche-th">Nom fichier</th>
                   <th className="fiche-th">Catégorie</th>
+                  <th className="fiche-th">Statut</th>
+                  <th className="fiche-th">Date expiration</th>
                   <th className="fiche-th">Taille</th>
                   <th className="fiche-th">Date upload</th>
                   <th className="fiche-th">Actions</th>
@@ -594,6 +605,12 @@ export default function FicheEmploye({ id, onRetour }) {
                       {p.extension && <div className="fiche-file-meta">.{p.extension}</div>}
                     </td>
                     <td className="fiche-td">{p.categorie ?? '—'}</td>
+                    <td className="fiche-td">
+                      <Badge variant={DOCUMENT_STATUT_VARIANTS[p.statut] ?? 'default'}>
+                        {DOCUMENT_STATUT_LABELS[p.statut] ?? p.statut ?? '—'}
+                      </Badge>
+                    </td>
+                    <td className="fiche-td">{formatDate(p.date_expiration)}</td>
                     <td className="fiche-td">{p.taille ?? '—'}</td>
                     <td className="fiche-td">{formatDate(p.date_upload)}</td>
                     <td className="fiche-td">
@@ -601,14 +618,7 @@ export default function FicheEmploye({ id, onRetour }) {
                         <button
                           type="button"
                           className="fiche-link-btn"
-                          onClick={() => {
-                            if (p.url) {
-                              const href = p.url.startsWith('http')
-                                ? p.url
-                                : `${new URL(api.defaults.baseURL).origin}${p.url}`
-                              window.open(href, '_blank', 'noopener,noreferrer')
-                            }
-                          }}
+                          onClick={() => telechargerPieceJointe(p)}
                         >
                           Télécharger
                         </button>
@@ -650,13 +660,31 @@ export default function FicheEmploye({ id, onRetour }) {
             />
           </div>
           <div className="fiche-upload-grid">
-            <input
-              type="text"
-              placeholder="Catégorie (optionnel)"
+            <select
               value={uploadCategorie}
               onChange={(e) => setUploadCategorie(e.target.value)}
               className="fiche-text-input"
+            >
+              <option value="">Catégorie (optionnel)</option>
+              {DOCUMENT_CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <input
+              type="date"
+              value={uploadDateExpiration}
+              onChange={(e) => setUploadDateExpiration(e.target.value)}
+              className="fiche-text-input"
+              title="Date d'expiration (optionnel)"
             />
+            <label className="fiche-upload-obligatoire">
+              <input
+                type="checkbox"
+                checked={uploadObligatoire}
+                onChange={(e) => setUploadObligatoire(e.target.checked)}
+              />
+              Obligatoire
+            </label>
             <button type="submit" className="fiche-primary-btn" disabled={uploading}>
               {uploading ? 'Ajout...' : 'Ajouter'}
             </button>

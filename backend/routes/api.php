@@ -48,6 +48,9 @@ Route::middleware('auth:rh')->group(function () {
     Route::get('/employes/{id}/pieces-jointes', [PieceJointeController::class, 'index']);
     Route::post('/employes/{id}/pieces-jointes', [PieceJointeController::class, 'store']);
     Route::delete('/pieces-jointes/{id}', [PieceJointeController::class, 'destroy']);
+    Route::get('/pieces-jointes/{id}/download', [PieceJointeController::class, 'download']);
+    Route::get('/documents-employes', [PieceJointeController::class, 'indexGlobal']);
+    Route::get('/moi/pieces-jointes', [PieceJointeController::class, 'mesPieces']);
 
     Route::get('/plans-formation',          [PlanFormationController::class, 'index']);
     Route::post('/plans-formation',         [PlanFormationController::class, 'store']);

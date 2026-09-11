@@ -8,26 +8,10 @@ import CongesPage from './components/CongesPage/CongesPage'
 import FormationsPage from './components/FormationsPage/FormationsPage'
 import MesFormationsPage from './components/MesFormationsPage/MesFormationsPage'
 import RapportActivitePage from './components/RapportActivitePage/RapportActivitePage'
+import DocumentsEmployesPage from './components/DocumentsEmployesPage/DocumentsEmployesPage'
+import MesDocumentsPage from './components/MesDocumentsPage/MesDocumentsPage'
 import Unauthorized from './components/Unauthorized/Unauthorized'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
-
-
-const Placeholder = ({ title }) => (
-  <div style={{ padding: '0' }}>
-    <p style={{ fontSize: 13, color: 'var(--neutral-500)', fontWeight: 500, marginBottom: 4 }}>Module en développement</p>
-    <h2 style={{ margin: '0 0 var(--space-4)', color: 'var(--neutral-900)', fontSize: 28, fontWeight: 700 }}>{title}</h2>
-    <div style={{
-      background: 'var(--white)',
-      border: '1px solid var(--neutral-200)',
-      borderRadius: 'var(--radius-lg)',
-      padding: '3rem',
-      textAlign: 'center',
-      boxShadow: 'var(--shadow-md)',
-    }}>
-      <p style={{ color: 'var(--neutral-400)', fontSize: 14 }}>Ce module sera disponible prochainement.</p>
-    </div>
-  </div>
-)
 
 export default function App() {
   const { user, login, logout, isAuthenticated } = useAuth()
@@ -77,8 +61,15 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="absences" element={<Placeholder title="Absences" />} />
-          <Route path="profil" element={<Placeholder title="Mon profil" />} />
+          <Route
+            path="documents-employes"
+            element={
+              <ProtectedRoute allowedRoles={['rh', 'dg']}>
+                <DocumentsEmployesPage readOnly={user?.role === 'dg'} />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="profil" element={<MesDocumentsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

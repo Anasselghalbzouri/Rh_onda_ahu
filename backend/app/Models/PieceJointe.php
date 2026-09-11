@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\DocumentsEmployesReference;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class PieceJointe extends Model
 {
@@ -26,20 +26,26 @@ class PieceJointe extends Model
         'date_upload',
         'description',
         'actif',
+        'date_expiration',
+        'statut',
+        'obligatoire',
+        'supprime_par',
     ];
 
     protected $casts = [
-        'date_upload'   => 'datetime',
+        'date_upload' => 'datetime',
         'taille_octets' => 'integer',
-        'actif'         => 'boolean',
+        'actif' => 'boolean',
+        'date_expiration' => 'date',
+        'obligatoire' => 'boolean',
     ];
 
     // Entités supportées → modèle correspondant
     private const ENTITE_MAP = [
-        'employe'                  => Employe::class,
-        'dossier_personnel'        => DossierPersonnel::class,
-        'demande_conge'            => DemandeConge::class,
-        'absence'                  => Absence::class,
+        'employe' => Employe::class,
+        'dossier_personnel' => DossierPersonnel::class,
+        'demande_conge' => DemandeConge::class,
+        'absence' => Absence::class,
         'historique_professionnel' => HistoriqueProfessionnel::class,
     ];
 
@@ -48,16 +54,49 @@ class PieceJointe extends Model
         return $this->belongsTo(ResponsableRh::class, 'uploade_par');
     }
 
+    public function supprimePar(): BelongsTo
+    {
+        return $this->belongsTo(ResponsableRh::class, 'supprime_par');
+    }
+
+    /** Relation logique valide uniquement lorsque `entite = 'employe'`. */
+    public function employe(): BelongsTo
+    {
+        return $this->belongsTo(Employe::class, 'entite_id');
+    }
+
+    /**
+     * Règle de dérivation du statut (data-model.md) :
+     * date_expiration dépassée → « expire » ; dans les 30 jours → « a_renouveler » ;
+     * sinon → « valide » (ou la valeur manuelle du RH pour un document non daté).
+     */
+    public function statutCalcule(): string
+    {
+        if ($this->date_expiration) {
+            $expiration = $this->date_expiration->copy()->startOfDay();
+
+            if ($expiration->isPast()) {
+                return 'expire';
+            }
+
+            if ($expiration->lte(now()->addDays(DocumentsEmployesReference::DELAI_RENOUVELLEMENT_JOURS)->endOfDay())) {
+                return 'a_renouveler';
+            }
+
+            return 'valide';
+        }
+
+        return $this->statut ?: 'valide';
+    }
+
     public function getTailleHumaineAttribute(): string
     {
         $kb = $this->taille_octets / 1024;
-        if ($kb < 1024) return round($kb, 1).' Ko';
-        return round($kb / 1024, 1).' Mo';
-    }
+        if ($kb < 1024) {
+            return round($kb, 1).' Ko';
+        }
 
-    public function getUrlAttribute(): string
-    {
-        return Storage::url($this->chemin);
+        return round($kb / 1024, 1).' Mo';
     }
 
     // Scope pour filtrer par entité

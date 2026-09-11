@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Calendar, UserCircle,
-  CalendarCheck, BarChart3, GraduationCap, FileSpreadsheet,
+  BarChart3, GraduationCap, FileSpreadsheet, FileCheck2,
 } from 'lucide-react'
 import './Sidebar.css'
 
@@ -11,7 +11,7 @@ const ICONS = {
   conges:    Calendar,
   formations: GraduationCap,
   'mes-formations': GraduationCap,
-  absences:  CalendarCheck,
+  'documents-employes': FileCheck2,
   profil:    UserCircle,
   stats:     BarChart3,
   'rapport-activite': FileSpreadsheet,
@@ -24,17 +24,17 @@ const MENU_BY_ROLE = {
     { key: 'conges',    label: 'Congés',            path: '/conges'   },
     { key: 'formations', label: 'Formations',       path: '/formations' },
     { key: 'rapport-activite', label: 'Rapport PS09', path: '/rapport-activite' },
-    { key: 'absences',  label: 'Absences',          path: '/absences' },
+    { key: 'documents-employes', label: 'Documents employés', path: '/documents-employes' },
   ],
   dg: [
     { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard' },
     { key: 'personnel', label: 'Personnel',        path: '/personnel' },
+    { key: 'documents-employes', label: 'Documents employés', path: '/documents-employes' },
   ],
   employe: [
     { key: 'profil',    label: 'Mon profil',   path: '/profil'   },
     { key: 'conges',    label: 'Mes congés',   path: '/conges'   },
     { key: 'mes-formations', label: 'Mes formations', path: '/mes-formations' },
-    { key: 'absences',  label: 'Mes absences', path: '/absences' },
   ],
 }
 
