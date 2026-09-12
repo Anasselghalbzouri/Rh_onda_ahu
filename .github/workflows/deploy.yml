@@ -52,35 +52,36 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      # TEMP DEBUG — à retirer une fois DEPLOY_PATH confirmé correct.
-      # N'affiche jamais la valeur du secret : GitHub la masque automatiquement
-      # (elle apparaîtrait comme ***), donc on vérifie longueur/format à la place,
-      # et on teste l'existence du dossier cible + de son parent sur le serveur.
-      - name: "[DEBUG] Vérifier DEPLOY_PATH"
-        env:
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      # 5) Crée le dossier de déploiement (et ses parents) s'il n'existe pas
+      #    encore. rsync ne peut créer qu'un seul niveau de dossier manquant ;
+      #    sur un hébergement neuf, aucun des deux niveaux n'existe encore,
+      #    d'où l'échec "mkdir failed: No such file or directory" observé.
+      #    mkdir -p est idempotent : sans effet si le dossier existe déjà.
+      - name: Création du dossier de déploiement (si absent)
         run: |
-          echo "Longueur de DEPLOY_PATH : ${#DEPLOY_PATH}"
-          if [ -z "$DEPLOY_PATH" ]; then
-            echo "::error::DEPLOY_PATH est vide ou non défini."
-          fi
-          case "$DEPLOY_PATH" in
-            /*) echo "Commence par / : oui" ;;
-            *)  echo "Commence par / : non (chemin relatif — vérifier que c'est voulu)" ;;
-          esac
-          case "$DEPLOY_PATH" in
-            */) echo "Se termine par / : oui" ;;
-            *)  echo "Se termine par / : non" ;;
-          esac
-
           ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "DEPLOY_PATH='$DEPLOY_PATH'; \
-             if [ -d \"\$DEPLOY_PATH\" ]; then echo 'Dossier cible : existe déjà'; else echo 'Dossier cible : MANQUANT'; fi; \
-             PARENT=\$(dirname \"\$DEPLOY_PATH\"); \
-             if [ -d \"\$PARENT\" ]; then echo \"Dossier parent (\$PARENT) : existe\"; else echo \"Dossier parent (\$PARENT) : MANQUANT\"; fi"
+            "mkdir -p '${{ secrets.DEPLOY_PATH }}'"
 
-      # 5) Envoie SEULEMENT le code vers le serveur.
+      # 6) storage/ est volontairement exclu du rsync (pour ne jamais écraser
+      #    logs/uploads/sessions existants) — mais sur un serveur neuf, cette
+      #    arborescence n'a donc jamais été créée du tout. Laravel exige que
+      #    ces dossiers existent (ex. storage/framework/views, requis par
+      #    `php artisan view:cache`). mkdir -p est idempotent : sans effet une
+      #    fois ces dossiers déjà présents lors des déploiements suivants.
+      - name: Provisionnement de storage/ (si absent)
+        run: |
+          ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "mkdir -p '${{ secrets.DEPLOY_PATH }}/storage/app/public' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/framework/cache/data' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/framework/sessions' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/framework/testing' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/framework/views' \
+                      '${{ secrets.DEPLOY_PATH }}/storage/logs' && \
+             chmod -R 775 '${{ secrets.DEPLOY_PATH }}/storage'"
+
+      # 7) Envoie SEULEMENT le code vers le serveur.
       #    Exclusions critiques : la base SQLite en production, le .env du
       #    serveur (contient l'APP_KEY stable) et storage/ (uploads, sessions,
       #    logs) ne sont JAMAIS écrasés. --delete nettoie le vieux code mais
@@ -98,8 +99,11 @@ jobs:
             backend/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
-      # 6) Applique les migrations et recache la config, côté serveur.
+      # 8) Applique les migrations et recache la config, côté serveur.
       #    migrate --force ne touche qu'au SCHÉMA, jamais aux données.
+      #    On vide d'abord les caches existants (config/route/view) avant de
+      #    les reconstruire : sans ce clear, `*:cache` peut recacher par-dessus
+      #    un ancien cache (ex. routes) et le site continue de servir du stale.
       - name: Migrations + cache (sur le serveur)
         run: |
           ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} \
@@ -107,6 +111,7 @@ jobs:
             "cd ${{ secrets.DEPLOY_PATH }} && \
              php artisan migrate --force && \
              php artisan storage:link || true && \
+             php artisan optimize:clear && \
              php artisan config:cache && \
              php artisan route:cache && \
              php artisan view:cache"
