@@ -49,7 +49,7 @@ export default function LoginPage({ onLogin }) {
                 type="text"
                 value={matricule}
                 onChange={(e) => { setMatricule(e.target.value); clearError() }}
-                placeholder="Ex : 9519"
+                placeholder="   "
                 autoComplete="username"
                 required
               />
