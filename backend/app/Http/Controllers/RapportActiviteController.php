@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employe;
 use App\Models\Formation;
 use App\Services\XlsxSurgicalPatcher;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -22,7 +23,7 @@ class RapportActiviteController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'annee'     => 'required|integer|min:2000|max:2100',
+            'annee' => 'required|integer|min:2000|max:2100',
             'trimestre' => 'required|integer|min:1|max:4',
         ]);
 
@@ -37,15 +38,15 @@ class RapportActiviteController extends Controller
     {
         $templatePath = config('rapport.ps09_template_path');
         if (! is_file($templatePath)) {
-            return response()->json(['message' => "Modèle PS09 introuvable sur le serveur."], 404);
+            return response()->json(['message' => 'Modèle PS09 introuvable sur le serveur.'], 404);
         }
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         $zip->open($templatePath);
         $workbookXml = $zip->getFromName('xl/workbook.xml');
         $zip->close();
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $dom->loadXML($workbookXml);
         $names = [];
         foreach ($dom->getElementsByTagName('sheet') as $sheet) {
@@ -64,8 +65,8 @@ class RapportActiviteController extends Controller
     public function export(Request $request): BinaryFileResponse
     {
         $data = $request->validate([
-            'sheet'     => 'required|string',
-            'annee'     => 'required|integer|min:2000|max:2100',
+            'sheet' => 'required|string',
+            'annee' => 'required|integer|min:2000|max:2100',
             'trimestre' => 'required|integer|min:1|max:4',
         ]);
 
@@ -74,7 +75,7 @@ class RapportActiviteController extends Controller
 
         $stats = $this->computeStats((int) $data['annee'], (int) $data['trimestre']);
 
-        $tempPath = storage_path('app/rapport-export-' . uniqid() . '.xlsx');
+        $tempPath = storage_path('app/rapport-export-'.uniqid().'.xlsx');
 
         $patcher = XlsxSurgicalPatcher::openCopy($templatePath, $tempPath);
         try {
@@ -91,13 +92,21 @@ class RapportActiviteController extends Controller
                 $colJ = $patcher->findColInRow($dom, $formationHeaderRow, 'Nbre des Formations Eval');
                 $colM = $patcher->findColInRow($dom, $formationHeaderRow, 'formations efficaces');
 
-                if ($colF) $patcher->setNumericCell($dom, $colF . $targetRow, $stats['formation']['planifiees']);
-                if ($colG) $patcher->setNumericCell($dom, $colG . $targetRow, $stats['formation']['realisees']);
-                if ($colJ) $patcher->setNumericCell($dom, $colJ . $targetRow, $stats['formation']['evaluees']);
-                if ($colM) $patcher->setNumericCell($dom, $colM . $targetRow, $stats['formation']['efficaces']);
+                if ($colF) {
+                    $patcher->setNumericCell($dom, $colF.$targetRow, $stats['formation']['planifiees']);
+                }
+                if ($colG) {
+                    $patcher->setNumericCell($dom, $colG.$targetRow, $stats['formation']['realisees']);
+                }
+                if ($colJ) {
+                    $patcher->setNumericCell($dom, $colJ.$targetRow, $stats['formation']['evaluees']);
+                }
+                if ($colM) {
+                    $patcher->setNumericCell($dom, $colM.$targetRow, $stats['formation']['efficaces']);
+                }
             }
 
-            $effectifHeaderRow = $patcher->findHeaderRow($dom, "effectif int");
+            $effectifHeaderRow = $patcher->findHeaderRow($dom, 'effectif int');
             if ($effectifHeaderRow !== null) {
                 $yearCol = $patcher->findColInRow($dom, $effectifHeaderRow, 'Ann');
                 $colIntegres = $patcher->findColInRow($dom, $effectifHeaderRow, 'effectif int');
@@ -109,9 +118,15 @@ class RapportActiviteController extends Controller
                     : null;
 
                 if ($targetYearRow !== null) {
-                    if ($colIntegres) $patcher->setNumericCell($dom, $colIntegres . $targetYearRow, $stats['effectif']['integres']);
-                    if ($colDeparts) $patcher->setNumericCell($dom, $colDeparts . $targetYearRow, $stats['effectif']['departs']);
-                    if ($colMutations) $patcher->setNumericCell($dom, $colMutations . $targetYearRow, $stats['effectif']['mutations']);
+                    if ($colIntegres) {
+                        $patcher->setNumericCell($dom, $colIntegres.$targetYearRow, $stats['effectif']['integres']);
+                    }
+                    if ($colDeparts) {
+                        $patcher->setNumericCell($dom, $colDeparts.$targetYearRow, $stats['effectif']['departs']);
+                    }
+                    if ($colMutations) {
+                        $patcher->setNumericCell($dom, $colMutations.$targetYearRow, $stats['effectif']['mutations']);
+                    }
                 }
             }
 
@@ -121,7 +136,7 @@ class RapportActiviteController extends Controller
             $patcher->close();
         }
 
-        $downloadName = 'PS09_Rapport_activite_' . $data['annee'] . '_T' . $data['trimestre'] . '.xlsx';
+        $downloadName = 'PS09_Rapport_activite_'.$data['annee'].'_T'.$data['trimestre'].'.xlsx';
 
         return response()->download($tempPath, $downloadName, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -130,9 +145,8 @@ class RapportActiviteController extends Controller
 
     private function computeStats(int $annee, int $trimestre): array
     {
-        $startMonth = ($trimestre - 1) * 3 + 1;
-        $debut = "{$annee}-" . str_pad((string) $startMonth, 2, '0', STR_PAD_LEFT) . '-01';
-        $fin = date('Y-m-t', strtotime("{$annee}-" . str_pad((string) ($startMonth + 2), 2, '0', STR_PAD_LEFT) . '-01'));
+        $debut = Carbon::createFromDate($annee, ($trimestre - 1) * 3 + 1, 1)->startOfDay();
+        $fin = $debut->copy()->addMonths(2)->endOfMonth();
 
         $formationsQuarter = Formation::whereBetween('date_debut', [$debut, $fin]);
         $planifiees = (clone $formationsQuarter)->count();
@@ -143,19 +157,28 @@ class RapportActiviteController extends Controller
             ->count();
 
         $integres = Employe::whereYear('date_embauche', $annee)->count();
-        $departs = Employe::where(function ($q) use ($annee) {
-            $q->where(function ($q2) use ($annee) {
+
+        $departScope = fn ($q) => $q
+            ->where(function ($q2) use ($annee) {
                 $q2->where('retraite', true)->whereYear('date_retraite', $annee);
-            })->orWhere(function ($q2) use ($annee) {
+            })
+            ->orWhere(function ($q2) use ($annee) {
                 $q2->where('depart_volontaire', true)->whereYear('date_depart_volontaire', $annee);
             });
-        })->count();
-        $mutations = Employe::where('mutation', true)->whereYear('date_mutation', $annee)->count();
+
+        $departs = Employe::where($departScope)->count();
+
+        // Un employé ayant plusieurs statuts de sortie la même année (ex. retraite + mutation)
+        // ne doit être compté que comme un départ, pas comme une mutation en plus.
+        $mutations = Employe::where('mutation', true)
+            ->whereYear('date_mutation', $annee)
+            ->whereNot($departScope)
+            ->count();
 
         return [
             'annee' => $annee,
             'trimestre' => $trimestre,
-            'periode' => ['debut' => $debut, 'fin' => $fin],
+            'periode' => ['debut' => $debut->toDateString(), 'fin' => $fin->toDateString()],
             'formation' => [
                 'planifiees' => $planifiees,
                 'realisees' => $realisees,
