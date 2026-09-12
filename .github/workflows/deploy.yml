@@ -101,6 +101,9 @@ jobs:
 
       # 8) Applique les migrations et recache la config, côté serveur.
       #    migrate --force ne touche qu'au SCHÉMA, jamais aux données.
+      #    On vide d'abord les caches existants (config/route/view) avant de
+      #    les reconstruire : sans ce clear, `*:cache` peut recacher par-dessus
+      #    un ancien cache (ex. routes) et le site continue de servir du stale.
       - name: Migrations + cache (sur le serveur)
         run: |
           ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} \
@@ -108,6 +111,7 @@ jobs:
             "cd ${{ secrets.DEPLOY_PATH }} && \
              php artisan migrate --force && \
              php artisan storage:link || true && \
+             php artisan optimize:clear && \
              php artisan config:cache && \
              php artisan route:cache && \
              php artisan view:cache"
