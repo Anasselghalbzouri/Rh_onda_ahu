@@ -15,7 +15,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    steps:
+    steps:  
       # 1) Récupère le code source
       - uses: actions/checkout@v4
 
@@ -51,6 +51,22 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      # DEBUG TEMPORAIRE — à retirer une fois le mystère "site pas à jour"
+      # résolu. N'affiche jamais la valeur de DEPLOY_PATH (même encodée) :
+      # on se contente de lister, côté serveur, les dossiers de domaines du
+      # compte et les dates de modif des fichiers du SPA au bout de
+      # DEPLOY_PATH, pour comparer avec le dossier racine réel de rhahu.com
+      # affiché dans hPanel.
+      - name: DEBUG - Vérification de DEPLOY_PATH
+        run: |
+          ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "echo '--- dossiers de domaines de ce compte (~/domains) ---' \
+             && ls -la ~/domains/ 2>&1 \
+             && echo '--- contenu de public/ au bout de DEPLOY_PATH (dates de modif) ---' \
+             && cd '${{ secrets.DEPLOY_PATH }}' 2>&1 \
+             && ls -la public/ 2>&1 | head -20"
 
       # 5) Crée le dossier de déploiement (et ses parents) s'il n'existe pas
       #    encore. rsync ne peut créer qu'un seul niveau de dossier manquant ;
