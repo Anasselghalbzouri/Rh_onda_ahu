@@ -23,7 +23,7 @@ Route::middleware('auth:rh')->group(function () {
 
     Route::get('/services', fn () => response()->json(Service::orderBy('nom')->get(['id', 'nom'])));
 
-    Route::get('/employes', [EmployeController::class, 'index']);
+    Route::get('/employes' , [EmployeController::class, 'index']);
     Route::get('/employes/export', [EmployeController::class, 'export']);
     Route::post('/employes/bulk-sync', [EmployeController::class, 'bulkSync']);
     Route::post('/employes', [EmployeController::class, 'store']);
