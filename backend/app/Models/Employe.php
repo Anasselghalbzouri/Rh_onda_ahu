@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Employe extends Model
 {
@@ -39,18 +38,24 @@ class Employe extends Model
         'observation',
         'solde_conge',
         'statut',
+        'taux_completude',
+        'champs_manquants',
+        'date_dernier_calcul',
     ];
 
     protected $casts = [
-        'date_naissance'        => 'date',
-        'date_embauche'         => 'date',
-        'date_affectation'      => 'date',
-        'date_mutation'         => 'date',
-        'date_retraite'         => 'date',
-        'date_depart_volontaire'=> 'date',
-        'retraite'              => 'boolean',
-        'depart_volontaire'     => 'boolean',
-        'solde_conge'           => 'float',
+        'date_naissance' => 'date',
+        'date_embauche' => 'date',
+        'date_affectation' => 'date',
+        'date_mutation' => 'date',
+        'date_retraite' => 'date',
+        'date_depart_volontaire' => 'date',
+        'retraite' => 'boolean',
+        'depart_volontaire' => 'boolean',
+        'solde_conge' => 'float',
+        'taux_completude' => 'integer',
+        'champs_manquants' => 'array',
+        'date_dernier_calcul' => 'datetime',
     ];
 
     public function service(): BelongsTo
@@ -81,7 +86,7 @@ class Employe extends Model
     public function piecesJointes(): HasMany
     {
         return $this->hasMany(PieceJointe::class, 'entite_id')
-                    ->where('entite', 'employe');
+            ->where('entite', 'employe');
     }
 
     public function getNomCompletAttribute(): string
@@ -92,7 +97,7 @@ class Employe extends Model
     public function formations(): BelongsToMany
     {
         return $this->belongsToMany(Formation::class, 'employe_formation', 'employe_id', 'formation_id')
-                    ->withPivot('statut', 'suivi', 'remarque');
+            ->withPivot('statut', 'suivi', 'remarque');
     }
 
     public function evaluationsFormation(): HasMany

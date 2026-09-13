@@ -65,6 +65,7 @@ export default function Dashboard() {
   const [formationStatsError, setFormationStatsError] = useState(false)
   const [pyramideAges, setPyramideAges]     = useState([])
   const [anciennete, setAnciennete]         = useState([])
+  const [completudeTaux, setCompletudeTaux] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -83,6 +84,7 @@ export default function Dashboard() {
   useEffect(() => {
     api.get('/dashboard/pyramide-ages').then(({ data }) => setPyramideAges(data)).catch(() => {})
     api.get('/dashboard/anciennete').then(({ data }) => setAnciennete(data)).catch(() => {})
+    api.get('/completude/taux').then(({ data }) => setCompletudeTaux(data)).catch(() => setCompletudeTaux(null))
   }, [])
 
   if (loading) return (
@@ -441,6 +443,24 @@ export default function Dashboard() {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      <div className="dash-section-title">Fiabilité du référentiel</div>
+      <div className="dash-chart-card">
+        <div className="dash-chart-title">Taux de complétude moyen par service</div>
+        {!completudeTaux?.par_service?.length ? <EmptyState /> : (
+          <div className="dash-completude-list">
+            {completudeTaux.par_service.map((ligne, i) => (
+              <div key={`${ligne.service_id ?? 'null'}-${i}`} className="dash-completude-row">
+                <span className="dash-completude-name">{ligne.service_nom}</span>
+                <span className="dash-completude-count">{ligne.nb_complets}/{ligne.nb_agents_actifs} complets</span>
+                <span className={`dash-completude-taux dash-completude-taux-${ligne.taux_moyen === null ? 'neutral' : ligne.taux_moyen >= 80 ? 'success' : ligne.taux_moyen >= 50 ? 'warning' : 'danger'}`}>
+                  {ligne.taux_moyen === null ? 'Aucun agent actif' : `${ligne.taux_moyen}%`}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="dash-section-title">Congés</div>

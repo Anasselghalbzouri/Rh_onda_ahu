@@ -16,6 +16,7 @@ const ICONS = {
   stats:     BarChart3,
   'rapport-activite': FileSpreadsheet,
   'rapport-employes': FileText,
+  completude: FileCheck2,
 }
 
 const MENU_BY_ROLE = {
@@ -26,6 +27,7 @@ const MENU_BY_ROLE = {
     { key: 'formations', label: 'Formations',       path: '/formations' },
     { key: 'rapport-activite', label: 'Rapport PS09', path: '/rapport-activite' },
     { key: 'rapport-employes', label: 'Rapport données employés', path: '/rapport-employes' },
+    { key: 'completude', label: 'Complétude des dossiers', path: '/completude' },
     { key: 'documents-employes', label: 'Documents employés', path: '/documents-employes' },
   ],
   dg: [

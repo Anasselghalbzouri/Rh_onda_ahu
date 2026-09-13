@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Exports\EmployeExport;
 use App\Models\Employe;
+use App\Models\ImportRapport;
+use App\Models\ImportRapportLigne;
 use App\Models\Notification;
+use App\Models\Service;
+use App\Services\CompletudeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,9 +16,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeController extends Controller
 {
+    public function __construct(private CompletudeService $completude) {}
+
     public function index(Request $request): JsonResponse
     {
-        $perPage  = min((int) $request->query('per_page', 15), 200);
+        $perPage = min((int) $request->query('per_page', 15), 200);
         $employes = $this->filtered($request)->paginate($perPage);
 
         return response()->json($employes);
@@ -39,9 +45,9 @@ class EmployeController extends Controller
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nom', 'like', "%{$search}%")
-                  ->orWhere('prenom', 'like', "%{$search}%")
-                  ->orWhere('matricule', 'like', "%{$search}%")
-                  ->orWhere('fonction', 'like', "%{$search}%");
+                    ->orWhere('prenom', 'like', "%{$search}%")
+                    ->orWhere('matricule', 'like', "%{$search}%")
+                    ->orWhere('fonction', 'like', "%{$search}%");
             });
         }
 
@@ -68,7 +74,7 @@ class EmployeController extends Controller
         $employe = is_numeric($id)
             ? Employe::with($relations)->findOrFail($id)
             : Employe::with($relations)
-                     ->where('matricule', $id)->firstOrFail();
+                ->where('matricule', $id)->firstOrFail();
 
         return response()->json($employe);
     }
@@ -76,30 +82,31 @@ class EmployeController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'matricule'             => 'required|string|unique:employe,matricule',
-            'nom'                   => 'required|string|max:100',
-            'prenom'                => 'required|string|max:100',
-            'sexe'                  => 'required|in:M,F',
-            'date_naissance'        => 'nullable|date',
-            'date_embauche'         => 'nullable|date',
-            'categorie'             => 'nullable|string|max:50',
-            'echelle'               => 'nullable|string|max:20',
-            'echelon'               => 'nullable|string|max:20',
-            'entite'                => 'nullable|string|max:100',
-            'fonction'              => 'nullable|string|max:100',
-            'qualification'         => 'nullable|string|max:100',
-            'service_id'            => 'nullable|integer|exists:service,id',
-            'affectation'           => 'nullable|string|max:100',
-            'date_affectation'      => 'nullable|date',
-            'solde_conge'           => 'nullable|numeric|min:0',
-            'statut'                => 'nullable|in:actif,mute,retraite,parti,suspendu',
-            'observation'           => 'nullable|string',
+            'matricule' => 'required|string|unique:employe,matricule',
+            'nom' => 'required|string|max:100',
+            'prenom' => 'required|string|max:100',
+            'sexe' => 'required|in:M,F',
+            'date_naissance' => 'nullable|date',
+            'date_embauche' => 'nullable|date',
+            'categorie' => 'nullable|string|max:50',
+            'echelle' => 'nullable|string|max:20',
+            'echelon' => 'nullable|string|max:20',
+            'entite' => 'nullable|string|max:100',
+            'fonction' => 'nullable|string|max:100',
+            'qualification' => 'nullable|string|max:100',
+            'service_id' => 'nullable|integer|exists:service,id',
+            'affectation' => 'nullable|string|max:100',
+            'date_affectation' => 'nullable|date',
+            'solde_conge' => 'nullable|numeric|min:0',
+            'statut' => 'nullable|in:actif,mute,retraite,parti,suspendu',
+            'observation' => 'nullable|string',
         ]);
 
         $data['solde_conge'] = $data['solde_conge'] ?? 0;
-        $data['statut']      = $data['statut'] ?? 'actif';
+        $data['statut'] = $data['statut'] ?? 'actif';
 
         $employe = Employe::create($data);
+        $this->completude->recalculer($employe);
 
         return response()->json($employe, 201);
     }
@@ -109,27 +116,28 @@ class EmployeController extends Controller
         $employe = Employe::findOrFail($id);
 
         $data = $request->validate([
-            'matricule'             => "nullable|string|unique:employe,matricule,{$id}",
-            'nom'                   => 'nullable|string|max:100',
-            'prenom'                => 'nullable|string|max:100',
-            'sexe'                  => 'nullable|in:M,F',
-            'date_naissance'        => 'nullable|date',
-            'date_embauche'         => 'nullable|date',
-            'categorie'             => 'nullable|string|max:50',
-            'echelle'               => 'nullable|string|max:20',
-            'echelon'               => 'nullable|string|max:20',
-            'entite'                => 'nullable|string|max:100',
-            'fonction'              => 'nullable|string|max:100',
-            'qualification'         => 'nullable|string|max:100',
-            'service_id'            => 'nullable|integer|exists:service,id',
-            'affectation'           => 'nullable|string|max:100',
-            'date_affectation'      => 'nullable|date',
-            'solde_conge'           => 'nullable|numeric',
-            'statut'                => 'nullable|string|max:20',
-            'observation'           => 'nullable|string',
+            'matricule' => "nullable|string|unique:employe,matricule,{$id}",
+            'nom' => 'nullable|string|max:100',
+            'prenom' => 'nullable|string|max:100',
+            'sexe' => 'nullable|in:M,F',
+            'date_naissance' => 'nullable|date',
+            'date_embauche' => 'nullable|date',
+            'categorie' => 'nullable|string|max:50',
+            'echelle' => 'nullable|string|max:20',
+            'echelon' => 'nullable|string|max:20',
+            'entite' => 'nullable|string|max:100',
+            'fonction' => 'nullable|string|max:100',
+            'qualification' => 'nullable|string|max:100',
+            'service_id' => 'nullable|integer|exists:service,id',
+            'affectation' => 'nullable|string|max:100',
+            'date_affectation' => 'nullable|date',
+            'solde_conge' => 'nullable|numeric',
+            'statut' => 'nullable|string|max:20',
+            'observation' => 'nullable|string',
         ]);
 
         $employe->update($data);
+        $this->completude->recalculer($employe);
 
         return response()->json($employe);
     }
@@ -145,30 +153,31 @@ class EmployeController extends Controller
     public function bulkSync(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'employes'              => 'required|array|min:1|max:500',
-            'employes.*.matricule'  => 'required|string',
-            'employes.*.nom'        => 'required|string|max:100',
-            'employes.*.prenom'     => 'required|string|max:100',
-            'employes.*.sexe'                => 'nullable|in:M,F',
-            'employes.*.date_naissance'      => 'nullable|date',
-            'employes.*.date_embauche'       => 'nullable|date',
-            'employes.*.categorie'           => 'nullable|string|max:50',
-            'employes.*.echelle'             => 'nullable|string|max:20',
-            'employes.*.echelon'             => 'nullable|string|max:20',
-            'employes.*.entite'              => 'nullable|string|max:100',
-            'employes.*.fonction'            => 'nullable|string|max:100',
-            'employes.*.qualification'       => 'nullable|string|max:100',
-            'employes.*.affectation'         => 'nullable|string|max:100',
-            'employes.*.date_affectation'    => 'nullable|date',
-            'employes.*.solde_conge'         => 'nullable|numeric|min:0',
-            'employes.*.statut'              => 'nullable|in:actif,mute,retraite,parti,suspendu',
-            'employes.*.observation'         => 'nullable|string',
+            'employes' => 'required|array|min:1|max:500',
+            'employes.*.matricule' => 'required|string',
+            'employes.*.nom' => 'required|string|max:100',
+            'employes.*.prenom' => 'required|string|max:100',
+            'employes.*.sexe' => 'nullable|in:M,F',
+            'employes.*.date_naissance' => 'nullable|date',
+            'employes.*.date_embauche' => 'nullable|date',
+            'employes.*.categorie' => 'nullable|string|max:50',
+            'employes.*.echelle' => 'nullable|string|max:20',
+            'employes.*.echelon' => 'nullable|string|max:20',
+            'employes.*.entite' => 'nullable|string|max:100',
+            'employes.*.fonction' => 'nullable|string|max:100',
+            'employes.*.qualification' => 'nullable|string|max:100',
+            'employes.*.affectation' => 'nullable|string|max:100',
+            'employes.*.date_affectation' => 'nullable|date',
+            'employes.*.solde_conge' => 'nullable|numeric|min:0',
+            'employes.*.statut' => 'nullable|in:actif,mute,retraite,parti,suspendu',
+            'employes.*.observation' => 'nullable|string',
         ]);
 
-        $results  = [];
-        $created  = 0;
+        $results = [];
+        $created = 0;
         $modified = 0;
         $unchanged = 0;
+        $rejets = [];
 
         $syncFields = [
             'nom', 'prenom', 'sexe', 'date_naissance', 'date_embauche',
@@ -177,11 +186,35 @@ class EmployeController extends Controller
             'solde_conge', 'statut', 'observation',
         ];
 
-        foreach ($data['employes'] as $row) {
+        foreach ($data['employes'] as $index => $row) {
             $fields = array_intersect_key($row, array_flip($syncFields));
 
             $fields['solde_conge'] = $fields['solde_conge'] ?? 0;
-            $fields['statut']      = $fields['statut'] ?? 'actif';
+            $fields['statut'] = $fields['statut'] ?? 'actif';
+
+            // L'entité tient lieu de service pour ce chemin d'import (le frontend
+            // n'envoie pas de service_id) : on la résout et on la persiste pour que
+            // le calcul de complétude soit cohérent avec les règles.
+            $entiteNom = trim((string) ($fields['entite'] ?? ''));
+            if ($entiteNom !== '') {
+                $fields['service_id'] = $this->getOrCreateService($entiteNom)->id;
+            }
+
+            // Garde-fou de complétude : un agent actif incomplet n'est pas écrit.
+            if ($fields['statut'] === 'actif') {
+                $manquants = $this->completude->champsManquantsPour($fields['categorie'] ?? null, $fields);
+
+                if (! empty($manquants)) {
+                    $rejets[] = [
+                        'numero_ligne' => $index + 1,
+                        'matricule' => $row['matricule'],
+                        'motif' => implode(', ', $manquants),
+                    ];
+                    $results[] = ['matricule' => $row['matricule'], 'status' => 'rejected'];
+
+                    continue;
+                }
+            }
 
             $employe = Employe::updateOrCreate(
                 ['matricule' => $row['matricule']],
@@ -190,7 +223,8 @@ class EmployeController extends Controller
 
             // wasChanged() ne compte que les vraies modifications de champs :
             // un ré-enregistrement Excel sans changement de données n'est pas
-            // compté (voir Notification::recordExcelSync).
+            // compté (voir Notification::recordExcelSync). On lit le statut AVANT
+            // le recalcul de complétude, qui touche toujours date_dernier_calcul.
             if ($employe->wasRecentlyCreated) {
                 $status = 'created';
                 $created++;
@@ -202,20 +236,56 @@ class EmployeController extends Controller
                 $unchanged++;
             }
 
+            $this->completude->recalculer($employe);
+
             $results[] = ['matricule' => $row['matricule'], 'status' => $status];
         }
 
         // Notification uniquement s'il y a eu un vrai changement.
         Notification::recordExcelSync($created, $modified, 'bulk-sync');
 
-        return response()->json([
-            'total'     => count($data['employes']),
-            'created'   => $created,
-            'updated'   => $modified,   // rétro-compatibilité : "updated" = modifiés réels
-            'modified'  => $modified,
-            'unchanged' => $unchanged,
-            'errors'    => 0,
-            'results'   => $results,
+        $rapport = ImportRapport::create([
+            'origine' => 'sync_excel',
+            'nom_fichier' => null,
+            'total_lignes' => count($data['employes']),
+            'lignes_acceptees' => $created + $modified + $unchanged,
+            'lignes_rejetees' => count($rejets),
+            'execute_par' => auth()->id(),
         ]);
+
+        foreach ($rejets as $rejet) {
+            ImportRapportLigne::create($rejet + ['import_rapport_id' => $rapport->id]);
+        }
+
+        return response()->json([
+            'total' => count($data['employes']),
+            'created' => $created,
+            'updated' => $modified,   // rétro-compatibilité : "updated" = modifiés réels
+            'modified' => $modified,
+            'unchanged' => $unchanged,
+            'lignes_rejetees' => count($rejets),
+            'import_rapport_id' => $rapport->id,
+            'errors' => 0,
+            'results' => $results,
+        ]);
+    }
+
+    private function getOrCreateService(string $nom): Service
+    {
+        $lower = strtolower($nom);
+        $domaine = null;
+
+        if (str_contains($lower, 'navigation')) {
+            $domaine = 'Navigation Aérienne';
+        } elseif (str_contains($lower, 'technique')) {
+            $domaine = 'Technique';
+        } elseif (str_contains($lower, 'exploitation')) {
+            $domaine = 'Exploitation';
+        } elseif (str_contains($lower, 'sûreté') || str_contains($lower, 'securite')
+            || str_contains($lower, 'qualité')) {
+            $domaine = 'Sûreté & Qualité';
+        }
+
+        return Service::firstOrCreate(['nom' => $nom], ['domaine' => $domaine]);
     }
 }

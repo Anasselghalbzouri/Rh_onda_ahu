@@ -1106,6 +1106,241 @@ Success response `200 OK`:
 ]
 ```
 
+## Reports
+
+### PS09 Activity Report
+
+```http
+GET /rapport-activite
+```
+
+Query parameters:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `annee` | integer | Required. Year of the report, 2000 to 2100. |
+| `trimestre` | integer | Required. Quarter, 1 to 4. |
+
+Success response `200 OK`:
+
+```json
+{
+  "annee": 2026,
+  "trimestre": 1,
+  "periode": { "debut": "2026-01-01", "fin": "2026-03-31" },
+  "formation": {
+    "planifiees": 10,
+    "realisees": 8,
+    "evaluees": 6,
+    "efficaces": 5
+  },
+  "effectif": {
+    "integres": 3,
+    "departs": 1,
+    "mutations": 0
+  }
+}
+```
+
+### PS09 Activity Report Export
+
+```http
+GET /rapport-activite/export
+```
+
+Query parameters:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `sheet` | string | Required. Name of the sheet to fill in the PS09 workbook. |
+| `annee` | integer | Required. Year of the report, 2000 to 2100. |
+| `trimestre` | integer | Required. Quarter, 1 to 4. |
+
+Success response `200 OK`: streamed `.xlsx` download generated from the PS09 template. The native charts and formatting of the workbook are preserved; only the calculable cells are updated.
+
+### Employee Data Report Preview
+
+```http
+GET /rapport-employes
+```
+
+Returns the number of employees matching the optional filters, used by the frontend before exporting.
+
+Query parameters:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `service_id` | integer | Optional. Must exist in `service.id`. |
+| `statut` | string | Optional. One of `actif`, `mute`, `retraite`, `parti`, `suspendu`. |
+
+Success response `200 OK`:
+
+```json
+{
+  "total": 42,
+  "filtres": { "service_id": 1, "statut": "actif" }
+}
+```
+
+When no employee matches the filters, `total` is `0` and the frontend displays an explicit message.
+
+### Employee Data Report Export
+
+```http
+GET /rapport-employes/export
+```
+
+Generates and downloads an Excel file listing administrative and career information for each employee. The file excludes any leave, illness, or absence data.
+
+Query parameters: same as `GET /rapport-employes`.
+
+Success response `200 OK`: streamed `.xlsx` download with the header:
+
+```http
+Content-Disposition: attachment; filename="Rapport_Employes_YYYY-MM-DD.xlsx"
+```
+
+Workbook columns (one sheet, one header row + one row per employee):
+
+```text
+Matricule | Nom | Prénom | Sexe | Date de naissance | Date d'embauche | Catégorie | Échelle | Échelon | Entité | Fonction | Qualification | Service | Affectation | Date d'affectation | Statut carrière | Statut
+```
+
+## Référentiel Quality & Completeness
+
+Completeness is driven by the configurable rules table `regle_completude` (seeded with 8 mandatory fields: `fonction`, `service_id`, `entite`, `date_embauche`, `categorie`, `echelle`, `echelon`, `date_naissance`). Each employee stores a computed `taux_completude` (0–100), the list of missing mandatory labels `champs_manquants`, and `date_dernier_calcul`. The rate is recomputed on employee create/update, after a successful Excel import line, and nightly via the scheduler.
+
+### List Incomplete Records
+
+```http
+GET /completude/dossiers-incomplets
+```
+
+Active employees with at least one missing mandatory field, grouped by service (a `null` service group is always present).
+
+Query parameters:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `service_id` | integer | Optional. Filter on a specific service. |
+| `categorie` | string | Optional. Filter on an employee category. |
+
+Success response `200 OK`:
+
+```json
+{
+  "services": [
+    {
+      "service_id": 3,
+      "service_nom": "Navigation Aérienne",
+      "employes": [
+        {
+          "id": 42,
+          "matricule": "E00123",
+          "nom_complet": "Karim Alaoui",
+          "categorie": "Cadre",
+          "taux_completude": 62,
+          "champs_manquants": ["Fonction manquante", "Date d'embauche manquante"],
+          "date_dernier_calcul": "2026-09-13T02:00:00Z"
+        }
+      ]
+    },
+    { "service_id": null, "service_nom": "Service non défini", "employes": [] }
+  ]
+}
+```
+
+### Completeness Rates
+
+```http
+GET /completude/taux
+```
+
+Aggregated completeness rate for active employees, by service and by category. Groups without active employees return `taux_moyen: null` and are labelled explicitly.
+
+Success response `200 OK`:
+
+```json
+{
+  "par_service": [
+    { "service_id": 3, "service_nom": "Navigation Aérienne", "nb_agents_actifs": 10, "taux_moyen": 84, "nb_complets": 6 },
+    { "service_id": null, "service_nom": "Aucun agent actif", "nb_agents_actifs": 0, "taux_moyen": null, "nb_complets": 0 }
+  ],
+  "par_categorie": [
+    { "categorie": "Cadre", "nb_agents_actifs": 15, "taux_moyen": 78, "nb_complets": 9 }
+  ]
+}
+```
+
+### List Import Reports
+
+```http
+GET /import/rapports
+```
+
+Paginated history of Excel imports (manual upload and Excel sync).
+
+Query parameters:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `page` | integer | Optional. Page number. |
+| `origine` | string | Optional. `manuel` or `sync_excel`. |
+
+Success response `200 OK`:
+
+```json
+{
+  "data": [
+    {
+      "id": 17,
+      "origine": "manuel",
+      "nom_fichier": "effectif_2026_09.xlsx",
+      "total_lignes": 120,
+      "lignes_acceptees": 115,
+      "lignes_rejetees": 5,
+      "created_at": "2026-09-12T10:00:00Z"
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 3, "total": 17 }
+}
+```
+
+### Import Report Detail
+
+```http
+GET /import/rapports/{id}
+```
+
+Detail of one import run, including rejected lines and their reason.
+
+Success response `200 OK` adds `lignes_rejetees_detail`:
+
+```json
+{
+  "id": 17,
+  "origine": "manuel",
+  "nom_fichier": "effectif_2026_09.xlsx",
+  "total_lignes": 120,
+  "lignes_acceptees": 115,
+  "lignes_rejetees": 5,
+  "created_at": "2026-09-12T10:00:00Z",
+  "lignes_rejetees_detail": [
+    { "numero_ligne": 14, "matricule": "E00456", "motif": "Fonction manquante, Service manquant" }
+  ]
+}
+```
+
+Response `404 Not Found` when the report does not exist.
+
+### Import Completeness Guard
+
+`POST /employes/bulk-sync` and `POST /employes/import` apply the completeness rules before writing any line:
+
+- A line whose computed `statut` is `actif` and that misses at least one mandatory field is **not** written (neither created nor updated).
+- The line is counted in the rejected total and stored as an `import_rapport_ligne` with its source line number, matricule, and reason.
+- An `import_rapport` row summarises the run. The existing response payload is preserved and gains `lignes_rejetees` and `import_rapport_id` so the frontend can load the detail via `GET /import/rapports/{id}`.
+
 ## JavaScript Example
 
 ```javascript

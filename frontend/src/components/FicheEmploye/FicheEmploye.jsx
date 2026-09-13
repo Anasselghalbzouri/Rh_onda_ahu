@@ -214,9 +214,8 @@ export default function FicheEmploye({ id, onRetour }) {
     .slice()
     .sort((a, b) => new Date(b?.date_debut ?? 0) - new Date(a?.date_debut ?? 0))
   const congesAvecFichier = demandesConge.filter((conge) => conge?.fichier_nom)
-  const dossierTotal = dossierPersonnel.length
-  const dossierValides = dossierPersonnel.filter((doc) => doc?.statut === 'valide').length
-  const dossierCompleteness = dossierTotal > 0 ? Math.round((dossierValides / dossierTotal) * 100) : 0
+  const tauxCompletude = employe.taux_completude ?? null
+  const champsManquants = Array.isArray(employe.champs_manquants) ? employe.champs_manquants : []
   const dossierAlerts = dossierPersonnel.filter((doc) => ['expire', 'a_renouveler'].includes(doc?.statut)).length
 
   const onDeletePieceJointe = async (pieceId) => {
@@ -308,10 +307,21 @@ export default function FicheEmploye({ id, onRetour }) {
         </div>
         <div className="fiche-summary-metrics">
           <Metric label="Solde congé" value={`${employe.solde_conge ?? 0}j`} tone={Number(employe.solde_conge ?? 0) < 5 ? 'danger' : 'success'} />
-          <Metric label="Dossier complet" value={`${dossierCompleteness}%`} tone={dossierCompleteness < 80 ? 'warning' : 'success'} />
+          <Metric label="Dossier complet" value={tauxCompletude === null ? '—' : `${tauxCompletude}%`} tone={tauxCompletude === null || tauxCompletude >= 80 ? 'success' : 'warning'} />
           <Metric label="Alertes" value={dossierAlerts} tone={dossierAlerts > 0 ? 'danger' : 'success'} />
         </div>
       </div>
+
+      {champsManquants.length > 0 && (
+        <div className="fiche-completude-alertes">
+          <span className="fiche-completude-alertes-title">Champs obligatoires manquants</span>
+          <ul>
+            {champsManquants.map((champ) => (
+              <li key={champ}>{champ}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="fiche-tabs" role="tablist" aria-label="Sections de la fiche employé">
         {TABS.map((tab) => {
