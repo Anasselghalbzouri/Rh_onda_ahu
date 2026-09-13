@@ -4,11 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Exports\EmployeExport;
 use App\Models\Employe;
-use App\Models\ImportRapport;
-use App\Models\ImportRapportLigne;
 use App\Models\Notification;
 use App\Models\Service;
-use App\Services\CompletudeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,8 +13,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeController extends Controller
 {
-    public function __construct(private CompletudeService $completude) {}
-
     public function index(Request $request): JsonResponse
     {
         $perPage = min((int) $request->query('per_page', 15), 200);
@@ -106,7 +101,6 @@ class EmployeController extends Controller
         $data['statut'] = $data['statut'] ?? 'actif';
 
         $employe = Employe::create($data);
-        $this->completude->recalculer($employe);
 
         return response()->json($employe, 201);
     }
@@ -137,7 +131,6 @@ class EmployeController extends Controller
         ]);
 
         $employe->update($data);
-        $this->completude->recalculer($employe);
 
         return response()->json($employe);
     }
@@ -177,7 +170,6 @@ class EmployeController extends Controller
         $created = 0;
         $modified = 0;
         $unchanged = 0;
-        $rejets = [];
 
         $syncFields = [
             'nom', 'prenom', 'sexe', 'date_naissance', 'date_embauche',
@@ -193,27 +185,10 @@ class EmployeController extends Controller
             $fields['statut'] = $fields['statut'] ?? 'actif';
 
             // L'entité tient lieu de service pour ce chemin d'import (le frontend
-            // n'envoie pas de service_id) : on la résout et on la persiste pour que
-            // le calcul de complétude soit cohérent avec les règles.
+            // n'envoie pas de service_id) : on la résout et on la persiste.
             $entiteNom = trim((string) ($fields['entite'] ?? ''));
             if ($entiteNom !== '') {
                 $fields['service_id'] = $this->getOrCreateService($entiteNom)->id;
-            }
-
-            // Garde-fou de complétude : un agent actif incomplet n'est pas écrit.
-            if ($fields['statut'] === 'actif') {
-                $manquants = $this->completude->champsManquantsPour($fields['categorie'] ?? null, $fields);
-
-                if (! empty($manquants)) {
-                    $rejets[] = [
-                        'numero_ligne' => $index + 1,
-                        'matricule' => $row['matricule'],
-                        'motif' => implode(', ', $manquants),
-                    ];
-                    $results[] = ['matricule' => $row['matricule'], 'status' => 'rejected'];
-
-                    continue;
-                }
             }
 
             $employe = Employe::updateOrCreate(
@@ -223,8 +198,7 @@ class EmployeController extends Controller
 
             // wasChanged() ne compte que les vraies modifications de champs :
             // un ré-enregistrement Excel sans changement de données n'est pas
-            // compté (voir Notification::recordExcelSync). On lit le statut AVANT
-            // le recalcul de complétude, qui touche toujours date_dernier_calcul.
+            // compté (voir Notification::recordExcelSync).
             if ($employe->wasRecentlyCreated) {
                 $status = 'created';
                 $created++;
@@ -236,26 +210,11 @@ class EmployeController extends Controller
                 $unchanged++;
             }
 
-            $this->completude->recalculer($employe);
-
             $results[] = ['matricule' => $row['matricule'], 'status' => $status];
         }
 
         // Notification uniquement s'il y a eu un vrai changement.
         Notification::recordExcelSync($created, $modified, 'bulk-sync');
-
-        $rapport = ImportRapport::create([
-            'origine' => 'sync_excel',
-            'nom_fichier' => null,
-            'total_lignes' => count($data['employes']),
-            'lignes_acceptees' => $created + $modified + $unchanged,
-            'lignes_rejetees' => count($rejets),
-            'execute_par' => auth()->id(),
-        ]);
-
-        foreach ($rejets as $rejet) {
-            ImportRapportLigne::create($rejet + ['import_rapport_id' => $rapport->id]);
-        }
 
         return response()->json([
             'total' => count($data['employes']),
@@ -263,8 +222,6 @@ class EmployeController extends Controller
             'updated' => $modified,   // rétro-compatibilité : "updated" = modifiés réels
             'modified' => $modified,
             'unchanged' => $unchanged,
-            'lignes_rejetees' => count($rejets),
-            'import_rapport_id' => $rapport->id,
             'errors' => 0,
             'results' => $results,
         ]);

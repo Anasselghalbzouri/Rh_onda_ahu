@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import { FileSpreadsheet, Download, UploadCloud } from 'lucide-react'
-import api from '../../../api'
 import Modal from '../Modal/Modal'
 import './ImportExcelModal.css'
 
@@ -39,7 +38,6 @@ export default function ImportExcelModal({
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const [submitError, setSubmitError] = useState(null)
-  const [rapportDetail, setRapportDetail] = useState(null)
 
   const fieldByHeader = new Map(
     fields.map((f) => [normalizeHeader(f.label ?? f.key), f.key])
@@ -51,19 +49,8 @@ export default function ImportExcelModal({
     setParseError(null)
     setResult(null)
     setSubmitError(null)
-    setRapportDetail(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
-
-  useEffect(() => {
-    const id = result?.import_rapport_id
-    if (!id) return undefined
-    let cancelled = false
-    api.get(`/import/rapports/${id}`)
-      .then(({ data }) => { if (!cancelled) setRapportDetail(data) })
-      .catch(() => { if (!cancelled) setRapportDetail(null) })
-    return () => { cancelled = true }
-  }, [result])
 
   const handleClose = () => {
     reset()
@@ -188,22 +175,6 @@ export default function ImportExcelModal({
                   {key} : <strong>{String(value)}</strong>
                 </span>
               ))}
-          </div>
-        )}
-
-        {rapportDetail?.lignes_rejetees_detail?.length > 0 && (
-          <div className="import-excel-rejets">
-            <p className="import-excel-rejets-title">
-              Lignes rejetées ({rapportDetail.lignes_rejetees_detail.length})
-            </p>
-            <ul>
-              {rapportDetail.lignes_rejetees_detail.map((ligne, idx) => (
-                <li key={`${ligne.numero_ligne}-${idx}`}>
-                  Ligne {ligne.numero_ligne}
-                  {ligne.matricule ? ` (${ligne.matricule})` : ''} : {ligne.motif}
-                </li>
-              ))}
-            </ul>
           </div>
         )}
 

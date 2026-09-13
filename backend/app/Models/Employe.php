@@ -38,9 +38,6 @@ class Employe extends Model
         'observation',
         'solde_conge',
         'statut',
-        'taux_completude',
-        'champs_manquants',
-        'date_dernier_calcul',
     ];
 
     protected $casts = [
@@ -53,9 +50,6 @@ class Employe extends Model
         'retraite' => 'boolean',
         'depart_volontaire' => 'boolean',
         'solde_conge' => 'float',
-        'taux_completude' => 'integer',
-        'champs_manquants' => 'array',
-        'date_dernier_calcul' => 'datetime',
     ];
 
     public function service(): BelongsTo

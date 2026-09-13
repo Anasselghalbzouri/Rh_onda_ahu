@@ -122,28 +122,3 @@
   cursor: not-allowed;
 }
 
-.import-excel-rejets {
-  background: var(--danger-light);
-  border: 1px solid var(--danger);
-  border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.import-excel-rejets-title {
-  margin: 0 0 var(--space-2);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--danger);
-}
-
-.import-excel-rejets ul {
-  margin: 0;
-  padding-left: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: 12px;
-  color: var(--neutral-700);
-}

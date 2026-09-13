@@ -3,11 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employe;
-use App\Models\ImportRapport;
-use App\Models\ImportRapportLigne;
 use App\Models\PieceJointe;
 use App\Models\Service;
-use App\Services\CompletudeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -16,8 +13,6 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ImportController extends Controller
 {
-    public function __construct(private CompletudeService $completude) {}
-
     private array $categorieMap = [
         'cadre supér' => 'Cadre Supérieur',
         'cadre super' => 'Cadre Supérieur',
@@ -133,7 +128,6 @@ class ImportController extends Controller
         $created = 0;
         $updated = 0;
         $errors = [];
-        $rejets = [];
 
         $syncFields = [
             'nom', 'prenom', 'sexe', 'date_naissance', 'date_embauche',
@@ -157,27 +151,10 @@ class ImportController extends Controller
 
                 $fields['statut'] = $fields['statut'] ?: 'actif';
 
-                // Garde-fou de complétude : un agent actif incomplet n'est pas écrit.
-                if ($fields['statut'] === 'actif') {
-                    $donnees = $fields + ['service_id' => $fields['entite'] ?? null];
-                    $manquants = $this->completude->champsManquantsPour($fields['categorie'], $donnees);
-
-                    if (! empty($manquants)) {
-                        $rejets[] = [
-                            'numero_ligne' => $i + 2,
-                            'matricule' => $row['matricule'] ?? null,
-                            'motif' => implode(', ', $manquants),
-                        ];
-
-                        continue;
-                    }
-                }
-
                 $employe = Employe::updateOrCreate(
                     ['matricule' => $row['matricule']],
                     $fields
                 );
-                $this->completude->recalculer($employe);
 
                 $employe->wasRecentlyCreated ? $created++ : $updated++;
 
@@ -186,27 +163,12 @@ class ImportController extends Controller
             }
         }
 
-        $rapport = ImportRapport::create([
-            'origine' => 'manuel',
-            'nom_fichier' => $file->getClientOriginalName(),
-            'total_lignes' => count($rows),
-            'lignes_acceptees' => $created + $updated,
-            'lignes_rejetees' => count($rejets),
-            'execute_par' => auth()->id(),
-        ]);
-
-        foreach ($rejets as $rejet) {
-            ImportRapportLigne::create($rejet + ['import_rapport_id' => $rapport->id]);
-        }
-
         return response()->json([
             'success' => true,
             'fichier' => $file->getClientOriginalName(),
             'total' => count($rows),
             'created' => $created,
             'updated' => $updated,
-            'lignes_rejetees' => count($rejets),
-            'import_rapport_id' => $rapport->id,
             'errors' => $errors,
         ]);
     }
@@ -223,18 +185,12 @@ class ImportController extends Controller
         $updated = 0;
         $skipped = 0;
         $errors = [];
-        $rejets = [];
 
         foreach ($rows as $index => $row) {
             try {
                 $matricule = trim((string) ($row['matricule'] ?? ''));
                 if ($matricule === '') {
                     $skipped++;
-                    $rejets[] = [
-                        'numero_ligne' => $index + 1,
-                        'matricule' => null,
-                        'motif' => 'Matricule manquant',
-                    ];
 
                     continue;
                 }
@@ -288,50 +244,15 @@ class ImportController extends Controller
                     'statut' => $statut,
                 ];
 
-                // Garde-fou de complétude : un agent actif incomplet n'est pas écrit.
-                if ($statut === 'actif') {
-                    $manquants = $this->completude->champsManquantsPour($categorie, $data);
-
-                    if (! empty($manquants)) {
-                        $skipped++;
-                        $rejets[] = [
-                            'numero_ligne' => $index + 1,
-                            'matricule' => $matricule,
-                            'motif' => implode(', ', $manquants),
-                        ];
-
-                        continue;
-                    }
-                }
-
                 $exists = Employe::where('matricule', $matricule)->exists();
                 $employe = Employe::updateOrCreate(['matricule' => $matricule], $data);
-                $this->completude->recalculer($employe);
 
                 $exists ? $updated++ : $inserted++;
 
             } catch (\Throwable $e) {
                 $errors[] = 'Ligne '.($index + 1)." (matricule={$row['matricule']}): ".$e->getMessage();
                 $skipped++;
-                $rejets[] = [
-                    'numero_ligne' => $index + 1,
-                    'matricule' => $row['matricule'] ?? null,
-                    'motif' => $e->getMessage(),
-                ];
             }
-        }
-
-        $rapport = ImportRapport::create([
-            'origine' => 'sync_excel',
-            'nom_fichier' => null,
-            'total_lignes' => count($rows),
-            'lignes_acceptees' => $inserted + $updated,
-            'lignes_rejetees' => count($rejets),
-            'execute_par' => auth()->id(),
-        ]);
-
-        foreach ($rejets as $rejet) {
-            ImportRapportLigne::create($rejet + ['import_rapport_id' => $rapport->id]);
         }
 
         return response()->json([
@@ -339,65 +260,8 @@ class ImportController extends Controller
             'inserted' => $inserted,
             'updated' => $updated,
             'skipped' => $skipped,
-            'lignes_rejetees' => count($rejets),
-            'import_rapport_id' => $rapport->id,
             'errors' => $errors,
             'total_db' => Employe::count(),
-        ]);
-    }
-
-    public function rapports(Request $request): JsonResponse
-    {
-        $query = ImportRapport::query()->orderByDesc('id');
-
-        if ($origine = $request->query('origine')) {
-            $query->where('origine', $origine);
-        }
-
-        $paginated = $query->paginate((int) $request->query('per_page', 15));
-
-        return response()->json([
-            'data' => $paginated->getCollection()->map(fn (ImportRapport $rapport) => [
-                'id' => $rapport->id,
-                'origine' => $rapport->origine,
-                'nom_fichier' => $rapport->nom_fichier,
-                'total_lignes' => $rapport->total_lignes,
-                'lignes_acceptees' => $rapport->lignes_acceptees,
-                'lignes_rejetees' => $rapport->lignes_rejetees,
-                'created_at' => $rapport->created_at,
-            ])->values(),
-            'meta' => [
-                'current_page' => $paginated->currentPage(),
-                'last_page' => $paginated->lastPage(),
-                'total' => $paginated->total(),
-            ],
-        ]);
-    }
-
-    public function rapportDetail(int $id): JsonResponse
-    {
-        $rapport = ImportRapport::with('lignes')->find($id);
-
-        if ($rapport === null) {
-            return response()->json(['message' => 'Rapport introuvable.'], 404);
-        }
-
-        return response()->json([
-            'id' => $rapport->id,
-            'origine' => $rapport->origine,
-            'nom_fichier' => $rapport->nom_fichier,
-            'total_lignes' => $rapport->total_lignes,
-            'lignes_acceptees' => $rapport->lignes_acceptees,
-            'lignes_rejetees' => $rapport->lignes_rejetees,
-            'created_at' => $rapport->created_at,
-            'lignes_rejetees_detail' => $rapport->lignes
-                ->sortBy('numero_ligne')
-                ->values()
-                ->map(fn (ImportRapportLigne $ligne) => [
-                    'numero_ligne' => $ligne->numero_ligne,
-                    'matricule' => $ligne->matricule,
-                    'motif' => $ligne->motif,
-                ]),
         ]);
     }
 

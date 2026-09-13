@@ -9,7 +9,6 @@ import FormationsPage from './components/FormationsPage/FormationsPage'
 import MesFormationsPage from './components/MesFormationsPage/MesFormationsPage'
 import RapportActivitePage from './components/RapportActivitePage/RapportActivitePage'
 import RapportEmployesPage from './components/RapportEmployesPage/RapportEmployesPage'
-import CompletudePage from './components/CompletudePage/CompletudePage'
 import DocumentsEmployesPage from './components/DocumentsEmployesPage/DocumentsEmployesPage'
 import MesDocumentsPage from './components/MesDocumentsPage/MesDocumentsPage'
 import Unauthorized from './components/Unauthorized/Unauthorized'
@@ -68,14 +67,6 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['rh']}>
                 <RapportEmployesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="completude"
-            element={
-              <ProtectedRoute allowedRoles={['rh']}>
-                <CompletudePage />
               </ProtectedRoute>
             }
           />

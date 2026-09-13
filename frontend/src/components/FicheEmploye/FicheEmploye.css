@@ -797,28 +797,6 @@
 
 .fiche-cancel-btn:hover { background: var(--neutral-100); }
 
-.fiche-completude-alertes {
-  padding: var(--space-3) var(--space-4);
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: var(--radius-md);
-  color: #92400e;
-  font-size: 13px;
-}
-
-.fiche-completude-alertes-title {
-  font-weight: 700;
-}
-
-.fiche-completude-alertes ul {
-  margin: var(--space-2) 0 0;
-  padding-left: var(--space-5);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-5);
-  list-style: disc;
-}
-
 @media (max-width: 760px) {
   .fiche-summary-card {
     flex-direction: column;

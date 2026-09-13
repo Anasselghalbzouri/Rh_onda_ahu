@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CompletudeController;
 use App\Http\Controllers\CongeController;
 use App\Http\Controllers\CoursController;
 use App\Http\Controllers\DashboardController;
@@ -30,8 +29,6 @@ Route::middleware('auth:rh')->group(function () {
     Route::get('/employes/export', [EmployeController::class, 'export']);
     Route::post('/employes/bulk-sync', [EmployeController::class, 'bulkSync']);
     Route::post('/employes/import', [ImportController::class, 'importFromFile']);
-    Route::get('/import/rapports', [ImportController::class, 'rapports']);
-    Route::get('/import/rapports/{id}', [ImportController::class, 'rapportDetail']);
     Route::post('/employes', [EmployeController::class, 'store']);
     Route::get('/employes/{id}', [EmployeController::class, 'show']);
     Route::put('/employes/{id}', [EmployeController::class, 'update']);
@@ -100,7 +97,4 @@ Route::middleware('auth:rh')->group(function () {
 
     Route::get('/rapport-employes', [RapportEmployesController::class, 'stats']);
     Route::get('/rapport-employes/export', [RapportEmployesController::class, 'export']);
-
-    Route::get('/completude/dossiers-incomplets', [CompletudeController::class, 'dossiersIncomplets']);
-    Route::get('/completude/taux', [CompletudeController::class, 'taux']);
 });
