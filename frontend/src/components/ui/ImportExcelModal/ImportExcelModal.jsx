@@ -82,7 +82,12 @@ export default function ImportExcelModal({
         const row = {}
         for (const [header, value] of Object.entries(rawRow)) {
           const key = fieldByHeader.get(normalizeHeader(header))
-          if (key) row[key] = typeof value === 'string' ? value.trim() : value
+           if (key) {
+             // Excel peut typer n'importe quelle cellule comme un nombre. On envoie
+             // donc toutes les valeurs importées en texte; Laravel convertit ensuite
+             // les champs numériques/date selon leurs règles de validation.
+             row[key] = String(value ?? '').trim()
+           }
         }
         return row
       })

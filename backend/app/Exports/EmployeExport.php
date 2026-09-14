@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -52,6 +53,20 @@ class EmployeExport
                 $e->observation ?? '',
             ]], null, "A{$row}");
             $row++;
+        }
+
+        // Keep identifiers and other text fields as text when Excel opens the file.
+        // This preserves values such as matricules with leading zeroes on re-import.
+        if ($row > 2) {
+            foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R'] as $column) {
+                $sheet->getStyle("{$column}2:{$column}" . ($row - 1))
+                    ->getNumberFormat()->setFormatCode('@');
+
+                for ($line = 2; $line < $row; $line++) {
+                    $cell = $sheet->getCell("{$column}{$line}");
+                    $cell->setValueExplicit((string) ($cell->getValue() ?? ''), DataType::TYPE_STRING);
+                }
+            }
         }
 
         $writer = new Xlsx($spreadsheet);
