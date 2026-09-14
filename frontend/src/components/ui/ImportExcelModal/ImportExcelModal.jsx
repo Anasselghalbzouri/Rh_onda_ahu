@@ -67,7 +67,8 @@ const formatFieldError = (key, message) => {
  *
  * fields: [{ key, label, required }] — key is the API field name, label is the
  * expected column header in the Excel sheet (matched case/accent-insensitively).
- * onImport(rows) must call the API and return the response payload (or throw).
+ * onImport(rows, { replace }) must call the API and return the response payload
+ * (or throw). `replaceOption` renders an optional opt-in full-sync checkbox.
  */
 export default function ImportExcelModal({
   isOpen,
@@ -76,6 +77,7 @@ export default function ImportExcelModal({
   description,
   fields,
   templateFilename = 'modele-import.xlsx',
+  replaceOption = null,
   onImport,
 }) {
   const fileInputRef = useRef(null)
@@ -85,6 +87,7 @@ export default function ImportExcelModal({
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const [submitError, setSubmitError] = useState(null)
+  const [replace, setReplace] = useState(replaceOption?.defaultChecked ?? false)
 
   const fieldByHeader = new Map(
     fields.map((f) => [normalizeHeader(f.label ?? f.key), f])
@@ -99,6 +102,7 @@ export default function ImportExcelModal({
     setParseError(null)
     setResult(null)
     setSubmitError(null)
+    setReplace(replaceOption?.defaultChecked ?? false)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -175,7 +179,7 @@ export default function ImportExcelModal({
     setSubmitError(null)
     setResult(null)
     try {
-      const data = await onImport(rows)
+      const data = await onImport(rows, { replace })
       setResult(data)
     } catch (err) {
       const errors = err?.response?.data?.errors
@@ -247,6 +251,17 @@ export default function ImportExcelModal({
                 </span>
               ))}
           </div>
+        )}
+
+        {replaceOption && (
+          <label className="import-excel-replace">
+            <input
+              type="checkbox"
+              checked={replace}
+              onChange={(e) => setReplace(e.target.checked)}
+            />
+            <span>{replaceOption.label}</span>
+          </label>
         )}
 
         <div className="import-excel-actions">

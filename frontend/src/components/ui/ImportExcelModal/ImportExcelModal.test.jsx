@@ -88,6 +88,33 @@ describe('ImportExcelModal confirmation', () => {
     expect(status).toHaveTextContent('1 inchangé(s)')
   })
 
+  it('passes the replace option to onImport', async () => {
+    const onImport = vi.fn().mockResolvedValue({
+      total: 1,
+      created: 0,
+      modified: 0,
+      unchanged: 1,
+      deleted: 0,
+    })
+
+    const { container } = render(
+      <ImportExcelModal
+        isOpen
+        onClose={() => {}}
+        fields={FIELDS}
+        replaceOption={{ label: 'Remplacer la liste', defaultChecked: true }}
+        onImport={onImport}
+      />
+    )
+
+    await uploadWorkbook(container)
+    fireEvent.click(screen.getByRole('button', { name: /^synchroniser$/i }))
+
+    await waitFor(() => {
+      expect(onImport).toHaveBeenCalledWith(expect.any(Array), { replace: true })
+    })
+  })
+
   it('keeps the error visible and shows no confirmation when the sync fails', async () => {
     const error = {
       response: {
@@ -125,5 +152,18 @@ describe('buildSyncConfirmation', () => {
       hasChanges: false,
       unchanged: 3,
     })
+  })
+
+  it('flags a database change when rows are deleted', () => {
+    const confirmation = buildSyncConfirmation({
+      created: 0,
+      modified: 0,
+      unchanged: 2,
+      deleted: 1,
+    })
+
+    expect(confirmation).toMatchObject({ hasChanges: true, deleted: 1 })
+    expect(confirmation.message).toContain('mise à jour')
+    expect(confirmation.message).toContain('1 supprimé(s)')
   })
 })

@@ -147,6 +147,7 @@ class EmployeController extends Controller
     {
         $data = $request->validate([
             'employes' => 'required|array|min:1|max:500',
+            'replace' => 'sometimes|boolean',
             'employes.*.matricule' => 'required|string',
             'employes.*.nom' => 'required|string|max:100',
             'employes.*.prenom' => 'required|string|max:100',
@@ -166,10 +167,14 @@ class EmployeController extends Controller
             'employes.*.observation' => 'nullable|string',
         ]);
 
+        $replace = (bool) ($data['replace'] ?? false);
+
         $results = [];
         $created = 0;
         $modified = 0;
         $unchanged = 0;
+        $deleted = 0;
+        $importedMatricules = [];
 
         $syncFields = [
             'nom', 'prenom', 'sexe', 'date_naissance', 'date_embauche',
@@ -210,11 +215,19 @@ class EmployeController extends Controller
                 $unchanged++;
             }
 
+            $importedMatricules[] = $row['matricule'];
             $results[] = ['matricule' => $row['matricule'], 'status' => $status];
         }
 
+        // Synchronisation complète : les employés présents en base mais absents
+        // du fichier importé sont supprimés (action explicitement demandée par
+        // l'administrateur via l'option « remplacer la liste »).
+        if ($replace) {
+            $deleted = Employe::whereNotIn('matricule', $importedMatricules)->delete();
+        }
+
         // Notification uniquement s'il y a eu un vrai changement.
-        Notification::recordExcelSync($created, $modified, 'bulk-sync');
+        Notification::recordExcelSync($created, $modified, 'bulk-sync', $deleted);
 
         return response()->json([
             'total' => count($data['employes']),
@@ -222,6 +235,7 @@ class EmployeController extends Controller
             'updated' => $modified,   // rétro-compatibilité : "updated" = modifiés réels
             'modified' => $modified,
             'unchanged' => $unchanged,
+            'deleted' => $deleted,
             'errors' => 0,
             'results' => $results,
         ]);

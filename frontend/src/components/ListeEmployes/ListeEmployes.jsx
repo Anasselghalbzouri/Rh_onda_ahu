@@ -403,8 +403,15 @@ const [createOpen, setCreateOpen] = useState(false)
         description="Le fichier doit contenir au minimum les colonnes Matricule, Nom et Prénom. Un employé existant (même matricule) sera mis à jour, sinon il sera créé."
         fields={EMPLOYE_IMPORT_FIELDS}
         templateFilename="modele-employes.xlsx"
-        onImport={async (rows) => {
-          const { data } = await api.post('/employes/bulk-sync', { employes: rows })
+        replaceOption={{
+          label: 'Remplacer la liste : supprimer les employés absents du fichier.',
+          defaultChecked: true,
+        }}
+        onImport={async (rows, options = {}) => {
+          const { data } = await api.post('/employes/bulk-sync', {
+            employes: rows,
+            replace: options.replace === true,
+          })
           setPage(1)
           fetchEmployes(1)
           return data

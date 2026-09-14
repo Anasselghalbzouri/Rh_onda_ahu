@@ -109,6 +109,50 @@ class EmployeExcelTest extends TestCase
         $this->assertNull($sheet->getCell('A2')->getValue());
     }
 
+    public function test_bulk_sync_replace_deletes_employees_absent_from_the_file(): void
+    {
+        $this->withoutMiddleware();
+
+        Employe::create(['matricule' => 'KEEP01', 'nom' => 'DOE', 'prenom' => 'Jane']);
+        Employe::create(['matricule' => 'DROP01', 'nom' => 'ROE', 'prenom' => 'John']);
+
+        $response = $this->postJson('/api/employes/bulk-sync', [
+            'replace' => true,
+            'employes' => [[
+                'matricule' => 'KEEP01',
+                'nom' => 'DOE',
+                'prenom' => 'Jane',
+            ]],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('deleted', 1)
+            ->assertJsonPath('unchanged', 1);
+
+        $this->assertDatabaseHas('employe', ['matricule' => 'KEEP01']);
+        $this->assertDatabaseMissing('employe', ['matricule' => 'DROP01']);
+    }
+
+    public function test_bulk_sync_without_replace_keeps_employees_absent_from_the_file(): void
+    {
+        $this->withoutMiddleware();
+
+        Employe::create(['matricule' => 'DROP01', 'nom' => 'ROE', 'prenom' => 'John']);
+
+        $response = $this->postJson('/api/employes/bulk-sync', [
+            'employes' => [[
+                'matricule' => 'KEEP01',
+                'nom' => 'DOE',
+                'prenom' => 'Jane',
+            ]],
+        ]);
+
+        $response->assertOk()->assertJsonPath('deleted', 0);
+
+        $this->assertDatabaseHas('employe', ['matricule' => 'DROP01']);
+        $this->assertDatabaseHas('employe', ['matricule' => 'KEEP01']);
+    }
+
     private function loadSheet(TestResponse $response): Worksheet
     {
         $path = tempnam(sys_get_temp_dir(), 'employes-xlsx-');

@@ -108,6 +108,23 @@
   color: var(--neutral-700);
 }
 
+.import-excel-replace {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--warning-light, var(--neutral-50));
+  border: 1px solid var(--warning, var(--neutral-200));
+  border-radius: var(--radius-md);
+  color: var(--neutral-700);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.import-excel-replace input {
+  margin-top: 2px;
+}
+
 .import-excel-actions {
   display: flex;
   justify-content: flex-end;
