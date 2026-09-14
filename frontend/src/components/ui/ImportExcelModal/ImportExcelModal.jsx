@@ -15,6 +15,52 @@ const normalizeHeader = (value) =>
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
 
+const pad2 = (value) => String(value).padStart(2, '0')
+
+// Convertit une cellule date Excel (objet Date, numéro de série, ou texte
+// d/m/Y) en YYYY-MM-DD, format accepté par la règle Laravel `date`.
+const toIsoDate = (value) => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${pad2(value.getMonth() + 1)}-${pad2(value.getDate())}`
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const parsed = XLSX.SSF.parse_date_code(value)
+    if (parsed) return `${parsed.y}-${pad2(parsed.m)}-${pad2(parsed.d)}`
+  }
+
+  const text = String(value ?? '').trim()
+  const match = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/.exec(text)
+  if (match) {
+    const [, day, month, rawYear] = match
+    const year = rawYear.length === 2 ? `20${rawYear}` : rawYear
+    return `${year}-${pad2(month)}-${pad2(day)}`
+  }
+
+  return text
+}
+
+// Normalise une cellule selon le contrat du champ : texte, date ou nombre.
+// Les cellules optionnelles vides restent des chaînes vides.
+const normalizeCell = (value, type) => {
+  if (value === null || value === undefined) return ''
+  if (type === 'date') return toIsoDate(value)
+  if (value instanceof Date) return toIsoDate(value)
+  if (type === 'number') {
+    return typeof value === 'number' && Number.isFinite(value)
+      ? String(value)
+      : String(value).trim()
+  }
+  return String(value).trim()
+}
+
+// Rend lisible une clé d'erreur Laravel `employes.{index}.{field}`.
+const formatFieldError = (key, message) => {
+  const match = /^employes\.(\d+)\.(.+)$/.exec(key)
+  if (!match) return `${key} : ${message}`
+  return `Ligne ${Number(match[1]) + 1} · ${match[2]} : ${message}`
+}
+
 /**
  * Generic "import from Excel" modal.
  *
@@ -40,7 +86,7 @@ export default function ImportExcelModal({
   const [submitError, setSubmitError] = useState(null)
 
   const fieldByHeader = new Map(
-    fields.map((f) => [normalizeHeader(f.label ?? f.key), f.key])
+    fields.map((f) => [normalizeHeader(f.label ?? f.key), f])
   )
 
   const reset = () => {
@@ -68,7 +114,9 @@ export default function ImportExcelModal({
 
     try {
       const buffer = await file.arrayBuffer()
-      const workbook = XLSX.read(buffer, { type: 'array' })
+      // cellDates: les cellules date Excel deviennent des objets Date au lieu
+      // de numéros de série, ce qui évite d'envoyer "45678" à Laravel.
+      const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
       const sheet = workbook.Sheets[workbook.SheetNames[0]]
       const raw = XLSX.utils.sheet_to_json(sheet, { defval: '' })
 
@@ -81,13 +129,14 @@ export default function ImportExcelModal({
       const mapped = raw.map((rawRow) => {
         const row = {}
         for (const [header, value] of Object.entries(rawRow)) {
-          const key = fieldByHeader.get(normalizeHeader(header))
-           if (key) {
-             // Excel peut typer n'importe quelle cellule comme un nombre. On envoie
-             // donc toutes les valeurs importées en texte; Laravel convertit ensuite
-             // les champs numériques/date selon leurs règles de validation.
-             row[key] = String(value ?? '').trim()
-           }
+          const field = fieldByHeader.get(normalizeHeader(header))
+          if (field) {
+            // Excel peut typer n'importe quelle cellule comme un nombre. On
+            // normalise selon le contrat du champ : texte en chaîne, dates en
+            // YYYY-MM-DD, solde numérique en chaîne numérique. Laravel reste
+            // la source de validation.
+            row[field.key] = normalizeCell(value, field.type)
+          }
         }
         return row
       })
@@ -127,7 +176,11 @@ export default function ImportExcelModal({
     } catch (err) {
       const errors = err?.response?.data?.errors
       if (errors) {
-        const flat = Object.values(errors).flat()
+        const flat = Object.entries(errors).flatMap(([key, messages]) =>
+          (Array.isArray(messages) ? messages : [messages]).map((message) =>
+            formatFieldError(key, message)
+          )
+        )
         setSubmitError(flat.slice(0, 5).join(' — '))
       } else {
         setSubmitError("Échec de la synchronisation. Vérifiez le fichier et réessayez.")
