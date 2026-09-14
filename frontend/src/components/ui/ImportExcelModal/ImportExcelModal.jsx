@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import { FileSpreadsheet, Download, UploadCloud } from 'lucide-react'
 import Modal from '../Modal/Modal'
+import { buildSyncConfirmation } from './syncConfirmation'
 import './ImportExcelModal.css'
 
 const DIACRITICS_RE = new RegExp('[\\u0300-\\u036f]', 'g')
@@ -88,6 +89,9 @@ export default function ImportExcelModal({
   const fieldByHeader = new Map(
     fields.map((f) => [normalizeHeader(f.label ?? f.key), f])
   )
+
+  // Confirmation lisible réservée aux réponses bulk-sync employés.
+  const confirmation = buildSyncConfirmation(result)
 
   const reset = () => {
     setFileName('')
@@ -224,7 +228,16 @@ export default function ImportExcelModal({
 
         {submitError && <div className="import-excel-error">{submitError}</div>}
 
-        {result && (
+        {confirmation && !submitError && (
+          <div
+            className={`import-excel-confirmation ${confirmation.hasChanges ? 'changed' : 'unchanged'}`}
+            role="status"
+          >
+            {confirmation.message}
+          </div>
+        )}
+
+        {result && !confirmation && (
           <div className="import-excel-result">
             {Object.entries(result)
               .filter(([key]) => key !== 'results')

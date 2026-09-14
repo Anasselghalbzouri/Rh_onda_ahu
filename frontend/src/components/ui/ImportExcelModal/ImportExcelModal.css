@@ -89,6 +89,25 @@
   text-transform: capitalize;
 }
 
+.import-excel-confirmation {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.import-excel-confirmation.changed {
+  background: var(--success-light);
+  border: 1px solid var(--success);
+  color: var(--success);
+}
+
+.import-excel-confirmation.unchanged {
+  background: var(--neutral-50);
+  border: 1px solid var(--neutral-200);
+  color: var(--neutral-700);
+}
+
 .import-excel-actions {
   display: flex;
   justify-content: flex-end;

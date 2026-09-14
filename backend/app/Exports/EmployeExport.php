@@ -2,22 +2,21 @@
 
 namespace App\Exports;
 
+use App\Models\Employe;
 use Illuminate\Support\Collection;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeExport
 {
-    /** @param Collection<int, \App\Models\Employe> $employes */
-    public function __construct(private Collection $employes)
-    {
-    }
+    /** @param Collection<int, Employe> $employes */
+    public function __construct(private Collection $employes) {}
 
     public function download(): StreamedResponse
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Personnel');
 
@@ -59,7 +58,7 @@ class EmployeExport
         // This preserves values such as matricules with leading zeroes on re-import.
         if ($row > 2) {
             foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R'] as $column) {
-                $sheet->getStyle("{$column}2:{$column}" . ($row - 1))
+                $sheet->getStyle("{$column}2:{$column}".($row - 1))
                     ->getNumberFormat()->setFormatCode('@');
 
                 for ($line = 2; $line < $row; $line++) {

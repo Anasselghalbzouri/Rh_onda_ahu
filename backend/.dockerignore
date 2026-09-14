@@ -1,0 +1,14 @@
+/vendor
+/node_modules
+/public/build
+/public/hot
+/.git
+/.gitignore
+/.idea
+/.vscode
+/.env
+/.env.*
+!/.env.docker
+Dockerfile*
+.dockerignore
+*.log
