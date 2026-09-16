@@ -5,23 +5,23 @@ name: Deploy to Hostinger
 on:
   push:
     branches: [main]
-  # workflow_dispatch:
+  workflow_dispatch:
 concurrency:
   group: deploy-production
-  cancel-in-progress: false   # ne jamais couper un déploiement en cours
+  cancel-in-progress: false # ne jamais couper un déploiement en cours
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    steps:  
+    steps:
       # 1) Récupère le code source
       - uses: actions/checkout@v4
 
       # 2) Compile les dépendances PHP de production (comme composer install --no-dev)
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
           extensions: pdo_sqlite, zip, mbstring
           tools: composer:v2
 
@@ -32,7 +32,7 @@ jobs:
       # 3) Compile le frontend React (Vite) puis le copie dans backend/public
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Build frontend
         working-directory: frontend
