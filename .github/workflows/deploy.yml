@@ -6,7 +6,6 @@ on:
   push:
     branches: [main]
   # workflow_dispatch:
-
 concurrency:
   group: deploy-production
   cancel-in-progress: false   # ne jamais couper un déploiement en cours
