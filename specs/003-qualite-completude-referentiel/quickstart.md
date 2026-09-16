@@ -31,6 +31,16 @@
   error message names the affected row and field (for example
   `Ligne 2 · sexe`).
 
+## Validate full synchronization (replace)
+
+1. Open Personnel and note the current employee count.
+2. Export the list, remove one employee, and import the file with the
+   "Remplacer la liste : supprimer les employés absents du fichier" box checked.
+3. Confirm the confirmation message reports the removed employee under
+   `supprimé(s)` and the employee no longer appears in Personnel.
+4. Import the same file with the box unchecked: absent employees are preserved
+   and `deleted` stays `0`.
+
 ## Validate export and round trip
 
 1. Export the employee list from Personnel.
@@ -61,10 +71,10 @@ Expected result: frontend build and PHP syntax checks pass; backend tests pass o
 
 ## Recorded automated results (2026-09-14)
 
-- Backend: `php artisan test` → 6 passed, 26 assertions (includes the 4 `EmployeExcelTest` cases).
+- Backend: `php artisan test` → 8 passed, 35 assertions (includes the 6 `EmployeExcelTest` cases, among them full-sync replace deletion).
 - Backend: `php -l app/Exports/EmployeExport.php` → no syntax errors.
 - Backend: `php vendor/bin/pint --test` (feature files) → passed.
-- Frontend: `npm test` → 7 passed (`ImportExcelModal` created/modified/unchanged/failed interactions and `buildSyncConfirmation`).
+- Frontend: `npm test` → 9 passed (`ImportExcelModal` created/modified/unchanged/deleted/failed interactions, replace-option forwarding, and `buildSyncConfirmation`).
 - Frontend: `npm run build` → passed. Pre-existing warning: bundle chunk > 500 kB.
 - Frontend: `npx eslint` (feature files) → clean. The build output is now ignored by ESLint (`build`, `coverage`), and JSX identifiers are marked as used (`react/jsx-uses-vars`). A pre-existing, feature-unrelated baseline of 7 errors remains in other components (`react-hooks/set-state-in-effect`, `jsx-a11y/label-has-associated-control`, one unused import in `Layout.jsx`).
 

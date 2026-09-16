@@ -36,6 +36,7 @@ normalizes every mapped cell before posting JSON to `POST /api/employes/bulk-syn
 
 ```json
 {
+  "replace": true,
   "employes": [
     {
       "matricule": "000123",
@@ -48,6 +49,13 @@ normalizes every mapped cell before posting JSON to `POST /api/employes/bulk-syn
 }
 ```
 
+- `replace` (optional boolean, default `false`): full-sync mode. When `true`,
+  every employee in the database whose `matricule` is **not** present in the
+  submitted `employes` list is deleted. The UI exposes this as the
+  "Remplacer la liste : supprimer les employés absents du fichier" checkbox
+  (checked by default in Personnel). When omitted/false, absent employees are
+  preserved.
+
 Normalization rules:
 
 - Text fields → trimmed string. Numeric-looking identifiers keep their exact
@@ -59,8 +67,14 @@ Normalization rules:
 - Blank optional cells are preserved as empty strings (Laravel treats them as
   `nullable`).
 
-The response reports `created`, `modified`, `unchanged`. Field-level validation
-errors use Laravel's `employes.{index}.{field}` keys.
+The response reports `created`, `modified`, `unchanged`, and `deleted` counts
+(`updated` is kept as a backwards-compatible alias of `modified`). Field-level
+validation errors use Laravel's `employes.{index}.{field}` keys.
+
+Deleting an absent employee relies on the database cascade rules: `demande_conge`,
+`employe_formation`, and `evaluation_formation` rows cascade, while
+`pieces_jointes.uploade_par` is set to `NULL` (see migration
+`2026_09_14_000001_fix_pieces_jointes_uploade_par_foreign_key.php`).
 
 The frontend displays a confirmation only after a successful response. It states
 that the database changed when `created + modified > 0`; otherwise it states that
