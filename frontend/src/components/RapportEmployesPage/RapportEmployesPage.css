@@ -70,6 +70,43 @@
   background: var(--white);
 }
 
+.rapport-colonnes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+}
+
+.rapport-colonnes legend {
+  padding: 0 var(--space-2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+.rapport-colonnes-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.rapport-colonnes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-2) var(--space-4);
+}
+
+.rapport-colonne {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--neutral-700);
+  cursor: pointer;
+}
+
 .rapport-actions {
   display: flex;
   gap: var(--space-3);
@@ -117,6 +154,13 @@
   font-size: 13px;
 }
 
+.rapport-error-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
 .rapport-empty {
   display: flex;
   align-items: center;
@@ -136,16 +180,30 @@
 }
 
 .rapport-preview-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
   background: var(--neutral-50);
   border-radius: var(--radius-md);
   padding: var(--space-4);
+}
+
+.rapport-preview-group .ui-table-wrapper {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.rapport-preview-group .ui-thead {
+  position: sticky;
+  top: 0;
 }
 
 .rapport-preview-group h4 {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin: 0 0 var(--space-3);
+  margin: 0;
   font-size: 13px;
   color: var(--primary);
 }

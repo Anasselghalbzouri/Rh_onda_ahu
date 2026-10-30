@@ -7,7 +7,9 @@ import { useAuth } from '../../useAuth'
 import FormField from '../ui/FormField/FormField'
 import Badge from '../ui/Badge/Badge'
 import { DOCUMENT_CATEGORIES, DOCUMENT_STATUT_LABELS, DOCUMENT_STATUT_VARIANTS } from '../../constants/documentsEmployes'
-import { telechargerPieceJointe } from '../../utils/telechargerPieceJointe'
+import Modal from '../ui/Modal/Modal'
+import ApercuDocument from '../DocumentsEmployesPage/ApercuDocument'
+import { telechargerFichier } from '../../utils/telechargerPieceJointe'
 import './FicheEmploye.css'
 
 const STATUT_STYLE = {
@@ -55,10 +57,8 @@ const formatDate = (value) => {
   return date.toLocaleDateString('fr-FR')
 }
 
-const congeFileUrl = (congeId) => {
-  const base = (api.defaults.baseURL ?? '').replace(/\/$/, '')
-  return `${base}/conges/${congeId}/fichier`
-}
+const pieceJointeFichier = (p) => ({ route: `/pieces-jointes/${p.id}/download`, nom: p.nom_original })
+const congeFichier = (conge) => ({ route: `/conges/${conge.id}/fichier`, nom: conge.fichier_nom })
 
 
 export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSaved, onDirtyChange, onglets = null }) {
@@ -71,6 +71,7 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
   const [piecesJointes, setPiecesJointes] = useState([])
   const [piecesLoading, setPiecesLoading] = useState(true)
   const [piecesError, setPiecesError] = useState(null)
+  const [apercuFichier, setApercuFichier] = useState(null)
 
   const [uploadFile, setUploadFile] = useState(null)
   const [uploadCategorie, setUploadCategorie] = useState('')
@@ -474,7 +475,7 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
                           <button
                             type="button"
                             className="fiche-link-btn"
-                            onClick={() => window.open(congeFileUrl(conge.id), '_blank', 'noopener,noreferrer')}
+                            onClick={() => { const f = congeFichier(conge); telechargerFichier(f.route, f.nom) }}
                             title={conge.fichier_nom}
                           >
                             Télécharger
@@ -665,9 +666,15 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
               </thead>
               <tbody>
                 {piecesJointes.map((p) => (
-                  <tr key={p.id}>
+                  <tr key={p.id} className="fiche-tr-clickable" onClick={() => setApercuFichier(pieceJointeFichier(p))}>
                     <td className="fiche-td">
-                      <div className="fiche-file-name">{p.nom_original ?? '—'}</div>
+                      <button
+                        type="button"
+                        className="fiche-file-name fiche-file-btn"
+                        onClick={(e) => { e.stopPropagation(); setApercuFichier(pieceJointeFichier(p)) }}
+                      >
+                        {p.nom_original ?? '—'}
+                      </button>
                       {p.extension && <div className="fiche-file-meta">.{p.extension}</div>}
                     </td>
                     <td className="fiche-td">{p.categorie ?? '—'}</td>
@@ -684,14 +691,14 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
                         <button
                           type="button"
                           className="fiche-link-btn"
-                          onClick={() => telechargerPieceJointe(p)}
+                          onClick={(e) => { e.stopPropagation(); const f = pieceJointeFichier(p); telechargerFichier(f.route, f.nom) }}
                         >
                           Télécharger
                         </button>
                         <button
                           type="button"
                           className="fiche-delete-btn"
-                          onClick={() => onDeletePieceJointe(p.id)}
+                          onClick={(e) => { e.stopPropagation(); onDeletePieceJointe(p.id) }}
                         >
                           Supprimer
                         </button>
@@ -775,17 +782,23 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
               </thead>
               <tbody>
                 {congesAvecFichier.map((conge) => (
-                  <tr key={`conge-file-${conge.id}`}>
+                  <tr key={`conge-file-${conge.id}`} className="fiche-tr-clickable" onClick={() => setApercuFichier(congeFichier(conge))}>
                     <td className="fiche-td">{TYPE_CONGE_LABELS[conge.type_conge] ?? conge.type_conge ?? '—'}</td>
                     <td className="fiche-td">{formatDate(conge.date_debut)} → {formatDate(conge.date_fin)}</td>
                     <td className="fiche-td">
-                      <div className="fiche-file-name">{conge.fichier_nom}</div>
+                      <button
+                        type="button"
+                        className="fiche-file-name fiche-file-btn"
+                        onClick={(e) => { e.stopPropagation(); setApercuFichier(congeFichier(conge)) }}
+                      >
+                        {conge.fichier_nom}
+                      </button>
                     </td>
                     <td className="fiche-td">
                       <button
                         type="button"
                         className="fiche-link-btn"
-                        onClick={() => window.open(congeFileUrl(conge.id), '_blank', 'noopener,noreferrer')}
+                        onClick={(e) => { e.stopPropagation(); const f = congeFichier(conge); telechargerFichier(f.route, f.nom) }}
                       >
                         Télécharger
                       </button>
@@ -797,6 +810,19 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
           </div>
         )}
       </Section>
+
+      <Modal isOpen={!!apercuFichier} onClose={() => setApercuFichier(null)} title={apercuFichier?.nom} size="lg">
+        {apercuFichier && <ApercuDocument key={apercuFichier.route} route={apercuFichier.route} nom={apercuFichier.nom} />}
+        <div className="de-form-actions">
+          <button
+            type="button"
+            className="de-primary-btn"
+            onClick={() => telechargerFichier(apercuFichier.route, apercuFichier.nom)}
+          >
+            Télécharger
+          </button>
+        </div>
+      </Modal>
         </>
       )}
 

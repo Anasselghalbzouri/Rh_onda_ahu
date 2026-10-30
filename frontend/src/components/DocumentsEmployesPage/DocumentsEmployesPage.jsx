@@ -14,6 +14,7 @@ import {
   DOCUMENT_STATUT_VARIANTS,
 } from '../../constants/documentsEmployes'
 import { telechargerPieceJointe } from '../../utils/telechargerPieceJointe'
+import ApercuDocument from './ApercuDocument'
 import './DocumentsEmployesPage.css'
 
 const PIECES_ACCEPT = '.pdf,.jpg,.jpeg,.png,.doc,.docx'
@@ -55,6 +56,8 @@ export default function DocumentsEmployesPage({ readOnly = false }) {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
   const [deleting, setDeleting] = useState(false)
+
+  const [apercuTarget, setApercuTarget] = useState(null)
 
   const fetchDocuments = async (p = 1) => {
     setLoading(true)
@@ -170,10 +173,7 @@ export default function DocumentsEmployesPage({ readOnly = false }) {
         <button
           type="button"
           className="de-link-btn"
-          onClick={(e) => {
-            e.stopPropagation()
-            navigate('/personnel', { state: { selectedEmployeId: row.employe.id } })
-          }}
+          onClick={(e) => { e.stopPropagation(); setApercuTarget(row) }}
         >
           {row.employe.prenom} {row.employe.nom}
           <span className="de-matricule"> ({row.employe.matricule})</span>
@@ -278,6 +278,7 @@ export default function DocumentsEmployesPage({ readOnly = false }) {
         <Table
           columns={columns}
           rows={documents}
+          onRowClick={setApercuTarget}
           loading={loading}
           emptyText="Aucun document trouvé."
         />
@@ -294,6 +295,41 @@ export default function DocumentsEmployesPage({ readOnly = false }) {
           </button>
         </div>
       )}
+
+      <Modal
+        isOpen={!!apercuTarget}
+        onClose={() => setApercuTarget(null)}
+        title={`${apercuTarget?.employe?.prenom ?? ''} ${apercuTarget?.employe?.nom ?? ''} — ${apercuTarget?.nom_original ?? apercuTarget?.categorie ?? ''}`}
+        size="lg"
+      >
+        {apercuTarget?.id ? (
+          <ApercuDocument
+            key={apercuTarget.id}
+            route={`/pieces-jointes/${apercuTarget.id}/download`}
+            nom={apercuTarget.nom_original}
+          />
+        ) : (
+          <div className="de-apercu-message">
+            Ce document n'a pas encore été ajouté pour cet employé.
+          </div>
+        )}
+        <div className="de-form-actions">
+          {apercuTarget?.employe && (
+            <button
+              type="button"
+              className="de-cancel-btn"
+              onClick={() => navigate('/personnel', { state: { selectedEmployeId: apercuTarget.employe.id } })}
+            >
+              Voir la fiche employé
+            </button>
+          )}
+          {apercuTarget?.id && (
+            <button type="button" className="de-primary-btn" onClick={() => telechargerPieceJointe(apercuTarget)}>
+              Télécharger
+            </button>
+          )}
+        </div>
+      </Modal>
 
       <Modal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Ajouter un document">
         <form onSubmit={onAddSubmit} className="de-form">

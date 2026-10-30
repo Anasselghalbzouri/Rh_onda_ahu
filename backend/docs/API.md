@@ -1164,7 +1164,7 @@ Success response `200 OK`: streamed `.xlsx` download generated from the PS09 tem
 GET /rapport-employes
 ```
 
-Returns the number of employees matching the optional filters, used by the frontend before exporting.
+Returns the employees matching the optional filters, with only the requested columns, plus their number and the list of exportable columns. Used by the frontend to preview the file. Without `colonnes[]`, `lignes` is empty. RH role only; other roles receive `403`.
 
 Query parameters:
 
@@ -1172,15 +1172,25 @@ Query parameters:
 | --- | --- | --- |
 | `service_id` | integer | Optional. Must exist in `service.id`. |
 | `statut` | string | Optional. One of `actif`, `mute`, `retraite`, `parti`, `suspendu`. |
+| `colonnes[]` | array of keys | Optional. Columns to return in `lignes`. An unknown key returns `422`. |
 
 Success response `200 OK`:
 
 ```json
 {
   "total": 42,
-  "filtres": { "service_id": 1, "statut": "actif" }
+  "lignes": [
+    { "matricule": "000777", "nom": "ALAMI" }
+  ],
+  "filtres": { "service_id": 1, "statut": "actif" },
+  "colonnes": [
+    { "key": "matricule", "label": "Matricule" },
+    { "key": "nom", "label": "Nom" }
+  ]
 }
 ```
+
+`colonnes` always contains all 19 columns, in file order.
 
 When no employee matches the filters, `total` is `0` and the frontend displays an explicit message.
 
@@ -1190,9 +1200,19 @@ When no employee matches the filters, `total` is `0` and the frontend displays a
 GET /rapport-employes/export
 ```
 
-Generates and downloads an Excel file listing administrative and career information for each employee. The file excludes any leave, illness, or absence data.
+Generates and downloads an Excel file containing only the requested columns, one row per employee, sorted by last name then first name. The leave balance appears only when requested; the file never contains illness, absence, or leave request data. RH role only.
 
-Query parameters: same as `GET /rapport-employes`.
+Query parameters:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `colonnes[]` | array of keys | Required, at least 1. Each key must be in the list below. The file always follows the list order, whatever the request order. |
+| `service_id` | integer | Optional. Must exist in `service.id`. |
+| `statut` | string | Optional. One of `actif`, `mute`, `retraite`, `parti`, `suspendu`. |
+
+Example: `GET /rapport-employes/export?colonnes[]=nom&colonnes[]=statut&service_id=3`
+
+Errors: `403` for any role other than RH; `422` with `Choisissez au moins une colonne à exporter.` if `colonnes` is missing or empty; `422` with `Colonne inconnue.` for an unknown key.
 
 Success response `200 OK`: streamed `.xlsx` download with the header:
 
@@ -1200,11 +1220,87 @@ Success response `200 OK`: streamed `.xlsx` download with the header:
 Content-Disposition: attachment; filename="Rapport_Employes_YYYY-MM-DD.xlsx"
 ```
 
-Workbook columns (one sheet, one header row + one row per employee):
+Available columns, as `key` (header), in file order (one sheet, one header row + one row per employee):
 
 ```text
-Matricule | Nom | Prénom | Sexe | Date de naissance | Date d'embauche | Catégorie | Échelle | Échelon | Entité | Fonction | Qualification | Service | Affectation | Date d'affectation | Statut carrière | Statut
+matricule (Matricule) | nom (Nom) | prenom (Prénom) | sexe (Sexe) | date_naissance (Date de naissance) | date_embauche (Date d'embauche) | categorie (Catégorie) | echelle (Échelle) | echelon (Échelon) | entite (Entité) | fonction (Fonction) | qualification (Qualification) | service (Service) | affectation (Affectation) | date_affectation (Date d'affectation) | statut_carriere (Statut carrière) | statut (Statut) | solde_conge (Solde congé (j)) | observation (Observation)
 ```
+
+## Complaints
+
+Personnel complaint register. RH can read and write; DG can only read; the employee role gets `403`. The employee's matricule and name are copied when the complaint is created, so it stays readable after the employee leaves the register.
+
+### List Complaints
+
+```http
+GET /reclamations
+```
+
+Query parameters:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `search` | string | Optional. Searches number, matricule, name and type. |
+| `etat` | string | Optional. One of `nouvelle`, `en_cours`, `resolue`, `rejetee`. |
+| `page`, `per_page` | integer | Optional. 15 per page by default, 200 at most. |
+
+Success response `200 OK`: standard pagination, most recent reception date first, plus the value lists:
+
+```json
+{
+  "data": [{ "id": 1, "numero": "001/2026", "date_reception": "2026-10-30", "matricule": "000777", "nom_complet": "ALAMI Sara", "etat": "nouvelle" }],
+  "current_page": 1,
+  "last_page": 1,
+  "total": 1,
+  "options": {
+    "etats": [{ "key": "nouvelle", "label": "Nouvelle" }]
+  }
+}
+```
+
+### Export Complaints
+
+```http
+GET /reclamations/export
+```
+
+Query parameters: `search` and `etat`, as above. RH and DG only.
+
+Success response `200 OK`: streamed `.xlsx` download named `Tableau_suivi_reclamations_YYYY-MM-DD.xlsx`, following the layout of the RH workbook: logo, update date, title, grey header and the 14 columns, one sheet per reception year (`Réclamation_YYYY`), oldest first, with a colored band per quarter.
+
+### Create a Complaint
+
+```http
+POST /reclamations
+```
+
+Body: `employe_id`, `date_reception`, `type` and `canal` (free text, 255 characters at most) and `description` (5000 characters at most) are required; `remarques` (2000 characters at most) is optional.
+
+Success response `201 Created`: the complaint, with a generated `numero` (`NNN/YYYY`, restarting each year, never reused) and the `nouvelle` state.
+
+### Update a Complaint
+
+```http
+PUT /reclamations/{id}
+```
+
+Body: `date_reception`, `type`, `description`, `canal` and `etat` are required; `date_reponse_1`, `contenu_reponse_1`, `date_reponse_2`, `contenu_reponse_2`, `date_solution` and `remarques` are optional. `numero`, `matricule` and `nom_complet` cannot be changed.
+
+Rules, each returning `422` with a French message:
+
+- No date in the future.
+- `date_reception` stays in the year of `numero`.
+- `date_reception` ≤ `date_reponse_1` ≤ `date_reponse_2`, and `date_reception` ≤ `date_solution`.
+- Each answer needs both its date and its content; the second answer needs the first.
+- `date_solution` is required for `resolue` and `rejetee`, and refused for any other state.
+
+### Delete a Complaint
+
+```http
+DELETE /reclamations/{id}
+```
+
+Success response `200 OK`: `{ "message": "Réclamation supprimée." }`. The deletion is permanent and the number is never reused.
 
 ## JavaScript Example
 

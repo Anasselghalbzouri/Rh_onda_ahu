@@ -589,6 +589,20 @@
 
 .fiche-link-btn:hover { background: #C7E7FF; }
 
+.fiche-tr-clickable { cursor: pointer; }
+
+.fiche-tr-clickable:hover { background: var(--neutral-50); }
+
+.fiche-file-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.fiche-file-btn:hover { text-decoration: underline; }
+
 .fiche-delete-btn {
   background: var(--danger-light);
   color: var(--danger);

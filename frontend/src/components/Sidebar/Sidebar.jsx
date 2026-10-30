@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Calendar, UserCircle,
-  BarChart3, GraduationCap, FileSpreadsheet, FileText, FileCheck2,
+  BarChart3, GraduationCap, FileSpreadsheet, FileText, FileCheck2, MessageSquareWarning,
 } from 'lucide-react'
 import './Sidebar.css'
 
@@ -16,6 +16,7 @@ const ICONS = {
   stats:     BarChart3,
   'rapport-activite': FileSpreadsheet,
   'rapport-employes': FileText,
+  reclamations: MessageSquareWarning,
 }
 
 const MENU_BY_ROLE = {
@@ -27,11 +28,13 @@ const MENU_BY_ROLE = {
     { key: 'rapport-activite', label: 'Rapport PS09', path: '/rapport-activite' },
     { key: 'rapport-employes', label: 'Rapport données employés', path: '/rapport-employes' },
     { key: 'documents-employes', label: 'Documents employés', path: '/documents-employes' },
+    { key: 'reclamations', label: 'Réclamations', path: '/reclamations' },
   ],
   dg: [
     { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard' },
     { key: 'personnel', label: 'Personnel',        path: '/personnel' },
     { key: 'documents-employes', label: 'Documents employés', path: '/documents-employes' },
+    { key: 'reclamations', label: 'Réclamations', path: '/reclamations' },
   ],
   employe: [
     { key: 'profil',    label: 'Mon profil',   path: '/profil'   },

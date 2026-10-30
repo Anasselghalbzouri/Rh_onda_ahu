@@ -14,6 +14,7 @@ use App\Http\Controllers\PieceJointeController;
 use App\Http\Controllers\PlanFormationController;
 use App\Http\Controllers\RapportActiviteController;
 use App\Http\Controllers\RapportEmployesController;
+use App\Http\Controllers\ReclamationController;
 use App\Http\Controllers\SuiviFormationController;
 use App\Models\Service;
 use Illuminate\Support\Facades\Route;
@@ -106,4 +107,10 @@ Route::middleware('auth:rh')->group(function () {
 
     Route::get('/rapport-employes', [RapportEmployesController::class, 'stats']);
     Route::get('/rapport-employes/export', [RapportEmployesController::class, 'export']);
+
+    Route::get('/reclamations', [ReclamationController::class, 'index']);
+    Route::get('/reclamations/export', [ReclamationController::class, 'export']);
+    Route::post('/reclamations', [ReclamationController::class, 'store']);
+    Route::put('/reclamations/{id}', [ReclamationController::class, 'update']);
+    Route::delete('/reclamations/{id}', [ReclamationController::class, 'destroy']);
 });

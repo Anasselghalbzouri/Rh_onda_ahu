@@ -4,18 +4,39 @@ namespace App\Exports;
 
 use App\Models\Employe;
 use Illuminate\Database\Eloquent\Builder;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeRapportExport
 {
-    private Builder $query;
+    /** Colonnes proposées à l'export, dans l'ordre du fichier. */
+    public const COLONNES = [
+        'matricule' => 'Matricule',
+        'nom' => 'Nom',
+        'prenom' => 'Prénom',
+        'sexe' => 'Sexe',
+        'date_naissance' => 'Date de naissance',
+        'date_embauche' => "Date d'embauche",
+        'categorie' => 'Catégorie',
+        'echelle' => 'Échelle',
+        'echelon' => 'Échelon',
+        'entite' => 'Entité',
+        'fonction' => 'Fonction',
+        'qualification' => 'Qualification',
+        'service' => 'Service',
+        'affectation' => 'Affectation',
+        'date_affectation' => "Date d'affectation",
+        'statut_carriere' => 'Statut carrière',
+        'statut' => 'Statut',
+        'solde_conge' => 'Solde congé (j)',
+        'observation' => 'Observation',
+    ];
 
-    public function __construct(?Builder $query = null)
-    {
-        $this->query = $query ?? Employe::query();
-    }
+    /** @param  array<int, string>  $colonnes */
+    public function __construct(private array $colonnes, private Builder $query) {}
 
     public function download(string $filename = 'Rapport_Employes.xlsx'): StreamedResponse
     {
@@ -23,32 +44,26 @@ class EmployeRapportExport
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Données employés');
 
-        $headers = [
-            'Matricule',
-            'Nom',
-            'Prénom',
-            'Sexe',
-            'Date de naissance',
-            "Date d'embauche",
-            'Catégorie',
-            'Échelle',
-            'Échelon',
-            'Entité',
-            'Fonction',
-            'Qualification',
-            'Service',
-            'Affectation',
-            "Date d'affectation",
-            'Statut carrière',
-            'Statut',
-        ];
+        // L'ordre suit toujours COLONNES, quel que soit celui de la requête.
+        $colonnes = array_intersect_key(self::COLONNES, array_flip($this->colonnes));
+        $sheet->fromArray([array_values($colonnes)], null, 'A1');
 
-        $sheet->fromArray([$headers], null, 'A1');
+        foreach ($this->lignes() as $index => $ligne) {
+            foreach (array_keys($colonnes) as $position => $cle) {
+                $valeur = $ligne[$cle];
 
-        $row = 2;
-        foreach ($this->buildRows() as $cols) {
-            $sheet->fromArray([$cols], null, "A{$row}");
-            $row++;
+                if ($valeur === null || $valeur === '') {
+                    continue;
+                }
+
+                // Écrit en texte explicite : conserve les zéros des matricules et
+                // empêche qu'une valeur commençant par « = » devienne une formule.
+                $sheet->setCellValueExplicit(
+                    Coordinate::stringFromColumnIndex($position + 1).($index + 2),
+                    $valeur,
+                    $cle === 'solde_conge' ? DataType::TYPE_NUMERIC : DataType::TYPE_STRING,
+                );
+            }
         }
 
         $writer = new Xlsx($spreadsheet);
@@ -63,65 +78,38 @@ class EmployeRapportExport
     }
 
     /**
-     * @return array<int, array<int, mixed>>
+     * Valeurs des colonnes choisies, partagées par l'aperçu et le fichier.
+     *
+     * @return array<int, array<string, mixed>>
      */
-    private function buildRows(): array
+    public function lignes(): array
     {
-        $rows = [];
+        $cles = array_keys(array_intersect_key(self::COLONNES, array_flip($this->colonnes)));
 
-        $employes = $this->query
-            ->select([
-                'matricule',
-                'nom',
-                'prenom',
-                'sexe',
-                'date_naissance',
-                'date_embauche',
-                'categorie',
-                'echelle',
-                'echelon',
-                'entite',
-                'fonction',
-                'qualification',
-                'service_id',
-                'affectation',
-                'date_affectation',
-                'mutation',
-                'date_mutation',
-                'retraite',
-                'date_retraite',
-                'depart_volontaire',
-                'date_depart_volontaire',
-                'statut',
-            ])
+        if ($cles === []) {
+            return [];
+        }
+
+        return $this->query
             ->with(['service' => fn ($q) => $q->select('id', 'nom')])
             ->orderBy('nom')
             ->orderBy('prenom')
-            ->get();
+            ->get()
+            ->map(fn (Employe $employe) => array_combine(
+                $cles,
+                array_map(fn (string $cle) => $this->valeur($employe, $cle), $cles),
+            ))
+            ->all();
+    }
 
-        foreach ($employes as $employe) {
-            $rows[] = [
-                $employe->matricule,
-                $employe->nom,
-                $employe->prenom,
-                $employe->sexe,
-                $employe->date_naissance?->format('d/m/Y'),
-                $employe->date_embauche?->format('d/m/Y'),
-                $employe->categorie,
-                $employe->echelle,
-                $employe->echelon,
-                $employe->entite,
-                $employe->fonction,
-                $employe->qualification,
-                $employe->service?->nom ?? 'Non renseigné',
-                $employe->affectation,
-                $employe->date_affectation?->format('d/m/Y'),
-                $this->careerStatus($employe),
-                $employe->statut,
-            ];
-        }
-
-        return $rows;
+    private function valeur(Employe $employe, string $cle): mixed
+    {
+        return match ($cle) {
+            'service' => $employe->service?->nom ?? 'Non renseigné',
+            'statut_carriere' => $this->careerStatus($employe),
+            'date_naissance', 'date_embauche', 'date_affectation' => $employe->{$cle}?->format('d/m/Y'),
+            default => $employe->{$cle},
+        };
     }
 
     private function careerStatus(Employe $employe): string

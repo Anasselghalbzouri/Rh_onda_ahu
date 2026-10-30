@@ -7,39 +7,60 @@ use App\Models\Employe;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RapportEmployesController extends Controller
 {
     public function stats(Request $request): JsonResponse
     {
+        abort_unless($this->estRole($request, 'rh'), 403, 'Action non autorisée pour ce rôle.');
+
         $filtres = $request->validate([
             'service_id' => 'nullable|integer|exists:service,id',
             'statut' => 'nullable|string',
+            'colonnes' => 'nullable|array',
+            'colonnes.*' => ['string', Rule::in(array_keys(EmployeRapportExport::COLONNES))],
+        ], [
+            'colonnes.*.in' => 'Colonne inconnue.',
         ]);
 
         $query = $this->applyFilters(Employe::query(), $filtres);
 
         return response()->json([
             'total' => $query->count(),
+            'lignes' => (new EmployeRapportExport($filtres['colonnes'] ?? [], $query))->lignes(),
             'filtres' => [
                 'service_id' => $filtres['service_id'] ?? null,
                 'statut' => $filtres['statut'] ?? null,
             ],
+            'colonnes' => array_map(
+                fn (string $key, string $label) => ['key' => $key, 'label' => $label],
+                array_keys(EmployeRapportExport::COLONNES),
+                EmployeRapportExport::COLONNES,
+            ),
         ]);
     }
 
     public function export(Request $request): StreamedResponse
     {
+        abort_unless($this->estRole($request, 'rh'), 403, 'Action non autorisée pour ce rôle.');
+
         $filtres = $request->validate([
             'service_id' => 'nullable|integer|exists:service,id',
             'statut' => 'nullable|string',
+            'colonnes' => 'required|array|min:1',
+            'colonnes.*' => ['string', Rule::in(array_keys(EmployeRapportExport::COLONNES))],
+        ], [
+            'colonnes.required' => 'Choisissez au moins une colonne à exporter.',
+            'colonnes.min' => 'Choisissez au moins une colonne à exporter.',
+            'colonnes.*.in' => 'Colonne inconnue.',
         ]);
 
         $query = $this->applyFilters(Employe::query(), $filtres);
         $filename = 'Rapport_Employes_'.now()->format('Y-m-d').'.xlsx';
 
-        return (new EmployeRapportExport($query))->download($filename);
+        return (new EmployeRapportExport($filtres['colonnes'], $query))->download($filename);
     }
 
     /**

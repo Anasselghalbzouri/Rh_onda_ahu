@@ -1,0 +1,217 @@
+.reclamations-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.reclamations-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.reclamations-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.reclamations-subtitle {
+  margin: 0 0 var(--space-1);
+  font-size: 13px;
+  color: var(--neutral-500);
+}
+
+.reclamations-title {
+  margin: 0;
+  color: var(--neutral-900);
+}
+
+.reclamations-filtres {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutral-700);
+}
+
+.reclamations-filtres input,
+.reclamations-filtres select {
+  padding: 8px var(--space-3);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--white);
+}
+
+.reclamations-filtres input {
+  flex: 1 1 240px;
+}
+
+.reclamations-btn-primary,
+.reclamations-btn-secondary,
+.reclamations-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reclamations-btn-primary {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.reclamations-btn-secondary {
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.reclamations-btn-danger {
+  margin-right: auto;
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.reclamations-btn-primary:disabled,
+.reclamations-btn-secondary:disabled,
+.reclamations-btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reclamations-error {
+  padding: var(--space-3);
+  background: var(--danger-light);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.reclamations-error-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.reclamations-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  font-size: 13px;
+  color: var(--neutral-500);
+}
+
+.reclamation-numero {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reclamation-texte {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reclamation-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.reclamation-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.reclamation-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.reclamation-employe {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--neutral-900);
+}
+
+.reclamation-employe-champ {
+  position: relative;
+}
+
+.reclamation-suggestions {
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  right: 0;
+  left: 0;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--white);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.reclamation-suggestions button {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: none;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reclamation-suggestions button:hover,
+.reclamation-suggestions button:focus-visible {
+  background: var(--neutral-100);
+}
+
+.reclamation-fiche {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.reclamation-fiche dt {
+  margin-bottom: var(--space-1);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--neutral-500);
+}
+
+.reclamation-fiche dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--neutral-900);
+  white-space: pre-wrap;
+}

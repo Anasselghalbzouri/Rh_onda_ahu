@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Download, Users } from 'lucide-react'
 import api from '../../api'
+import Table from '../ui/Table/Table'
 import './RapportEmployesPage.css'
 
 const STATUTS = [
@@ -12,14 +13,24 @@ const STATUTS = [
   { value: 'suspendu', label: 'Suspendu' },
 ]
 
+const COLONNES_INITIALES = ['matricule', 'nom', 'prenom']
+const ERREUR_APERCU = 'Impossible de calculer l\'aperçu pour les filtres sélectionnés.'
+
+const filtresParams = (serviceId, statut) => ({
+  ...(serviceId ? { service_id: serviceId } : {}),
+  ...(statut ? { statut } : {}),
+})
+
 export default function RapportEmployesPage() {
   const [services, setServices] = useState([])
   const [servicesError, setServicesError] = useState(null)
   const [serviceId, setServiceId] = useState('')
   const [statut, setStatut] = useState('')
 
-  const [preview, setPreview] = useState(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
+  const [catalogue, setCatalogue] = useState([])
+  const [colonnes, setColonnes] = useState(COLONNES_INITIALES)
+  const [resultat, setResultat] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [exporting, setExporting] = useState(false)
   const [error, setError] = useState(null)
 
@@ -29,23 +40,28 @@ export default function RapportEmployesPage() {
       .catch(() => setServicesError('Impossible de charger la liste des services.'))
   }, [])
 
-  const buildParams = () => ({
-    ...(serviceId ? { service_id: serviceId } : {}),
-    ...(statut ? { statut } : {}),
-  })
+  // Un résultat ne vaut que pour la sélection qui l'a demandé : sinon, chargement en cours.
+  const cle = `${serviceId}|${statut}|${reloadKey}|${colonnes.join(',')}`
+  const { data: preview, erreur: previewError } = resultat?.cle === cle ? resultat : {}
 
-  const loadPreview = async () => {
-    setPreviewLoading(true)
-    setError(null)
-    try {
-      const { data } = await api.get('/rapport-employes', { params: buildParams() })
-      setPreview(data)
-    } catch {
-      setError('Impossible de calculer l\'aperçu pour les filtres sélectionnés.')
-      setPreview(null)
-    } finally {
-      setPreviewLoading(false)
-    }
+  useEffect(() => {
+    let ignore = false
+    api.get('/rapport-employes', { params: { ...filtresParams(serviceId, statut), colonnes } })
+      .then(({ data }) => {
+        if (ignore) return
+        setResultat({ cle, data })
+        setCatalogue(data.colonnes ?? [])
+      })
+      .catch(() => {
+        if (!ignore) setResultat({ cle, erreur: ERREUR_APERCU })
+      })
+    return () => { ignore = true }
+  }, [cle, serviceId, statut, colonnes])
+
+  const basculerColonne = (key) => {
+    setColonnes((actuelles) => (
+      actuelles.includes(key) ? actuelles.filter((c) => c !== key) : [...actuelles, key]
+    ))
   }
 
   const exportRapport = async () => {
@@ -53,7 +69,7 @@ export default function RapportEmployesPage() {
     setError(null)
     try {
       const response = await api.get('/rapport-employes/export', {
-        params: buildParams(),
+        params: { ...filtresParams(serviceId, statut), colonnes },
         responseType: 'blob',
       })
       const blob = new Blob([response.data], {
@@ -75,7 +91,7 @@ export default function RapportEmployesPage() {
     }
   }
 
-  const hasResults = preview !== null && preview.total > 0
+  const colonnesChoisies = catalogue.filter((c) => colonnes.includes(c.key))
 
   return (
     <div className="rapport-container">
@@ -86,9 +102,9 @@ export default function RapportEmployesPage() {
 
       <div className="rapport-card">
         <p className="rapport-intro">
-          Génère un fichier Excel listant les informations administratives et de carrière
-          de chaque employé. Le rapport exclut strictement les données de congés, maladies
-          et absences. Vous pouvez le filtrer par service et par statut avant export.
+          Génère un fichier Excel avec les colonnes de votre choix. Le solde de congé n'est inclus
+          que si vous le cochez ; les maladies, absences et demandes de congé n'y figurent jamais.
+          Vous pouvez filtrer par service et par statut.
         </p>
 
         {servicesError && <div className="rapport-error">{servicesError}</div>}
@@ -114,27 +130,63 @@ export default function RapportEmployesPage() {
           </label>
         </div>
 
-        {error && <div className="rapport-error">{error}</div>}
+        {catalogue.length > 0 && (
+          <fieldset className="rapport-colonnes">
+            <legend>Colonnes à exporter</legend>
+            <div className="rapport-colonnes-actions">
+              <button type="button" className="rapport-btn-secondary" onClick={() => setColonnes(catalogue.map((c) => c.key))}>
+                Tout cocher
+              </button>
+              <button type="button" className="rapport-btn-secondary" onClick={() => setColonnes([])}>
+                Tout décocher
+              </button>
+            </div>
+            <div className="rapport-colonnes-grid">
+              {catalogue.map((c) => (
+                <label key={c.key} className="rapport-colonne">
+                  <input
+                    type="checkbox"
+                    checked={colonnes.includes(c.key)}
+                    onChange={() => basculerColonne(c.key)}
+                  />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
 
-        <div className="rapport-actions">
-          <button
-            type="button"
-            className="rapport-btn-secondary"
-            onClick={loadPreview}
-            disabled={previewLoading}
-          >
-            {previewLoading ? 'Calcul...' : 'Aperçu'}
-          </button>
-          <button
-            type="button"
-            className="rapport-btn-primary"
-            onClick={exportRapport}
-            disabled={exporting || (preview !== null && preview.total === 0)}
-          >
-            <Download size={15} aria-hidden="true" />
-            {exporting ? 'Génération...' : 'Exporter'}
-          </button>
-        </div>
+        {catalogue.length > 0 && (
+          <div className="rapport-preview">
+            <div className="rapport-preview-group">
+              <h4><Users size={14} aria-hidden="true" /> Aperçu du fichier</h4>
+              {colonnesChoisies.length > 0 ? (
+                <Table
+                  columns={colonnesChoisies}
+                  rows={preview?.lignes ?? []}
+                  loading={!preview && !previewError}
+                  emptyText="Aucune donnée à afficher."
+                />
+              ) : (
+                <p className="rapport-preview-total">Choisissez au moins une colonne à exporter.</p>
+              )}
+              <p className="rapport-preview-total" aria-live="polite">
+                {preview ? (
+                  <>Total : <strong>{preview.total}</strong> employé{preview.total > 1 ? 's' : ''}</>
+                ) : 'Calcul du total...'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {previewError && (
+          <div className="rapport-error rapport-error-action">
+            {previewError}
+            <button type="button" className="rapport-btn-secondary" onClick={() => setReloadKey((k) => k + 1)}>
+              Réessayer
+            </button>
+          </div>
+        )}
 
         {preview && preview.total === 0 && (
           <div className="rapport-empty">
@@ -143,16 +195,19 @@ export default function RapportEmployesPage() {
           </div>
         )}
 
-        {hasResults && (
-          <div className="rapport-preview">
-            <div className="rapport-preview-group">
-              <h4><Users size={14} aria-hidden="true" /> Employés sélectionnés</h4>
-              <p className="rapport-preview-total">
-                Total : <strong>{preview.total}</strong> employé{preview.total > 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-        )}
+        {error && <div className="rapport-error">{error}</div>}
+
+        <div className="rapport-actions">
+          <button
+            type="button"
+            className="rapport-btn-primary"
+            onClick={exportRapport}
+            disabled={exporting || colonnes.length === 0 || !preview || preview.total === 0}
+          >
+            <Download size={15} aria-hidden="true" />
+            {exporting ? 'Génération...' : 'Exporter'}
+          </button>
+        </div>
       </div>
     </div>
   )

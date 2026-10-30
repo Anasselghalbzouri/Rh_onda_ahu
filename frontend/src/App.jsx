@@ -10,6 +10,7 @@ import MesFormationsPage from './components/MesFormationsPage/MesFormationsPage'
 import RapportActivitePage from './components/RapportActivitePage/RapportActivitePage'
 import RapportEmployesPage from './components/RapportEmployesPage/RapportEmployesPage'
 import DocumentsEmployesPage from './components/DocumentsEmployesPage/DocumentsEmployesPage'
+import ReclamationsPage from './components/ReclamationsPage/ReclamationsPage'
 import MesDocumentsPage from './components/MesDocumentsPage/MesDocumentsPage'
 import Unauthorized from './components/Unauthorized/Unauthorized'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
@@ -75,6 +76,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['rh', 'dg']}>
                 <DocumentsEmployesPage readOnly={user?.role === 'dg'} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reclamations"
+            element={
+              <ProtectedRoute allowedRoles={['rh', 'dg']}>
+                <ReclamationsPage />
               </ProtectedRoute>
             }
           />
