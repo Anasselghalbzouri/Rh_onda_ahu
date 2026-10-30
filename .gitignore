@@ -8,5 +8,17 @@
 /.claude
 /CLAUDE.md
 *.stackdump
+/.github/
+/.opencode/
+/.playwright/
+/.shannon/
+/.specify/
+/specs/
+
+# Fichiers non nécessaires pour faire tourner le projet
+/Rh_onda_ahu/
+/plan.md
+/d7197c6120ff28b30d5338cd70aa2c22.webp
+/PS09_Rapport*.xlsx
 
 backend/database/*.sqlite

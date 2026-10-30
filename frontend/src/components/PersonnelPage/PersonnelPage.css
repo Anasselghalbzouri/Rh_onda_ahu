@@ -1,4 +1,63 @@
-﻿.personnel-page {
+.personnel-page {
   width: 100%;
   animation: fadeIn 200ms ease-out;
+  --largeur-panneau: min(520px, 100vw);
+}
+
+/* Fiche ouverte : tiroir fixé à droite sur toute la hauteur, la liste reste visible à gauche (spec 007). */
+.personnel-page--panneau { padding-right: calc(var(--largeur-panneau) + var(--space-4)); }
+
+.personnel-panneau {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  width: var(--largeur-panneau);
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-5) var(--space-6);
+  background: var(--white);
+  border-left: 1px solid var(--neutral-200);
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  animation: personnel-panneau-entree 200ms ease-out;
+}
+
+@keyframes personnel-panneau-entree {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.personnel-panneau-entete {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+/* Boutons discrets « Agrandir » et « × Fermer » en haut à droite. */
+.personnel-panneau-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--neutral-500);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.personnel-panneau-btn:hover { background: var(--neutral-100); color: var(--neutral-900); }
+
+/* Agrandi : le tiroir s'élargit par-dessus la liste, qui reste montée (son état est conservé). */
+.personnel-page--agrandi { --largeur-panneau: min(1100px, 100vw); padding-right: 0; }
+
+/* Écran étroit : le tiroir occupe toute la largeur, par-dessus la liste. */
+@media (max-width: 1023px) {
+  .personnel-page { --largeur-panneau: 100vw; }
+  .personnel-page--panneau { padding-right: 0; }
+  .personnel-panneau { border-radius: 0; }
 }

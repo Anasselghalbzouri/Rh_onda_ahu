@@ -138,15 +138,6 @@ class PieceJointeController extends Controller
         return response()->json(['message' => 'Pièce jointe supprimée.']);
     }
 
-    /**
-     * Rôle de l'utilisateur authentifié. Aujourd'hui seul le guard RH existe ;
-     * cette lecture reste compatible avec un futur attribut de rôle (Employé/DG).
-     */
-    private function estRole(Request $request, string $role): bool
-    {
-        return ($request->user()?->role ?? 'rh') === $role;
-    }
-
     private function format(PieceJointe $p): array
     {
         return [

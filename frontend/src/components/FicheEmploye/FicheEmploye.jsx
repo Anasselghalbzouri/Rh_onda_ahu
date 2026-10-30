@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Briefcase, CalendarDays, FileCheck2, GraduationCap, History, Paperclip, UserRound } from 'lucide-react'
 import api from '../../api'
+import { useAuth } from '../../useAuth'
 import FormField from '../ui/FormField/FormField'
 import Badge from '../ui/Badge/Badge'
 import { DOCUMENT_CATEGORIES, DOCUMENT_STATUT_LABELS, DOCUMENT_STATUT_VARIANTS } from '../../constants/documentsEmployes'
@@ -60,8 +61,9 @@ const congeFileUrl = (congeId) => {
 }
 
 
-export default function FicheEmploye({ id, onRetour }) {
+export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSaved, onDirtyChange, onglets = null }) {
   const navigate = useNavigate()
+  const canEditHist = useAuth().user?.role !== 'dg'
   const [employe, setEmploye] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -92,6 +94,22 @@ export default function FicheEmploye({ id, onRetour }) {
   const [formationsEmploye, setFormationsEmploye] = useState([])
   const [formationsLoading, setFormationsLoading] = useState(false)
   const [formationsError, setFormationsError] = useState(null)
+
+  // histForm : null (fermé) ou { id?, open, poste, service, categorie, echelle, date_debut, date_fin }
+  const [histForm, setHistForm] = useState(null)
+  const [histErrors, setHistErrors] = useState({})
+  const [histError, setHistError] = useState(null)
+  const [histSaving, setHistSaving] = useState(false)
+  const [histDeleteId, setHistDeleteId] = useState(null)
+
+  // onglets : clés à afficher (vue résumée du panneau) ; null = tous les onglets.
+  const tabsVisibles = onglets ? TABS.filter((t) => onglets.includes(t.key)) : TABS
+  useEffect(() => {
+    if (!tabsVisibles.some((t) => t.key === activeTab)) setActiveTab('profil')
+  }, [onglets])
+
+  // Signale au parent un formulaire ouvert (confirmation avant de changer de fiche).
+  useEffect(() => { onDirtyChange?.(editOpen || histForm !== null) }, [editOpen, histForm])
 
   const fetchEmploye = () => {
     return api.get(`/employes/${id}`)
@@ -149,6 +167,7 @@ export default function FicheEmploye({ id, onRetour }) {
     try {
       const { data } = await api.put(`/employes/${id}`, editForm)
       setEmploye(data)
+      onSaved?.()
       setEditSuccess(true)
       setTimeout(() => { setEditOpen(false); setEditSuccess(false) }, 1500)
     } catch (err) {
@@ -202,6 +221,57 @@ export default function FicheEmploye({ id, onRetour }) {
 
   if (loading) return <p className="fiche-center">Chargement...</p>
   if (error)   return <p className="fiche-center" style={{ color: '#dc2626' }}>{error}</p>
+  const openHistForm = (h = null) => {
+    setHistForm({
+      id: h?.id, open: !!h && !h.date_fin,
+      poste: h?.poste ?? '', service: h?.service ?? '', categorie: h?.categorie ?? '', echelle: h?.echelle ?? '',
+      date_debut: h?.date_debut?.slice(0, 10) ?? '', date_fin: h?.date_fin?.slice(0, 10) ?? '',
+    })
+    setHistErrors({})
+    setHistError(null)
+    setHistDeleteId(null)
+  }
+
+  const onHistChange = (e) => {
+    const { name, value } = e.target
+    setHistForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const onHistSubmit = async (e) => {
+    e.preventDefault()
+    setHistErrors({})
+    setHistError(null)
+    setHistSaving(true)
+    const { id: periodId, open, ...fields } = histForm
+    const body = open ? { date_debut: fields.date_debut } : fields
+    try {
+      if (periodId) await api.put(`/historique/${periodId}`, body)
+      else await api.post(`/employes/${id}/historique`, body)
+      setHistForm(null)
+      await fetchEmploye()
+    } catch (err) {
+      if (err.response?.status === 422 && err.response.data?.errors) setHistErrors(err.response.data.errors)
+      else setHistError("Impossible d'enregistrer la période.")
+    } finally {
+      setHistSaving(false)
+    }
+  }
+
+  const onHistDelete = async (periodId) => {
+    if (histDeleteId !== periodId) { setHistDeleteId(periodId); return }
+    setHistError(null)
+    try {
+      await api.delete(`/historique/${periodId}`)
+      await fetchEmploye()
+    } catch (err) {
+      setHistError(err.response?.status === 422 && err.response.data?.message
+        ? err.response.data.message
+        : 'Impossible de supprimer la période.')
+    } finally {
+      setHistDeleteId(null)
+    }
+  }
+
   if (!employe) return null
 
   const statutStyle = STATUT_STYLE[employe.statut] ?? { background: '#f3f4f6', color: '#374151' }
@@ -260,7 +330,7 @@ export default function FicheEmploye({ id, onRetour }) {
     <div className="fiche-container">
 
       <div className="fiche-header">
-        <button className="fiche-retour-btn" onClick={onRetour}>← Retour</button>
+        {!masquerRetour && <button className="fiche-retour-btn" onClick={onRetour}>← Retour</button>}
         <div className="fiche-header-info">
           <h2 className="fiche-nom-complet">{employe.prenom} {employe.nom}</h2>
           <span className="fiche-matricule-badge">Matricule : {employe.matricule}</span>
@@ -310,7 +380,7 @@ export default function FicheEmploye({ id, onRetour }) {
       </div>
 
       <div className="fiche-tabs" role="tablist" aria-label="Sections de la fiche employé">
-        {TABS.map((tab) => {
+        {tabsVisibles.map((tab) => {
           const Icon = tab.icon
           return (
             <button
@@ -732,6 +802,40 @@ export default function FicheEmploye({ id, onRetour }) {
 
       {activeTab === 'historique' && (
       <Section titre="Historique professionnel">
+        {canEditHist && !histForm && (
+          <div className="fiche-actions" style={{ marginBottom: '12px' }}>
+            <button type="button" className="fiche-primary-btn" onClick={() => openHistForm()}>
+              Ajouter une période
+            </button>
+          </div>
+        )}
+        {histForm && (
+          <form onSubmit={onHistSubmit} style={{ marginBottom: '16px' }}>
+            <div className="fiche-modal-grid">
+              {!histForm.open && (
+                <>
+                  <FormField label="Fonction"  name="poste"     value={histForm.poste}     onChange={onHistChange} error={histErrors.poste?.[0]} />
+                  <FormField label="Entité"    name="service"   value={histForm.service}   onChange={onHistChange} error={histErrors.service?.[0]} />
+                  <FormField label="Catégorie" name="categorie" value={histForm.categorie} onChange={onHistChange} error={histErrors.categorie?.[0]} />
+                  <FormField label="Échelle"   name="echelle"   value={histForm.echelle}   onChange={onHistChange} error={histErrors.echelle?.[0]} />
+                </>
+              )}
+              <FormField label="Date de début" name="date_debut" type="date" required value={histForm.date_debut} onChange={onHistChange} error={histErrors.date_debut?.[0]} />
+              {!histForm.open && (
+                <FormField label="Date de fin" name="date_fin" type="date" required value={histForm.date_fin} onChange={onHistChange} error={histErrors.date_fin?.[0]} />
+              )}
+            </div>
+            <div className="fiche-modal-actions">
+              <button type="button" className="fiche-cancel-btn" onClick={() => setHistForm(null)} disabled={histSaving}>
+                Annuler
+              </button>
+              <button type="submit" className="fiche-primary-btn" disabled={histSaving}>
+                {histSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+              </button>
+            </div>
+          </form>
+        )}
+        {histError && <div className="fiche-form-error">{histError}</div>}
         {historiqueProfessionnel.length === 0 ? (
           <div className="fiche-empty-state">Aucun historique enregistré.</div>
         ) : (
@@ -739,21 +843,38 @@ export default function FicheEmploye({ id, onRetour }) {
             <table className="fiche-table">
               <thead>
                 <tr>
-                  <th className="fiche-th">Poste</th>
-                  <th className="fiche-th">Service</th>
+                  <th className="fiche-th">Fonction</th>
+                  <th className="fiche-th">Entité</th>
+                  <th className="fiche-th">Catégorie</th>
+                  <th className="fiche-th">Échelle</th>
                   <th className="fiche-th">Période</th>
-                  <th className="fiche-th">Observation</th>
+                  {canEditHist && <th className="fiche-th">Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {historiqueProfessionnel.map((h, idx) => (
                   <tr key={h?.id ?? `${h?.poste ?? 'hist'}-${idx}`}>
-                    <td className="fiche-td">{h?.poste ?? '—'}</td>
-                    <td className="fiche-td">{h?.service?.nom ?? '—'}</td>
+                    <td className="fiche-td">{h?.poste || '—'}</td>
+                    <td className="fiche-td">{h?.service || '—'}</td>
+                    <td className="fiche-td">{h?.categorie || '—'}</td>
+                    <td className="fiche-td">{h?.echelle || '—'}</td>
                     <td className="fiche-td">
                       {formatDate(h?.date_debut)} → {h?.date_fin ? formatDate(h?.date_fin) : 'En cours'}
                     </td>
-                    <td className="fiche-td">{h?.observation ?? '—'}</td>
+                    {canEditHist && (
+                      <td className="fiche-td">
+                        <div className="fiche-actions">
+                          <button type="button" className="fiche-link-btn" onClick={() => openHistForm(h)}>
+                            Modifier
+                          </button>
+                          {h?.date_fin && (
+                            <button type="button" className="fiche-delete-btn" onClick={() => onHistDelete(h.id)}>
+                              {histDeleteId === h.id ? 'Confirmer ?' : 'Supprimer'}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

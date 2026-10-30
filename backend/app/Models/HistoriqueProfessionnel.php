@@ -16,6 +16,7 @@ class HistoriqueProfessionnel extends Model
         'poste',
         'service',
         'categorie',
+        'echelle',
         'date_debut',
         'date_fin',
     ];

@@ -34,6 +34,9 @@ class XlsxSurgicalPatcher
     /** @var array<int,string>|null */
     private ?array $sharedStrings = null;
 
+    /** @var array<string,string> parties modifiées : ZipArchive::getFromName relit l'archive d'origine avant close() */
+    private array $modifiees = [];
+
     private function __construct(string $path)
     {
         $this->path = $path;
@@ -60,7 +63,7 @@ class XlsxSurgicalPatcher
      */
     public function listSheets(): array
     {
-        $workbookXml = $this->zip->getFromName('xl/workbook.xml');
+        $workbookXml = $this->lire('xl/workbook.xml');
         $relsXml = $this->zip->getFromName('xl/_rels/workbook.xml.rels');
         if ($workbookXml === false || $relsXml === false) {
             throw new RuntimeException('xl/workbook.xml ou ses relations sont introuvables.');
@@ -102,7 +105,7 @@ class XlsxSurgicalPatcher
 
     public function loadSheetDom(string $sheetXmlPath): \DOMDocument
     {
-        $xml = $this->zip->getFromName($sheetXmlPath);
+        $xml = $this->lire($sheetXmlPath);
         if ($xml === false) {
             throw new RuntimeException("Partie XML introuvable dans l'archive : {$sheetXmlPath}");
         }
@@ -115,9 +118,20 @@ class XlsxSurgicalPatcher
 
     public function saveSheetDom(string $sheetXmlPath, \DOMDocument $dom): void
     {
-        if (! $this->zip->addFromString($sheetXmlPath, $dom->saveXML())) {
-            throw new RuntimeException("Impossible d'écrire la partie modifiée : {$sheetXmlPath}");
+        $this->ecrire($sheetXmlPath, $dom->saveXML());
+    }
+
+    private function lire(string $partie): string|false
+    {
+        return $this->modifiees[$partie] ?? $this->zip->getFromName($partie);
+    }
+
+    private function ecrire(string $partie, string $xml): void
+    {
+        if (! $this->zip->addFromString($partie, $xml)) {
+            throw new RuntimeException("Impossible d'écrire la partie modifiée : {$partie}");
         }
+        $this->modifiees[$partie] = $xml;
     }
 
     /** @return array<int,string> index => texte */
@@ -240,25 +254,50 @@ class XlsxSurgicalPatcher
     }
 
     /**
-     * Trouve, sous la ligne d'en-tête, la ligne dont la colonne $labelCol
-     * contient la valeur numérique $year exactement.
+     * Première ligne (>= $fromRow) dont la cellule de la colonne $col contient
+     * $needle. Limiter la colonne évite qu'un mot d'un commentaire (colonne I)
+     * soit pris pour un titre de section (colonne B).
      */
-    public function findRowByYear(\DOMDocument $dom, int $headerRow, string $labelCol, int $year, int $maxScan = 30): ?int
+    public function findRowInCol(\DOMDocument $dom, string $col, string $needle, int $fromRow = 1): ?int
     {
-        for ($rowNum = $headerRow + 1; $rowNum <= $headerRow + $maxScan; $rowNum++) {
-            $row = $this->findRowElement($dom, $rowNum);
-            if ($row === null) {
+        $needle = $this->normalize($needle);
+        foreach ($dom->getElementsByTagName('c') as $cell) {
+            /** @var \DOMElement $cell */
+            $ref = $cell->getAttribute('r');
+            if ($this->colLettersFromRef($ref) !== $col || $this->rowNumberFromRef($ref) < $fromRow) {
                 continue;
             }
-            foreach ($row->getElementsByTagName('c') as $cell) {
-                /** @var \DOMElement $cell */
-                if ($this->colLettersFromRef($cell->getAttribute('r')) === $labelCol) {
-                    $vNode = $cell->getElementsByTagName('v')->item(0);
-                    if ($vNode !== null && (int) trim($vNode->textContent) === $year) {
-                        return $rowNum;
-                    }
-                    break;
-                }
+            if (str_contains($this->normalize($this->cellText($cell)), $needle)) {
+                return $this->rowNumberFromRef($ref);
+            }
+        }
+
+        return null;
+    }
+
+    /** Titre de section : texte de la colonne B qui COMMENCE par $prefix (ex. « I.F », « IV.c »). */
+    public function findTitleRow(\DOMDocument $dom, string $prefix): ?int
+    {
+        $prefix = $this->normalize($prefix);
+        foreach ($dom->getElementsByTagName('c') as $cell) {
+            /** @var \DOMElement $cell */
+            $ref = $cell->getAttribute('r');
+            if ($this->colLettersFromRef($ref) === 'B' && str_starts_with($this->normalize($this->cellText($cell)), $prefix)) {
+                return $this->rowNumberFromRef($ref);
+            }
+        }
+
+        return null;
+    }
+
+    /** Colonne de la ligne $rowNumber dont le texte normalisé correspond à $regex. */
+    public function findColInRowMatching(\DOMDocument $dom, int $rowNumber, string $regex): ?string
+    {
+        $row = $this->findRowElement($dom, $rowNumber);
+        foreach ($row?->getElementsByTagName('c') ?? [] as $cell) {
+            /** @var \DOMElement $cell */
+            if (preg_match($regex, $this->normalize($this->cellText($cell)))) {
+                return $this->colLettersFromRef($cell->getAttribute('r'));
             }
         }
 
@@ -266,37 +305,31 @@ class XlsxSurgicalPatcher
     }
 
     /**
-     * Dernière ligne du bloc CONTIGU commençant à $afterRow+1 possédant une
-     * valeur non vide dans $col (s'arrête au premier "trou" — n'examine pas
-     * tout le reste de la feuille, où la même lettre de colonne peut être
-     * réutilisée par d'autres tableaux plus bas).
+     * Écrit un texte dans $cellRef en chaîne « inline » (pas de table de
+     * chaînes partagées à modifier). Même garde anti-formule que setNumericCell.
      */
-    public function lastRowWithValue(\DOMDocument $dom, string $col, int $afterRow, int $maxScan = 30): int
+    public function setTextCell(\DOMDocument $dom, string $cellRef, string $text): void
     {
-        $last = $afterRow;
-        for ($rowNum = $afterRow + 1; $rowNum <= $afterRow + $maxScan; $rowNum++) {
-            $row = $this->findRowElement($dom, $rowNum);
-            if ($row === null) {
-                break;
+        $this->setNumericCell($dom, $cellRef, 0); // crée/positionne la cellule et vérifie l'absence de formule
+        foreach ($this->findRowElement($dom, $this->rowNumberFromRef($cellRef))->getElementsByTagName('c') as $cell) {
+            /** @var \DOMElement $cell */
+            if ($cell->getAttribute('r') !== $cellRef) {
+                continue;
             }
-            $hasValue = false;
-            foreach ($row->getElementsByTagName('c') as $cell) {
-                /** @var \DOMElement $cell */
-                if ($this->colLettersFromRef($cell->getAttribute('r')) === $col) {
-                    $vNode = $cell->getElementsByTagName('v')->item(0);
-                    if ($vNode !== null && trim($vNode->textContent) !== '') {
-                        $hasValue = true;
-                    }
-                    break;
-                }
+            while ($cell->firstChild) {
+                $cell->removeChild($cell->firstChild);
             }
-            if (! $hasValue) {
-                break;
-            }
-            $last = $rowNum;
-        }
+            $cell->setAttribute('t', 'inlineStr');
+            $t = $dom->createElement('t');
+            $t->setAttribute('xml:space', 'preserve');
+            // createTextNode échappe & et < (createElement($nom, $valeur) ne le fait pas).
+            $t->appendChild($dom->createTextNode($text));
+            $is = $dom->createElement('is');
+            $is->appendChild($t);
+            $cell->appendChild($is);
 
-        return $last;
+            return;
+        }
     }
 
     private function findRowElement(\DOMDocument $dom, int $rowNumber): ?\DOMElement
@@ -383,7 +416,7 @@ class XlsxSurgicalPatcher
      */
     public function forceFullRecalcOnLoad(): void
     {
-        $xml = $this->zip->getFromName('xl/workbook.xml');
+        $xml = $this->lire('xl/workbook.xml');
         if ($xml === false) {
             return;
         }
@@ -397,7 +430,112 @@ class XlsxSurgicalPatcher
         }
         $calcPr->setAttribute('fullCalcOnLoad', '1');
 
-        $this->zip->addFromString('xl/workbook.xml', $dom->saveXML());
+        $this->ecrire('xl/workbook.xml', $dom->saveXML());
+    }
+
+    /** Valeur affichée de $cellRef (chaîne partagée, texte en ligne ou nombre), null si absente ou vide. */
+    public function cellValue(\DOMDocument $dom, string $cellRef): ?string
+    {
+        $cell = $this->findCell($dom, $cellRef);
+        $text = $cell ? $this->cellText($cell) : '';
+
+        return $text === '' ? null : $text;
+    }
+
+    /** Vide une cellule en gardant son style ; une formule n'est jamais touchée. */
+    public function clearCell(\DOMDocument $dom, string $cellRef): void
+    {
+        $cell = $this->findCell($dom, $cellRef);
+        if ($cell === null || $cell->getElementsByTagName('f')->length > 0) {
+            return;
+        }
+        while ($cell->firstChild) {
+            $cell->removeChild($cell->firstChild);
+        }
+        $cell->removeAttribute('t');
+    }
+
+    private function findCell(\DOMDocument $dom, string $cellRef): ?\DOMElement
+    {
+        foreach ($this->findRowElement($dom, $this->rowNumberFromRef($cellRef))?->getElementsByTagName('c') ?? [] as $cell) {
+            /** @var \DOMElement $cell */
+            if ($cell->getAttribute('r') === $cellRef) {
+                return $cell;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Renomme une feuille et toutes les références « 'Nom'!A1 » du classeur
+     * (zones d'impression, graphiques, formules).
+     */
+    public function renameSheet(string $ancien, string $nouveau): void
+    {
+        if (mb_strlen($nouveau) > 31) {
+            throw new RuntimeException("Nom de feuille trop long (31 caractères maximum) : {$nouveau}");
+        }
+
+        $wb = new \DOMDocument();
+        $wb->loadXML($this->lire('xl/workbook.xml'));
+        foreach ($wb->getElementsByTagName('sheet') as $sheet) {
+            /** @var \DOMElement $sheet */
+            if ($sheet->getAttribute('name') === $ancien) {
+                $sheet->setAttribute('name', $nouveau);
+            }
+        }
+        $this->ecrire('xl/workbook.xml', $wb->saveXML());
+
+        $ref = fn (string $nom) => htmlspecialchars("'".str_replace("'", "''", $nom)."'!", ENT_NOQUOTES | ENT_XML1);
+        $remplacements = [$ref($ancien) => $ref($nouveau)];
+        if (preg_match('/^\w+$/u', $ancien)) {
+            // Nom sans espace : Excel l'écrit aussi sans apostrophes (Feuil1!A1).
+            $remplacements['>'.$ancien.'!'] = '>'.$ref($nouveau);
+        }
+        for ($i = 0; $i < $this->zip->numFiles; $i++) {
+            $partie = $this->zip->getNameIndex($i);
+            if (preg_match('#^xl/(workbook\.xml|charts/[^/]+\.xml|worksheets/[^/]+\.xml)$#', $partie)) {
+                $xml = $this->lire($partie);
+                $nouveauXml = strtr($xml, $remplacements);
+                if ($nouveauXml !== $xml) {
+                    $this->ecrire($partie, $nouveauXml);
+                }
+            }
+        }
+    }
+
+    /** Cache toutes les autres feuilles et ouvre le classeur sur $nom. */
+    public function showOnlySheet(string $nom): void
+    {
+        $sheets = $this->listSheets();
+        $wb = new \DOMDocument();
+        $wb->loadXML($this->lire('xl/workbook.xml'));
+        $index = 0;
+        foreach ($wb->getElementsByTagName('sheet') as $i => $sheet) {
+            /** @var \DOMElement $sheet */
+            if ($sheet->getAttribute('name') === $nom) {
+                $sheet->removeAttribute('state');
+                $index = $i;
+            } else {
+                $sheet->setAttribute('state', 'hidden');
+            }
+        }
+        foreach ($wb->getElementsByTagName('workbookView') as $vue) {
+            /** @var \DOMElement $vue */
+            $vue->setAttribute('activeTab', (string) $index);
+            $vue->setAttribute('firstSheet', (string) $index);
+        }
+        $this->ecrire('xl/workbook.xml', $wb->saveXML());
+
+        foreach ($sheets as $nomFeuille => $partie) {
+            $dom = $this->loadSheetDom($partie);
+            foreach ($dom->getElementsByTagName('sheetView') as $vue) {
+                /** @var \DOMElement $vue */
+                $nomFeuille === $nom ? $vue->setAttribute('tabSelected', '1') : $vue->removeAttribute('tabSelected');
+            }
+            $this->saveSheetDom($partie, $dom);
+        }
     }
 
     public function close(): void

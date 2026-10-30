@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\EvaluationFormationController;
 use App\Http\Controllers\FormationController;
+use App\Http\Controllers\HistoriqueProfessionnelController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PieceJointeController;
@@ -47,6 +48,10 @@ Route::middleware('auth:rh')->group(function () {
     Route::put('/conges/{id}', [CongeController::class, 'update']);
     Route::delete('/conges/{id}', [CongeController::class, 'destroy']);
     Route::get('/conges/{id}/fichier', [CongeController::class, 'downloadFichier']);
+
+    Route::post('/employes/{id}/historique', [HistoriqueProfessionnelController::class, 'store']);
+    Route::put('/historique/{id}', [HistoriqueProfessionnelController::class, 'update']);
+    Route::delete('/historique/{id}', [HistoriqueProfessionnelController::class, 'destroy']);
 
     Route::get('/employes/{id}/pieces-jointes', [PieceJointeController::class, 'index']);
     Route::post('/employes/{id}/pieces-jointes', [PieceJointeController::class, 'store']);
@@ -92,7 +97,11 @@ Route::middleware('auth:rh')->group(function () {
     Route::get('/dashboard/pyramide-ages', [DashboardController::class, 'pyramideAges']);
     Route::get('/dashboard/anciennete', [DashboardController::class, 'anciennete']);
     Route::get('/rapport-activite', [RapportActiviteController::class, 'stats']);
-    Route::get('/rapport-activite/sheets', [RapportActiviteController::class, 'sheets']);
+    Route::get('/rapport-activite/saisie', [RapportActiviteController::class, 'saisie']);
+    Route::put('/rapport-activite/saisie/{annee}/{trimestre}', [RapportActiviteController::class, 'enregistrerSaisie'])
+        ->whereNumber('annee')->whereIn('trimestre', ['1', '2', '3', '4']);
+    Route::get('/rapport-activite/export/visuel', [RapportActiviteController::class, 'visuel']);
+    Route::get('/rapport-activite/export/apercu', [RapportActiviteController::class, 'apercu']);
     Route::get('/rapport-activite/export', [RapportActiviteController::class, 'export']);
 
     Route::get('/rapport-employes', [RapportEmployesController::class, 'stats']);

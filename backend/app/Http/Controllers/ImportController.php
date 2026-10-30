@@ -104,7 +104,7 @@ class ImportController extends Controller
         for ($r = 2; $r <= $highestRow; $r++) {
             $rowData = [];
             foreach (self::COL_MAP as $col => $field) {
-                $cell = $sheet->getCellByColumnAndRow($col, $r);
+                $cell = $sheet->getCell([$col, $r]);
                 $value = $cell->getValue();
 
                 if (in_array($field, self::DATE_FIELDS, true)) {

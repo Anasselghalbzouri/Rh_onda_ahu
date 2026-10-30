@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DemandeConge;
 use App\Models\Employe;
 use App\Models\Formation;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -28,10 +29,11 @@ class DashboardController extends Controller
         $congesCeMois  = DemandeConge::where('date_debut', '<=', $fin)
             ->where('date_fin', '>=', $debut)->count();
         $soldeMoyen    = round((float) Employe::avg('solde_conge'), 1);
+        // Calcul en PHP : TIMESTAMPDIFF/CURDATE n'existent pas en SQLite
         $ageMoyen      = round((float) Employe::where('statut', '!=', 'retraite')
             ->whereNotNull('date_naissance')
-            ->selectRaw('AVG(TIMESTAMPDIFF(YEAR, date_naissance, CURDATE())) as age_moyen')
-            ->value('age_moyen'), 1);
+            ->pluck('date_naissance')
+            ->avg(fn ($d) => Carbon::parse($d)->age), 1);
 
         $parType = DemandeConge::select('type_conge', DB::raw('COUNT(*) as total'))
             ->groupBy('type_conge')->orderByDesc('total')->get()
@@ -107,9 +109,9 @@ class DashboardController extends Controller
             $data[] = [
                 'tranche' => $t['label'],
                 'hommes'  => Employe::where('statut', '!=', 'retraite')->where('sexe', 'M')
-                    ->whereNotNull('date_naissance')->whereBetween('date_naissance', [$bornMin, $bornMax])->count(),
+                    ->whereDate('date_naissance', '>=', $bornMin)->whereDate('date_naissance', '<=', $bornMax)->count(),
                 'femmes'  => Employe::where('statut', '!=', 'retraite')->where('sexe', 'F')
-                    ->whereNotNull('date_naissance')->whereBetween('date_naissance', [$bornMin, $bornMax])->count(),
+                    ->whereDate('date_naissance', '>=', $bornMin)->whereDate('date_naissance', '<=', $bornMax)->count(),
             ];
         }
 
@@ -134,8 +136,8 @@ class DashboardController extends Controller
             $dateMin = now()->subYears($t['max'] + 1)->addDay()->toDateString();
             $data[] = [
                 'tranche' => $t['label'],
-                'total'   => Employe::where('statut', '!=', 'retraite')->whereNotNull('date_embauche')
-                    ->whereBetween('date_embauche', [$dateMin, $dateMax])->count(),
+                'total'   => Employe::where('statut', '!=', 'retraite')
+                    ->whereDate('date_embauche', '>=', $dateMin)->whereDate('date_embauche', '<=', $dateMax)->count(),
             ];
         }
 

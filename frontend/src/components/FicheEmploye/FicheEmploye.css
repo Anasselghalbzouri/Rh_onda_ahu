@@ -809,3 +809,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Fiche dans le panneau de la page Personnel (spec 007) : largeur du panneau, blocs en une colonne. */
+.personnel-panneau .fiche-container { max-width: none; }
+.personnel-panneau .fiche-header {
+  flex-wrap: wrap;
+  padding: 0 0 var(--space-4);
+  border: none;
+  border-bottom: 1px solid var(--neutral-200);
+  border-radius: 0;
+  box-shadow: none;
+}
+.personnel-panneau .fiche-summary-card {
+  flex-direction: column;
+  align-items: stretch;
+}
+.personnel-panneau .fiche-upload-grid { grid-template-columns: 1fr; }

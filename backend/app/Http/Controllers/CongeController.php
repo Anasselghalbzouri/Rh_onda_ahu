@@ -7,6 +7,7 @@ use App\Models\Employe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class CongeController extends Controller
 {
@@ -59,7 +60,8 @@ class CongeController extends Controller
 
         // Le solde de l'employé est décrémenté immédiatement à la saisie.
         $employe = Employe::findOrFail($data['employe_id']);
-        $nouveau_solde = max(0, $employe->solde_conge - $data['nombre_jours']);
+        $this->verifierSolde($employe, $data['nombre_jours']);
+        $nouveau_solde = $employe->solde_conge - $data['nombre_jours'];
         $employe->update(['solde_conge' => $nouveau_solde]);
         $data['solde_restant'] = $nouveau_solde;
 
@@ -104,7 +106,8 @@ class CongeController extends Controller
 
             $diff    = $data['nombre_jours'] - $ancienJours;
             $employe = $conge->employe;
-            $nouveau_solde = max(0, $employe->solde_conge - $diff);
+            $this->verifierSolde($employe, $diff);
+            $nouveau_solde = $employe->solde_conge - $diff;
             $employe->update(['solde_conge' => $nouveau_solde]);
             $data['solde_restant'] = $nouveau_solde;
         }
@@ -154,6 +157,15 @@ class CongeController extends Controller
         }
 
         return Storage::disk('public')->download($conge->fichier_chemin, $conge->fichier_nom);
+    }
+
+    private function verifierSolde(Employe $employe, float $jours): void
+    {
+        if ($jours > $employe->solde_conge) {
+            throw ValidationException::withMessages([
+                'nombre_jours' => "Solde insuffisant : {$employe->solde_conge} jour(s) disponible(s), {$jours} demandé(s).",
+            ]);
+        }
     }
 
     private function countJours(string $debut, string $fin): int

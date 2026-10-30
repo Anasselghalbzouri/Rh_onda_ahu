@@ -195,6 +195,9 @@
 }
 
 .liste-tr:hover { background: var(--neutral-50); }
+.liste-tr { cursor: pointer; }
+.liste-tr--active,
+.liste-tr--active:hover { background: var(--secondary-light); box-shadow: inset 3px 0 0 var(--secondary); }
 .liste-tr:last-child { border-bottom: none; }
 
 .liste-td {

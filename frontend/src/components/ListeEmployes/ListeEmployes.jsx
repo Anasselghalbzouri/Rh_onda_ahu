@@ -42,7 +42,7 @@ const EMPTY_FORM = {
   entite: '', affectation: '', solde_conge: '', statut: 'actif',
 }
 
-export default function ListeEmployes({ onSelectEmploye }) {
+export default function ListeEmployes({ onSelectEmploye, selectedId = null, refreshKey = 0 }) {
   const [employes, setEmployes] = useState([])
   const [meta, setMeta] = useState(null)
   const [page, setPage] = useState(1)
@@ -85,6 +85,11 @@ const [createOpen, setCreateOpen] = useState(false)
     setPage(1)
     fetchEmployes(1)
   }, [search, statut, serviceId])
+
+  // Fiche enregistrée ou supprimée depuis le panneau : recharge la page courante, filtres conservés.
+  useEffect(() => {
+    if (refreshKey) fetchEmployes(page)
+  }, [refreshKey])
 
   const handlePage = (p) => {
     setPage(p)
@@ -285,7 +290,12 @@ const [createOpen, setCreateOpen] = useState(false)
                   </tr>
                 ) : (
                   sortedEmployes.map((emp) => (
-                    <tr key={emp.id} className="liste-tr">
+                    <tr
+                      key={emp.id}
+                      className={`liste-tr ${emp.id === selectedId ? 'liste-tr--active' : ''}`}
+                      aria-selected={emp.id === selectedId}
+                      onClick={() => onSelectEmploye?.(emp.id)}
+                    >
                       <td className="liste-td">{emp.matricule}</td>
                       <td className="liste-td">
                         <div className="liste-employee-cell">
@@ -315,7 +325,8 @@ const [createOpen, setCreateOpen] = useState(false)
                         <button
                           type="button"
                           className="liste-action-btn"
-                          onClick={() => onSelectEmploye && onSelectEmploye(emp.id)}
+                          data-employe-id={emp.id}
+                          onClick={(e) => { e.stopPropagation(); onSelectEmploye?.(emp.id) }}
                           aria-label={`Voir la fiche de ${emp.prenom} ${emp.nom}`}
                         >
                           <Eye size={14} aria-hidden="true" />

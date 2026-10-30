@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -51,6 +52,53 @@ class Employe extends Model
         'depart_volontaire' => 'boolean',
         'solde_conge' => 'float',
     ];
+
+    private const CHAMPS_CARRIERE = ['fonction', 'entite', 'categorie', 'echelle'];
+
+    protected static function booted(): void
+    {
+        // Événements modèle : un seul point couvre les 5 chemins d'écriture
+        // (fiche, bulk-sync, imports Excel, commande artisan).
+        static::created(function (Employe $e) {
+            if ($e->estEnPoste()) {
+                $e->ouvrirPeriode($e->date_affectation ?? $e->date_embauche ?? today());
+            }
+        });
+
+        static::updated(function (Employe $e) {
+            // Départ prioritaire : clôture sans réouverture.
+            if ($e->wasChanged('statut') && in_array($e->statut, ['retraite', 'parti'], true)) {
+                $e->clorePeriode(($e->statut === 'retraite' ? $e->date_retraite : $e->date_depart_volontaire) ?? today());
+
+                return;
+            }
+            if ($e->estEnPoste() && $e->wasChanged(self::CHAMPS_CARRIERE)) {
+                $e->clorePeriode(today());
+                $e->ouvrirPeriode(today());
+            }
+        });
+    }
+
+    private function estEnPoste(): bool
+    {
+        return in_array($this->statut ?? 'actif', ['actif', 'mute'], true);
+    }
+
+    private function ouvrirPeriode($debut): void
+    {
+        $this->historiqueProfessionnel()->create([
+            'poste' => $this->fonction,
+            'service' => $this->entite,
+            'categorie' => $this->categorie,
+            'echelle' => $this->echelle,
+            'date_debut' => $debut,
+        ]);
+    }
+
+    private function clorePeriode($fin): void
+    {
+        $this->historiqueProfessionnel()->whereNull('date_fin')->update(['date_fin' => Carbon::parse($fin)->startOfDay()]);
+    }
 
     public function service(): BelongsTo
     {
