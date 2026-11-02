@@ -24,3 +24,6 @@
 /image.png
 
 backend/database/*.sqlite
+
+# Projets vidéo (HyperFrames, animate) : sources, captures et rendus. Seul docs/rh-onda-presentation.mp4 est versionné.
+/video/
