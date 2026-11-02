@@ -19,32 +19,28 @@ const ICONS = {
   reclamations: MessageSquareWarning,
 }
 
-const MENU_BY_ROLE = {
-  rh: [
-    { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard' },
-    { key: 'personnel', label: 'Personnel',        path: '/personnel' },
-    { key: 'conges',    label: 'Congés',            path: '/conges'   },
-    { key: 'formations', label: 'Formations',       path: '/formations' },
-    { key: 'rapport-activite', label: 'Rapport PS09', path: '/rapport-activite' },
-    { key: 'rapport-employes', label: 'Rapport données employés', path: '/rapport-employes' },
-    { key: 'documents-employes', label: 'Documents employés', path: '/documents-employes' },
-    { key: 'reclamations', label: 'Réclamations', path: '/reclamations' },
-  ],
-  dg: [
-    { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard' },
-    { key: 'personnel', label: 'Personnel',        path: '/personnel' },
-    { key: 'documents-employes', label: 'Documents employés', path: '/documents-employes' },
-    { key: 'reclamations', label: 'Réclamations', path: '/reclamations' },
-  ],
-  employe: [
-    { key: 'profil',    label: 'Mon profil',   path: '/profil'   },
-    { key: 'conges',    label: 'Mes congés',   path: '/conges'   },
-    { key: 'mes-formations', label: 'Mes formations', path: '/mes-formations' },
-  ],
-}
+// Menu commun RH / DG ; `rhOnly` masque au DG les pages qu'il ne peut pas ouvrir (cf. routes de App.jsx).
+const MENU_DIRECTION = [
+  { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard' },
+  { key: 'personnel', label: 'Personnel',        path: '/personnel' },
+  { key: 'conges',    label: 'Congés',            path: '/conges', rhOnly: true },
+  { key: 'formations', label: 'Formations',       path: '/formations', rhOnly: true },
+  { key: 'rapport-activite', label: 'Rapport PS09', path: '/rapport-activite', rhOnly: true },
+  { key: 'rapport-employes', label: 'Rapport données employés', path: '/rapport-employes', rhOnly: true },
+  { key: 'documents-employes', label: 'Documents employés', path: '/documents-employes' },
+  { key: 'reclamations', label: 'Réclamations', path: '/reclamations' },
+]
+
+const MENU_EMPLOYE = [
+  { key: 'profil',    label: 'Mon profil',   path: '/profil'   },
+  { key: 'conges',    label: 'Mes congés',   path: '/conges'   },
+  { key: 'mes-formations', label: 'Mes formations', path: '/mes-formations' },
+]
 
 export default function Sidebar({ role }) {
-  const items = MENU_BY_ROLE[role] ?? MENU_BY_ROLE.rh
+  const items = role === 'employe'
+    ? MENU_EMPLOYE
+    : MENU_DIRECTION.filter(item => role !== 'dg' || !item.rhOnly)
 
   return (
     <nav className="sidebar" aria-label="Navigation principale">
