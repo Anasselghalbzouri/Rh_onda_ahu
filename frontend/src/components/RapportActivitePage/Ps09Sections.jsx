@@ -27,7 +27,7 @@ function Section({ code, titre, children }) {
   )
 }
 
-export default function Ps09Sections({ auto, trimestre, annuel, numTrimestre, annee, onChange, errors = {}, readOnly }) {
+export default function Ps09Sections({ auto, trimestre, annuel, numTrimestre, annee, onChange, errors = {} }) {
   const t = trimestre ?? {}
   const a = annuel ?? {}
   const erreur = (path) => errors[path]?.[0] && <span className="ps09-erreur">{errors[path][0]}</span>
@@ -37,12 +37,8 @@ export default function Ps09Sections({ auto, trimestre, annuel, numTrimestre, an
   const nombre = (path, libelle, valeur) => (
     <label className="ps09-champ" key={path}>
       {libelle}
-      {readOnly ? (
-        <span className="ps09-valeur">{valeur ?? 'Non renseigné'}</span>
-      ) : (
-        <input type="number" min="0" step="1" value={valeur ?? ''} placeholder="Non renseigné"
-          onChange={(e) => onChange(path, e.target.value === '' ? null : Number(e.target.value))} />
-      )}
+      <input type="number" min="0" step="1" value={valeur ?? ''} placeholder="Non renseigné"
+        onChange={(e) => onChange(path, e.target.value === '' ? null : Number(e.target.value))} />
       {erreur(path)}
     </label>
   )
@@ -50,12 +46,8 @@ export default function Ps09Sections({ auto, trimestre, annuel, numTrimestre, an
   const texte = (path, libelle, valeur, lignes = 3) => (
     <label className="ps09-champ ps09-commentaire">
       {libelle}
-      {readOnly ? (
-        <p className="ps09-valeur">{valeur || 'Non renseigné'}</p>
-      ) : (
-        <textarea rows={lignes} maxLength={2000} value={valeur ?? ''} placeholder="Non renseigné"
-          onChange={(e) => onChange(path, e.target.value === '' ? null : e.target.value)} />
-      )}
+      <textarea rows={lignes} maxLength={2000} value={valeur ?? ''} placeholder="Non renseigné"
+        onChange={(e) => onChange(path, e.target.value === '' ? null : e.target.value)} />
       {erreur(path)}
     </label>
   )

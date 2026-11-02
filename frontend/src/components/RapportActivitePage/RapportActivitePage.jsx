@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Download, Save } from 'lucide-react'
 import api from '../../api'
-import { useAuth } from '../../useAuth'
 import Ps09Sections from './Ps09Sections'
 import Ps09Document from './Ps09Document'
 import './RapportActivitePage.css'
@@ -17,7 +16,6 @@ function setIn(obj, [cle, ...reste], valeur) {
 }
 
 export default function RapportActivitePage() {
-  const readOnly = useAuth().user?.role === 'dg'
   const [annee, setAnnee] = useState(currentYear)
   const [trimestre, setTrimestre] = useState(Math.floor(new Date().getMonth() / 3) + 1)
 
@@ -225,27 +223,25 @@ export default function RapportActivitePage() {
       {loading && <div className="rapport-card">Chargement du rapport...</div>}
 
       {!loading && saisie && (
-        <div className={`ps09-cote-a-cote ${readOnly ? 'ps09-seul' : ''}`}>
-          {!readOnly && (
-            <div className="rapport-card ps09-colonne-saisie">
-              <h3 className="ps09-colonne-titre">Saisie</h3>
-              <Ps09Sections
-                auto={auto}
-                trimestre={edits.trimestre}
-                annuel={edits.annuel}
-                numTrimestre={trimestre}
-                annee={annee}
-                onChange={onChange}
-                errors={errors}
-              />
-              <div className="rapport-actions ps09-actions-collantes">
-                <button type="button" className="rapport-btn-primary" onClick={enregistrer} disabled={saving || !dirty}>
-                  <Save size={15} aria-hidden="true" />
-                  {saving ? 'Enregistrement...' : 'Enregistrer'}
-                </button>
-              </div>
+        <div className="ps09-cote-a-cote">
+          <div className="rapport-card ps09-colonne-saisie">
+            <h3 className="ps09-colonne-titre">Saisie</h3>
+            <Ps09Sections
+              auto={auto}
+              trimestre={edits.trimestre}
+              annuel={edits.annuel}
+              numTrimestre={trimestre}
+              annee={annee}
+              onChange={onChange}
+              errors={errors}
+            />
+            <div className="rapport-actions ps09-actions-collantes">
+              <button type="button" className="rapport-btn-primary" onClick={enregistrer} disabled={saving || !dirty}>
+                <Save size={15} aria-hidden="true" />
+                {saving ? 'Enregistrement...' : 'Enregistrer'}
+              </button>
             </div>
-          )}
+          </div>
 
           <div className="ps09-colonne-apercu">
           <div className="ps09-onglets">

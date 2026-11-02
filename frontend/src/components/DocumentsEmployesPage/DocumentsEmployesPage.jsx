@@ -33,7 +33,7 @@ const formatDate = (v) => {
   return Number.isNaN(d.getTime()) ? v : d.toLocaleDateString('fr-FR')
 }
 
-export default function DocumentsEmployesPage({ readOnly = false }) {
+export default function DocumentsEmployesPage() {
   const navigate = useNavigate()
 
   const [documents, setDocuments] = useState([])
@@ -208,7 +208,7 @@ export default function DocumentsEmployesPage({ readOnly = false }) {
               Télécharger
             </button>
           )}
-          {!readOnly && row.id && (
+          {row.id && (
             <button
               type="button"
               className="de-delete-btn"
@@ -265,11 +265,9 @@ export default function DocumentsEmployesPage({ readOnly = false }) {
             ))}
           </select>
         </div>
-        {!readOnly && (
-          <button type="button" className="de-add-btn" onClick={openAdd}>
-            <Plus size={16} aria-hidden="true" /> Ajouter un document
-          </button>
-        )}
+        <button type="button" className="de-add-btn" onClick={openAdd}>
+          <Plus size={16} aria-hidden="true" /> Ajouter un document
+        </button>
       </div>
 
       {error ? (

@@ -6,13 +6,10 @@ import Dashboard from './components/Dashboard/Dashboard'
 import PersonnelPage from './components/PersonnelPage/PersonnelPage'
 import CongesPage from './components/CongesPage/CongesPage'
 import FormationsPage from './components/FormationsPage/FormationsPage'
-import MesFormationsPage from './components/MesFormationsPage/MesFormationsPage'
 import RapportActivitePage from './components/RapportActivitePage/RapportActivitePage'
 import RapportEmployesPage from './components/RapportEmployesPage/RapportEmployesPage'
 import DocumentsEmployesPage from './components/DocumentsEmployesPage/DocumentsEmployesPage'
 import ReclamationsPage from './components/ReclamationsPage/ReclamationsPage'
-import MesDocumentsPage from './components/MesDocumentsPage/MesDocumentsPage'
-import Unauthorized from './components/Unauthorized/Unauthorized'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 
 export default function App() {
@@ -25,12 +22,11 @@ export default function App() {
           path="/login"
           element={isAuthenticated ? <Navigate to="/personnel" replace /> : <LoginPage onLogin={login} />}
         />
-        <Route path="/unauthorized" element={<Unauthorized />} />
 
         <Route
           path="/"
           element={
-            <ProtectedRoute allowedRoles={['rh', 'dg', 'employe']}>
+            <ProtectedRoute>
               <Layout user={user} onLogout={logout} />
             </ProtectedRoute>
           }
@@ -39,55 +35,11 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="personnel" element={<PersonnelPage />} />
           <Route path="conges" element={<CongesPage />} />
-          <Route
-            path="formations"
-            element={
-              <ProtectedRoute allowedRoles={['rh']}>
-                <FormationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="mes-formations"
-            element={
-              <ProtectedRoute allowedRoles={['employe']}>
-                <MesFormationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="rapport-activite"
-            element={
-              <ProtectedRoute allowedRoles={['rh']}>
-                <RapportActivitePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="rapport-employes"
-            element={
-              <ProtectedRoute allowedRoles={['rh']}>
-                <RapportEmployesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="documents-employes"
-            element={
-              <ProtectedRoute allowedRoles={['rh', 'dg']}>
-                <DocumentsEmployesPage readOnly={user?.role === 'dg'} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="reclamations"
-            element={
-              <ProtectedRoute allowedRoles={['rh', 'dg']}>
-                <ReclamationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="profil" element={<MesDocumentsPage />} />
+          <Route path="formations" element={<FormationsPage />} />
+          <Route path="rapport-activite" element={<RapportActivitePage />} />
+          <Route path="rapport-employes" element={<RapportEmployesPage />} />
+          <Route path="documents-employes" element={<DocumentsEmployesPage />} />
+          <Route path="reclamations" element={<ReclamationsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

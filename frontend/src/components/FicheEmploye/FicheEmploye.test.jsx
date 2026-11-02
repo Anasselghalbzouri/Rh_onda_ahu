@@ -5,7 +5,6 @@ import api from '../../api'
 import FicheEmploye from './FicheEmploye'
 
 vi.mock('../../api', () => ({ default: { get: vi.fn(), delete: vi.fn() } }))
-vi.mock('../../useAuth', () => ({ useAuth: () => ({ user: { role: 'rh' } }) }))
 
 const EMPLOYE = {
   id: 7,

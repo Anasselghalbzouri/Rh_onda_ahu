@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Download, Plus } from 'lucide-react'
 import api from '../../api'
-import { useAuth } from '../../useAuth'
 import FormField from '../ui/FormField/FormField'
 import Modal from '../ui/Modal/Modal'
 import Table from '../ui/Table/Table'
@@ -196,21 +195,7 @@ function FormulaireReclamation({ reclamation, options, onClose, onSaved }) {
   )
 }
 
-function FicheReclamation({ reclamation, options }) {
-  return (
-    <dl className="reclamation-fiche">
-      {COLONNES.map((c) => (
-        <div key={c.key}>
-          <dt>{c.label}</dt>
-          <dd>{valeurColonne(c, reclamation, options)}</dd>
-        </div>
-      ))}
-    </dl>
-  )
-}
-
 export default function ReclamationsPage() {
-  const peutModifier = useAuth().user?.role === 'rh'
   const { toast, showToast, hideToast } = useToast()
 
   const [page, setPage] = useState(1)
@@ -304,12 +289,10 @@ export default function ReclamationsPage() {
             <Download size={15} aria-hidden="true" />
             {exporting ? 'Export...' : 'Exporter Excel'}
           </button>
-          {peutModifier && (
-            <button type="button" className="reclamations-btn-primary" onClick={() => setOuverte({ creation: true })}>
-              <Plus size={15} aria-hidden="true" />
-              Nouvelle réclamation
-            </button>
-          )}
+          <button type="button" className="reclamations-btn-primary" onClick={() => setOuverte({ creation: true })}>
+            <Plus size={15} aria-hidden="true" />
+            Nouvelle réclamation
+          </button>
         </div>
       </div>
 
@@ -363,7 +346,7 @@ export default function ReclamationsPage() {
         size="lg"
         title={ouverte?.creation ? 'Nouvelle réclamation' : `Réclamation ${ouverte?.numero}`}
       >
-        {ouverte && (peutModifier ? (
+        {ouverte && (
           <FormulaireReclamation
             key={ouverte.id ?? 'creation'}
             reclamation={ouverte.creation ? null : ouverte}
@@ -371,9 +354,7 @@ export default function ReclamationsPage() {
             onClose={() => setOuverte(null)}
             onSaved={onSaved}
           />
-        ) : (
-          <FicheReclamation reclamation={ouverte} options={options} />
-        ))}
+        )}
       </Modal>
 
       <Toast toast={toast} onClose={hideToast} />

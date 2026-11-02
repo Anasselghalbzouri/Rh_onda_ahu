@@ -195,23 +195,3 @@
   background: var(--neutral-100);
 }
 
-.reclamation-fiche {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--space-4);
-  margin: 0;
-}
-
-.reclamation-fiche dt {
-  margin-bottom: var(--space-1);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--neutral-500);
-}
-
-.reclamation-fiche dd {
-  margin: 0;
-  font-size: 13px;
-  color: var(--neutral-900);
-  white-space: pre-wrap;
-}

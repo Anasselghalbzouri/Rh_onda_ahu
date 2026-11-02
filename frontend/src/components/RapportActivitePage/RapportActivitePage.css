@@ -200,7 +200,6 @@
 
 /* Côte à côte : saisie | aperçu document (spec 005, FR-013) */
 .ps09-cote-a-cote { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: var(--space-5); align-items: start; }
-.ps09-cote-a-cote.ps09-seul { grid-template-columns: minmax(0, 900px); justify-content: center; }
 .ps09-colonne-titre { margin: 0; font-size: 15px; color: var(--neutral-900); }
 .ps09-colonne-apercu { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 .ps09-actions-collantes { position: sticky; bottom: 0; background: var(--white); padding-bottom: var(--space-2); }

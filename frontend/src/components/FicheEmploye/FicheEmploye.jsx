@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Briefcase, CalendarDays, FileCheck2, GraduationCap, History, Paperclip, UserRound } from 'lucide-react'
 import api from '../../api'
-import { useAuth } from '../../useAuth'
 import FormField from '../ui/FormField/FormField'
 import Badge from '../ui/Badge/Badge'
 import { DOCUMENT_CATEGORIES, DOCUMENT_STATUT_LABELS, DOCUMENT_STATUT_VARIANTS } from '../../constants/documentsEmployes'
@@ -63,7 +62,6 @@ const congeFichier = (conge) => ({ route: `/conges/${conge.id}/fichier`, nom: co
 
 export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSaved, onDirtyChange, onglets = null }) {
   const navigate = useNavigate()
-  const canEditHist = useAuth().user?.role !== 'dg'
   const [employe, setEmploye] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -828,7 +826,7 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
 
       {activeTab === 'historique' && (
       <Section titre="Historique professionnel">
-        {canEditHist && !histForm && (
+        {!histForm && (
           <div className="fiche-actions" style={{ marginBottom: '12px' }}>
             <button type="button" className="fiche-primary-btn" onClick={() => openHistForm()}>
               Ajouter une période
@@ -874,7 +872,7 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
                   <th className="fiche-th">Catégorie</th>
                   <th className="fiche-th">Échelle</th>
                   <th className="fiche-th">Période</th>
-                  {canEditHist && <th className="fiche-th">Actions</th>}
+                  <th className="fiche-th">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -887,20 +885,18 @@ export default function FicheEmploye({ id, onRetour, masquerRetour = false, onSa
                     <td className="fiche-td">
                       {formatDate(h?.date_debut)} → {h?.date_fin ? formatDate(h?.date_fin) : 'En cours'}
                     </td>
-                    {canEditHist && (
-                      <td className="fiche-td">
-                        <div className="fiche-actions">
-                          <button type="button" className="fiche-link-btn" onClick={() => openHistForm(h)}>
-                            Modifier
+                    <td className="fiche-td">
+                      <div className="fiche-actions">
+                        <button type="button" className="fiche-link-btn" onClick={() => openHistForm(h)}>
+                          Modifier
+                        </button>
+                        {h?.date_fin && (
+                          <button type="button" className="fiche-delete-btn" onClick={() => onHistDelete(h.id)}>
+                            {histDeleteId === h.id ? 'Confirmer ?' : 'Supprimer'}
                           </button>
-                          {h?.date_fin && (
-                            <button type="button" className="fiche-delete-btn" onClick={() => onHistDelete(h.id)}>
-                              {histDeleteId === h.id ? 'Confirmer ?' : 'Supprimer'}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    )}
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

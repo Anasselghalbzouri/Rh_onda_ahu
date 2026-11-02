@@ -53,7 +53,7 @@ export default function Layout({ user, onLogout }) {
   return (
     <div className="layout-root">
       <div className="layout-shell">
-        <Sidebar role={user?.role} />
+        <Sidebar />
 
         <div className="layout-main">
           <header className="layout-header">

@@ -5,7 +5,6 @@ import api from '../../api'
 import PersonnelPage from './PersonnelPage'
 
 vi.mock('../../api', () => ({ default: { get: vi.fn(), put: vi.fn(), delete: vi.fn(), post: vi.fn() } }))
-vi.mock('../../useAuth', () => ({ useAuth: () => ({ user: { role: 'rh' } }) }))
 
 // Fiche simulée « en cours de modification », activée par describe ; la vraie fiche sinon.
 const simulation = vi.hoisted(() => ({ ficheModifiee: false }))

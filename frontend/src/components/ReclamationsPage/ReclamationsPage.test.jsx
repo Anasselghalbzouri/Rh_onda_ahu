@@ -1,12 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import api from '../../api'
 import ReclamationsPage from './ReclamationsPage'
 
 vi.mock('../../api', () => ({ default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }))
 
-const session = vi.hoisted(() => ({ role: 'rh' }))
-vi.mock('../../useAuth', () => ({ useAuth: () => ({ user: { role: session.role } }) }))
 
 const OPTIONS = {
   etats: [
@@ -58,7 +56,6 @@ function erreur422(errors) {
 }
 
 beforeEach(() => {
-  session.role = 'rh'
   liste = () => Promise.resolve(page())
   api.get.mockImplementation((url) => {
     if (url === '/reclamations') return liste()
@@ -235,23 +232,6 @@ describe('suivi', () => {
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/reclamations/5'))
     await waitFor(() => expect(appelsListe().length).toBeGreaterThan(appels))
   })
-
-  it('donne au DG une lecture seule du texte complet', async () => {
-    session.role = 'dg'
-    render(<ReclamationsPage />)
-    await screen.findByText('ALAMI Sara')
-
-    expect(screen.queryByRole('button', { name: 'Nouvelle réclamation' })).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: '001/2026' }))
-
-    const fiche = screen.getByRole('heading', { name: /001\/2026/ }).closest('.modal-box')
-    expect(within(fiche).getByText('Solde de congé erroné')).toBeInTheDocument()
-    expect(within(fiche).getByText('Dossier transmis')).toBeInTheDocument()
-    expect(fiche.querySelector('input, select, textarea')).toBeNull()
-    expect(within(fiche).queryByRole('button', { name: 'Enregistrer' })).not.toBeInTheDocument()
-    expect(within(fiche).queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument()
-  })
 })
 
 describe('export Excel', () => {
@@ -266,8 +246,7 @@ describe('export Excel', () => {
     })
   })
 
-  it('télécharge le fichier avec les filtres en cours, y compris pour le DG', async () => {
-    session.role = 'dg'
+  it('télécharge le fichier avec les filtres en cours', async () => {
     render(<ReclamationsPage />)
     await screen.findByText('ALAMI Sara')
     fireEvent.change(screen.getByLabelText('État'), { target: { value: 'en_cours' } })
